@@ -2,6 +2,8 @@
 import sys
 import numpy as np
 import pickle
+import time
+import signal
 
 class DummyProcess():
     def __init__(self):
@@ -10,26 +12,34 @@ class DummyProcess():
     def receive_from_pipe(self, msg):
         print(msg)
 
+def receive_signal(signum, stack):
+    # sys.stderr.buffer.write(b'pytel')
+    sys.stdout.buffer.write(b'ksicht')
+    return
+    # sys.stderr.buffer.write(signum)
+    # sys.stderr.buffer.write(stack)
+
+def main():
+    sys.stdout.buffer.write(b'error dummy\n')
+    signal.signal(signal.SIGUSR1, receive_signal)
+
+    while True:
+        sys.stdout.buffer.write(b'waiting\n')
+        time.sleep(2.2)
+        sys.stdout.buffer.write(b'waiting\n')
+        break
+
+    sys.exit(0)
+
+    inp = sys.stdin.buffer.read()
+
+    time.sleep(1.2)
+    sys.stdout.buffer.write(inp)
+
+
 if __name__ == '__main__':
 
-    output = {
-        "ksicht": np.array([1., 1.5, 2.])
-    }
-
-    # output = [1,2,3]
-    a = input()
-    print("a: ", a)
-
-    out_ser = pickle.dumps(output)
-
-    print(f"out_type: {type(out_ser)}", file=sys.stderr)
-    print(f"out: {out_ser}", file=sys.stderr)
-
-    in_ser = pickle.loads(out_ser)
-
-    sys.stdout.buffer.write(out_ser)
-    # print(out_ser, end='')
-    # print(in_ser)
-
-    # 5/0
-    # print(in_ser, end='')
+    try:
+        main()
+    except Exception as e:
+        print(f"ERROR: {e}", file=sys.stderr)
