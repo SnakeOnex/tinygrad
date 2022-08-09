@@ -1,1 +1,4 @@
+__pycache__/
 autonomous/__pycache__/
+autonomous/cone_detector/__pycache__/
+autonomous/cone_detector/weights/*

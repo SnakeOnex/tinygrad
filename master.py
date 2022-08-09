@@ -5,15 +5,28 @@ import sys
 import time
 import os
 import multiprocessing
+from pathlib import Path
+import argparse
 
-from autonomous.cone_detector import ConeDetector 
+from autonomous.cone_detector.cone_detector import ConeDetectionNode
+from tvojemama.logger import gen_name_with_time, create_log_folder
+from main_config import config
 
-def main():
+
+def main(brosbag_folder=None):
+
+    # 0. create a log folder for the run
+    main_log_folder = config["main_log_folder"]
+    folder_path = main_log_folder / Path(gen_name_with_time('', ''))
+    folder_path.mkdir()
+    print("LOG_FILE: ", folder_path)
 
     # 1. processes init
 
     ## AS
-    cone_detector = ConeDetector()
+    cone2path = multiprocessing.Queue()
+    cone_detector = ConeDetectionNode(cone2path, main_log_folder, brosbag_folder)
+
     # path_planning = PathPlanning()
 
     ## MISSIONS
@@ -25,4 +38,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--brosbag_folder', type=str, default=None)
+    args = parser.parse_args()
+
+    main(args.brosbag_folder)
