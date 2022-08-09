@@ -36,6 +36,9 @@ def main(brosbag_folder=None):
 
     ## ASM
 
+    # 2. start the processes
+    cone_detector.start()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

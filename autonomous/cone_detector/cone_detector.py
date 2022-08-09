@@ -1,13 +1,17 @@
 import multiprocessing
 import time
+import sys
+
 from .cone_detector_config import config
 from cones.cone_detector import ConeDetector
 from cones.cone_localizer import ConeLocalizer
-from tvojemama.logger import Logger, LogReader
+from tvojemama.logger import Logger, LogReader, name_to_log
 
 class ConeDetectionNode(multiprocessing.Process):
     def __init__(self, output_queue, main_log_folder, brosbag_path=None):
+        multiprocessing.Process.__init__(self)
         self.output_queue = output_queue
+        log_opt = config["logging_opt"]
 
         # zed setup or brosbag setup
         if brosbag_path is None:
@@ -19,24 +23,33 @@ class ConeDetectionNode(multiprocessing.Process):
             self.zed_image = sl.Mat()
             self.runtime_parameters = sl.RuntimeParameters()
         else:
-            self.brosbag_gen = LogReader(brosbag_path) if brosbag_path is not None else None
+            self.brosbag_gen = LogReader(name_to_log(log_opt["log_name"],brosbag_path)) if brosbag_path is not None else None
 
         self.detector = ConeDetector(config["cone_detector_opt"])
         self.localizer = ConeLocalizer(config["cone_localizer_opt"])
-        log_opt = config["logging_opt"]
         self.logger = Logger(log_name=log_opt["log_name"], log_folder_name=log_opt["log_folder_name"], main_folder_path=main_log_folder)
         self.logger.log("CONE_DETECTOR_CONFIGURATION", config) # log config
 
     def run(self):
         while True:
             if self.brosbag_gen is None:
-                image = read_zed_image()
+                image = self.read_zed_image()
             else:
-                image = read_log_image()
+                image = self.read_log_image()
 
-            bbox_preds = self.detector(image)
-            world_preds = self.localizer.project_bboxes(self.bbox_preds)
+            bbox_preds = self.detector.process_image(image).cpu().detach().numpy()
+            world_preds = self.localizer.project_bboxes(bbox_preds)
+
             self.output_queue.put(world_preds)
+
+            cone_classes = bbox_preds[:,5].astype(int)
+            data = {
+                "bboxes": bbox_preds,
+                "world_preds": world_preds,
+                "cone_classes": cone_classes,
+            }
+
+            self.logger.log("CONE_DETECTOR_FRAME", data)
 
     def read_zed_image(self):
         if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:
@@ -47,5 +60,7 @@ class ConeDetectionNode(multiprocessing.Process):
 
     def read_log_image(self):
         msg_t, (msg_type, data) = next(self.brosbag_gen)
-        assert msg_type == "CONE_DETECTOR_CONFIGURATION"
+        assert msg_type == "CONE_DETECTOR_FRAME"
         return data["image"]
+
+
