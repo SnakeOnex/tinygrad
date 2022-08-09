@@ -48,7 +48,6 @@ class ConeDetectionNode(multiprocessing.Process):
                 "world_preds": world_preds,
                 "cone_classes": cone_classes,
             }
-
             self.logger.log("CONE_DETECTOR_FRAME", data)
 
     def read_zed_image(self):
@@ -62,5 +61,4 @@ class ConeDetectionNode(multiprocessing.Process):
         msg_t, (msg_type, data) = next(self.brosbag_gen)
         assert msg_type == "CONE_DETECTOR_FRAME"
         return data["image"]
-
 
