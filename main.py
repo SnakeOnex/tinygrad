@@ -30,7 +30,6 @@ def world_setup():
         color=color.cyan
     )
 
-
 if __name__ == '__main__':
 
     app = Ursina()
@@ -41,6 +40,11 @@ if __name__ == '__main__':
     # 2. RENDER CONES
     cone_track = ConeTrack('slam_hard_track.npy')
     cone_track.render_cones()
+
+    cone = Entity(model='models/cone_yellow.fbx', color=color.yellow, position=(0.,0.01, 0.), scale=(0.1, 0.1, 0.1))
+
+
+
 
     # 3. RENDER THE CAR
     player = Formula()

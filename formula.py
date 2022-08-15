@@ -7,9 +7,9 @@ class Formula(Entity):
         self.model = 'cube'
         self.color = color.orange
         # self.scale = (0.8,0.4,0.4)
-        self.scale = (0.6,0.5,2.0)
+        self.scale = (0.3,0.25,1.0)
         self.texture = 'white_cube',
-        self.position = (0,0.2,0)
+        self.position = (0,0.125,0)
         self.rotation = (0,0,0)
 
         self.throttle = 0.

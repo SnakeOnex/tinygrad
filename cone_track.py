@@ -7,9 +7,10 @@ class ConeTrack():
     def __init__(self, path):
         self.load_from_npy(path)
 
-        self.cone_model = 'cube'
-        self.cone_scale = (0.15, 0.32, 0.15)
+        self.cone_model = 'models/cone_yellow.fbx'
+        self.cone_scale = (0.1, 0.1, 0.1)
         self.texture = 'white_cube'
+        self.y_pos = 0.01
 
     def load_from_npy(self, path):
         cones = np.load(path)
@@ -33,9 +34,9 @@ class ConeTrack():
             )
             return
 
-        [render_cone(color.yellow, (c[0], 0, c[1])) for c in self.yellow_cones]
-        [render_cone(color.blue, (c[0], 0, c[1])) for c in self.blue_cones]
-        [render_cone(color.orange, (c[0], 0, c[1])) for c in self.orange_cones]
-        [render_cone(color.red, (c[0], 0, c[1])) for c in self.big_cones]
+        [render_cone(color.yellow, (c[0], self.y_pos, c[1])) for c in self.yellow_cones]
+        [render_cone(color.blue, (c[0], self.y_pos, c[1])) for c in self.blue_cones]
+        [render_cone(color.orange, (c[0], self.y_pos, c[1])) for c in self.orange_cones]
+        [render_cone(color.red, (c[0], self.y_pos, c[1])) for c in self.big_cones]
         
 
