@@ -2,6 +2,17 @@ from ursina import *
 
 from cone_track import ConeTrack
 from formula import Formula
+from enum import Enum
+import sys
+
+class CameraMode(Enum):
+    WORLD = 0
+    FIRST_PERSON = 1
+    THIRD_PERSON = 2
+
+    def next(self):
+        v = self.value
+        return CameraMode((v + 1) % 3)
 
 def world_setup():
     ground = Entity(
@@ -23,6 +34,7 @@ def handle_camera(cam_mode, player):
     """
     setup camera based on the player position and camera mode
     """
+    pass
 
 if __name__ == '__main__':
 
@@ -39,15 +51,15 @@ if __name__ == '__main__':
     player = Formula()
 
     # 4. HANDLE CAMERA
-    # cam_mode = "world"
-    cam_mode = "first_person"
-
-    if cam_mode == "world":
-        camera.position = Vec3(0,15,-20)
-    elif cam_mode == "first_person":
-        camera.position = player.position - player.get_heading_pos() * 3
+    ## apparently all state has to be tied to the app object (not sure what to think)
+    app.cam_mode = CameraMode.WORLD
 
     text = Text(text=f"{player.position}")
+
+    def input(key):
+        if key == 'p':
+            app.cam_mode = app.cam_mode.next()
+            print(f"CAMERA MODE: {app.cam_mode}")
 
     def update():                  # update gets automatically called by the engine.
         if held_keys['w']:
@@ -62,7 +74,15 @@ if __name__ == '__main__':
         text.text = f"Pos: {player.position}\n Rotation: {player.rotation} \nthrottle: {player.throttle}"
 
         # update camera
-        camera.position = player.position - player.get_heading_pos() * 3
-        camera.look_at(player)
+        if app.cam_mode == CameraMode.WORLD:
+            camera.position = Vec3(0,15,-20)
+            camera.look_at(player)
+        elif app.cam_mode == CameraMode.FIRST_PERSON:
+            camera.position = player.position - player.get_heading_pos() * 3
+            camera.look_at(player)
+        elif app.cam_mode == CameraMode.THIRD_PERSON:
+            camera.position = Vec3(0,15,-20)
+            camera.look_at(player)
+            app.cam_mode = app.cam_mode.next()
 
     app.run()

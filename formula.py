@@ -28,10 +28,18 @@ class Formula(Entity):
         if self.rotation[1] >= 360:
             self.rotation = (0,0,0)
 
+        if self.rotation[1] < 0:
+            self.rotation = (0,359,0)
+
     def right(self):
         self.rotation += (0.,self.turn,0.)
+
         if self.rotation[1] >= 360:
             self.rotation = (0,0,0)
+
+        if self.rotation[1] < 0:
+            self.rotation = (0,359,0)
+
 
     def update(self):
         heading_pos = self.get_heading_pos()
