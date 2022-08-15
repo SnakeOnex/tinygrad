@@ -41,13 +41,22 @@ if __name__ == '__main__':
     cone_track = ConeTrack('slam_hard_track.npy')
     cone_track.render_cones()
 
-    cone = Entity(model='models/cone_yellow.fbx', color=color.yellow, position=(0.,0.01, 0.), scale=(0.1, 0.1, 0.1))
 
 
 
 
     # 3. RENDER THE CAR
     player = Formula()
+
+    cone = Entity(
+            model='models/cone_yellow.fbx', 
+            color=color.yellow, 
+            position=(0.,0.01, 0.), 
+            scale=(0.1, 0.1, 0.1), 
+        )
+
+    Entity(model='models/whole_car.stl', color=color.red, position = (1, 0.2, 1), scale=(0.001, 0.001, 0.001), rotation=(270.,0.,0.))
+
 
     # 4. HANDLE CAMERA
     ## apparently all state has to be tied to the app object (not sure what to think)
@@ -78,7 +87,7 @@ if __name__ == '__main__':
             camera.look_at(player)
         elif app.cam_mode == CameraMode.FIRST_PERSON:
             # camera.position = player.position - player.get_heading_pos() * 3
-            camera.position = player.position + Vec3(0., 0.5, 0.)
+            camera.position = player.position + Vec3(0., 4.2, 0.)
             camera.rotation = player.rotation
         elif app.cam_mode == CameraMode.THIRD_PERSON:
             camera.position = Vec3(0,15,-20)

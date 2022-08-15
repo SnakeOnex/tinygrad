@@ -4,13 +4,15 @@ import numpy as np
 class Formula(Entity):
     def __init__(self, **kwargs):
         super().__init__()
-        self.model = 'cube'
+        self.model = 'models/whole_car.stl'
         self.color = color.orange
         # self.scale = (0.8,0.4,0.4)
-        self.scale = (0.3,0.25,1.0)
+        self.scale = (0.001,0.001,0.001)
         self.texture = 'white_cube',
-        self.position = (0,0.125,0)
-        self.rotation = (0,0,0)
+        self.position = (0.,0.,0.)
+
+        self.x_rot = 270.
+        self.rotation = (self.x_rot,0.,90.)
 
         self.throttle = 0.
         self.velocity = (0.,0.,0.)
@@ -27,19 +29,19 @@ class Formula(Entity):
         self.rotation -= (0.,self.turn,0.)
 
         if self.rotation[1] >= 360:
-            self.rotation = (0,0,0)
+            self.rotation = (self.x_rot, 0, 90.)
 
         if self.rotation[1] < 0:
-            self.rotation = (0,359,0)
+            self.rotation = (self.x_rot,359,90.)
 
     def right(self):
-        self.rotation += (0.,self.turn,0.)
+        self.rotation += (0., self.turn,0.)
 
         if self.rotation[1] >= 360:
-            self.rotation = (0,0,0)
+            self.rotation = (self.x_rot, 0, 90.)
 
         if self.rotation[1] < 0:
-            self.rotation = (0,359,0)
+            self.rotation = (self.x_rot, 359,90.)
 
 
     def update(self):
