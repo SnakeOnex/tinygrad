@@ -1,6 +1,7 @@
 from ursina import *
 
 from cone_track import ConeTrack
+from formula import Formula
 
 def world_setup():
     ground = Entity(
@@ -18,6 +19,11 @@ def world_setup():
         color=color.cyan
     )
 
+def handle_camera(cam_mode, player):
+    """
+    setup camera based on the player position and camera mode
+    """
+
 if __name__ == '__main__':
 
     app = Ursina()
@@ -30,26 +36,33 @@ if __name__ == '__main__':
     cone_track.render_cones()
 
     # 3. RENDER THE CAR
-    player = Entity(
-        model = 'sphere',
-        position=(1,1,1),
-        texture = 'white_cube',
-        color = color.orange,
-        scale_y = 1
-    )
+    player = Formula()
 
-    camera.position = Vec3(0,50,-50)
-    camera.rotation = (35,0,0)
+    # 4. HANDLE CAMERA
+    # cam_mode = "world"
+    cam_mode = "first_person"
 
+    if cam_mode == "world":
+        camera.position = Vec3(0,15,-20)
+    elif cam_mode == "first_person":
+        camera.position = player.position - player.get_heading_pos() * 3
 
-    print(camera.position)
+    text = Text(text=f"{player.position}")
 
     def update():                  # update gets automatically called by the engine.
-        player.x += held_keys['d'] * .1
-        player.x -= held_keys['a'] * .1
-        player.z += held_keys['w'] * .1
-        player.z -= held_keys['s'] * .1
+        if held_keys['w']:
+            player.forward()
 
-        camera.rotation
+        if held_keys['a']:
+            player.left()
+
+        if held_keys['d']:
+            player.right()
+
+        text.text = f"Pos: {player.position}\n Rotation: {player.rotation} \nthrottle: {player.throttle}"
+
+        # update camera
+        camera.position = player.position - player.get_heading_pos() * 3
+        camera.look_at(player)
 
     app.run()
