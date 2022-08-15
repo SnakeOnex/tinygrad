@@ -30,11 +30,6 @@ def world_setup():
         color=color.cyan
     )
 
-def handle_camera(cam_mode, player):
-    """
-    setup camera based on the player position and camera mode
-    """
-    pass
 
 if __name__ == '__main__':
 
@@ -78,8 +73,9 @@ if __name__ == '__main__':
             camera.position = Vec3(0,15,-20)
             camera.look_at(player)
         elif app.cam_mode == CameraMode.FIRST_PERSON:
-            camera.position = player.position - player.get_heading_pos() * 3
-            camera.look_at(player)
+            # camera.position = player.position - player.get_heading_pos() * 3
+            camera.position = player.position + Vec3(0., 0.5, 0.)
+            camera.rotation = player.rotation
         elif app.cam_mode == CameraMode.THIRD_PERSON:
             camera.position = Vec3(0,15,-20)
             camera.look_at(player)

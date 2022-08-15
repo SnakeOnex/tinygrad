@@ -6,9 +6,10 @@ class Formula(Entity):
         super().__init__()
         self.model = 'cube'
         self.color = color.orange
-        self.scale = (0.8,0.4,0.4)
+        # self.scale = (0.8,0.4,0.4)
+        self.scale = (0.6,0.5,2.0)
         self.texture = 'white_cube',
-        self.position = (1,1,1)
+        self.position = (0,0.2,0)
         self.rotation = (0,0,0)
 
         self.throttle = 0.
@@ -53,6 +54,6 @@ class Formula(Entity):
         R = np.array([[np.cos(heading), np.sin(-heading)],
                      [np.sin(heading), np.cos(heading)]])
 
-        heading_pos = R @ heading_pos
+        heading_pos = np.linalg.inv(R) @ heading_pos
         heading_pos /= np.sum(np.abs(heading_pos))
-        return Vec3(heading_pos[1], 0., heading_pos[0])
+        return Vec3(heading_pos[0], 0., heading_pos[1])

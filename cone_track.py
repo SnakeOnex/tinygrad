@@ -8,7 +8,7 @@ class ConeTrack():
         self.load_from_npy(path)
 
         self.cone_model = 'cube'
-        self.cone_scale = (0.1, 0.4, 0.1)
+        self.cone_scale = (0.15, 0.32, 0.15)
         self.texture = 'white_cube'
 
     def load_from_npy(self, path):
