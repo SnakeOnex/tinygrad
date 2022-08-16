@@ -2,6 +2,7 @@ import numpy as np
 from pathlib import Path
 
 from ursina import *
+from ursina.shaders import lit_with_shadows_shader
 
 class ConeTrack():
     def __init__(self, path):
@@ -11,6 +12,7 @@ class ConeTrack():
         self.cone_scale = (0.1, 0.1, 0.1)
         self.texture = 'white_cube'
         self.y_pos = 0.01
+        self.shader = lit_with_shadows_shader
 
     def load_from_npy(self, path):
         cones = np.load(path)
@@ -30,7 +32,8 @@ class ConeTrack():
                 color = color,
                 texture = self.texture,
                 position = pos,
-                scale = self.cone_scale
+                scale = self.cone_scale,
+                shader=self.shader
             )
             return
 
