@@ -1,7 +1,6 @@
 import numpy as np
 import warnings
 
-
 class PathPlanning(object):
     def __init__(self, start_point, clockwise=-1, filling_cones_distance=3.5, movement_direction="x", debugging=False):
         """
@@ -231,26 +230,20 @@ class PathPlanning(object):
         else:
             return full, to_fill
 
-    """
-    def fill_missing(self, A, B, C, right=True):
-        mask = np.array([1,-1]) if right else np.array([-1,1])
-        nvs = []
-        for sv, co in zip((B-A, C-B),(A,B)):
-            sv = sv/np.linalg.norm(sv)
-            nv = np.array([sv[1],sv[0]])
-            nv = nv*mask
-            nvs.append(co+nv*self.filling_cones_distance)
-        return np.array(nvs)
-    """
+class PathPlanner():
+    def __init__(self, opt):
+        self.n_steps = opt["n_steps"]
 
-def find_path(world_preds):
-    if world_preds.shape[0] > 0:
-        planner = PathPlanning(np.array([0,0], clockwise=-1))
+    def find_path(self, cones):
+        if cones.shape[0] > 0:
+            planner = PathPlanning(np.array([0,0]))
 
-        blue_cones = cones[cones[:,2] == 0]
-        yellow_cones = cones[cones[:,2] == 0]
-        planner.find_path(blue_cones, yellow_cones, n_steps=5)
-        path = np.vstack(planner.start_points)
-    else:
-        path = []
+            blue_cones = cones[cones[:,2] == 0]
+            yellow_cones = cones[cones[:,2] == 1]
+            planner.find_path(blue_cones[:, :2], yellow_cones[:,:2], n_steps=self.n_steps)
+            path = np.vstack(planner.start_points)
+        else:
+            path = []
+
+        return path
 

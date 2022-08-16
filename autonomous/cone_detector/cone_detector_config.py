@@ -22,8 +22,13 @@ cone_localizer_opt = {
     "occlusion_profile": [-6., 6., 2.5, 15.]
 }
 
+path_planner_opt = {
+    "n_steps": 5
+}
+
 config = {
     "cone_detector_opt": cone_detector_opt,
     "cone_localizer_opt": cone_localizer_opt,
+    "path_planner_opt": path_planner_opt,
     "logging_opt": logging_opt
 }

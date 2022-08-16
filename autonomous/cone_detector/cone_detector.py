@@ -5,6 +5,7 @@ import sys
 from .cone_detector_config import config
 from cones.cone_detector import ConeDetector
 from cones.cone_localizer import ConeLocalizer
+from .path_planning import PathPlanner
 from tvojemama.logger import Logger, LogReader, name_to_log
 
 class ConeDetectionNode(multiprocessing.Process):
@@ -27,6 +28,7 @@ class ConeDetectionNode(multiprocessing.Process):
 
         self.detector = ConeDetector(config["cone_detector_opt"])
         self.localizer = ConeLocalizer(config["cone_localizer_opt"])
+        self.path_planner = PathPlanner(config["path_planner_opt"])
         self.logger = Logger(log_name=log_opt["log_name"], log_folder_name=log_opt["log_folder_name"], main_folder_path=main_log_folder)
         self.logger.log("CONE_DETECTOR_CONFIGURATION", config) # log config
 
@@ -39,14 +41,16 @@ class ConeDetectionNode(multiprocessing.Process):
 
             bbox_preds = self.detector.process_image(image).cpu().detach().numpy()
             world_preds = self.localizer.project_bboxes(bbox_preds)
+            path = self.path_planner.find_path(world_preds)
 
-            self.output_queue.put(world_preds)
+            self.output_queue.put(path)
 
             cone_classes = bbox_preds[:,5].astype(int)
             data = {
                 "bboxes": bbox_preds,
                 "world_preds": world_preds,
                 "cone_classes": cone_classes,
+                "path": path
             }
             self.logger.log("CONE_DETECTOR_FRAME", data)
 
