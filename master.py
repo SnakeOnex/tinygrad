@@ -24,11 +24,11 @@ def main(brosbag_folder=None):
     # 1. processes init
 
     ## AS
-    cone_to_path = multiprocessing.Queue()
-    cone_detector = ConeDetectionNode(cone_to_path, main_log_folder, brosbag_folder)
+    cone_detector_out = multiprocessing.Queue()
+    cone_detector = ConeDetectionNode(cone_detector_out, main_log_folder, brosbag_folder)
 
     ## MISSIONS
-    # trackdrive = Trackdrive()
+    trackdrive = Trackdrive(cone_in=cone_detector_out)
 
     ## CAN
 
