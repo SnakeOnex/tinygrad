@@ -7,10 +7,9 @@ from ursina.shaders import lit_with_shadows_shader
 class ConeTrack():
     def __init__(self, path):
         self.load_from_npy(path)
-
         self.cone_model = 'models/cone_yellow.fbx'
         self.cone_scale = (0.1, 0.1, 0.1)
-        self.texture = 'white_cube'
+        self.texture = None
         self.y_pos = 0.01
         self.shader = lit_with_shadows_shader
 
@@ -21,9 +20,6 @@ class ConeTrack():
         self.blue_cones = cones[cones[:,2] == 0, :2].reshape(-1,2)
         self.orange_cones = cones[cones[:,2] == 2, :2].reshape(-1,2)
         self.big_cones = cones[cones[:,2] == 3, :2].reshape(-1,2)
-
-    def load_from_json(self):
-        pass
 
     def render_cones(self):
         def render_cone(color, pos):

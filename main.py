@@ -2,9 +2,10 @@ from ursina import *
 from ursina.shaders import lit_with_shadows_shader
 
 from cone_track import ConeTrack
-from formula import Formula
+from objects.formula import Formula
 from enum import Enum
 import sys
+import numpy as np
 
 class CameraMode(Enum):
     WORLD = 0
@@ -20,7 +21,8 @@ def world_setup():
         model = 'cube',
         color = color.gray,
         # texture='brick',
-        # texture='asfalt.jpg',
+        texture='concrete.jpg',
+        texture_scale = (64, 64),
         position=(0,0,0),
         scale = (200, 0, 200),
         collider = 'box'
@@ -37,6 +39,8 @@ if __name__ == '__main__':
 
     # 1. SETUP WORLD
     world_setup()
+    camera.orthographic = False
+    camera.fox = 78
 
     # 2. RENDER CONES
     cone_track = ConeTrack('slam_hard_track.npy')
@@ -62,6 +66,16 @@ if __name__ == '__main__':
         shader=lit_with_shadows_shader
     )
 
+    cone2 = Entity(
+        parent=cone,
+        model='models/cone_yellow.fbx', 
+        color=color.yellow, 
+        position=(10.,0.01, 1.), 
+        scale=(1., 1., 1.),
+        shader=lit_with_shadows_shader
+    )
+
+
     # Entity(model='models/whole_car.stl', color=color.red, position = (1, 0.2, 1), scale=(0.001, 0.001, 0.001), rotation=(270.,0.,0.))
 
 
@@ -69,7 +83,7 @@ if __name__ == '__main__':
     ## apparently all state has to be tied to the app object (not sure what to think)
     app.cam_mode = CameraMode.WORLD
 
-    text = Text(text=f"{player.position}")
+    # text = Text(text=f"{player.position}")
 
     pivot = Entity()
     DirectionalLight(parent=pivot, position=(0.,10.,0.), shadows=True, rotation=(90.,0., 0.))
@@ -89,7 +103,7 @@ if __name__ == '__main__':
         if held_keys['d']:
             player.right()
 
-        text.text = f"Pos: {player.position}\n Rotation: {player.rotation} \nthrottle: {player.throttle}"
+        # text.text = f"Pos: {player.position}\n Rotation: {player.rotation} \nthrottle: {player.throttle}"
 
         # update camera
         if app.cam_mode == CameraMode.WORLD:
