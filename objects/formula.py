@@ -29,25 +29,46 @@ class Formula(Entity):
         self.rl_wheel = Tire(position=(-1500., -550., 235.), parent=self)
         self.rr_wheel = Tire(position=(-1500., 550., 235.), parent=self)
 
+
+        # CONFIGURATION
+
+        self.wheel_base = 1500. / 1000
+
+        ## STEERING
+        self.steering_speed = 90. # degrees per second
+        self.max_steering_angle = 30. # max and min steering angle
+
+        ## TRACTION
+        self.max_engine_force = 400. # nM
+        self.max_brake_force = 2000.
+        self.drag_coef = 0.4
+        self.rr_coef = self.drag_coef * 30
+        self.mass = 200.
+
+        ## CAR STATE
         self.heading = 0.
         self.steering_angle = 0.
-        self.fl_wheel.rotation = (0. ,0., self.steering_angle)
-        self.fr_wheel.rotation = (0. ,0., self.steering_angle)
+        self.speed = 0.
+        self.engine_force = 0.
 
-        # physics things
-        self.steering_speed = 90. # degrees per second
-        self.max_steering_angle = 50.
-
-        self.throttle = 0.
-        self.velocity = (0.,0.,0.)
-
-        self.text = Text()
+        self.debug_text = Text()
 
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+
     def forward(self):
-        self.throttle = min(1., self.throttle + 0.05)
+        self.engine_force = self.max_engine_force
+
+    def neutral(self):
+        self.engine_force = 0.
+
+    def brake(self):
+        if self.speed > 0.:
+            self.engine_force = -self.max_brake_force
+        else:
+            self.engine_force = 0.
+            self.speed = 0.
 
     def left(self):
         self.steering_angle += time.dt * self.steering_speed
@@ -63,48 +84,52 @@ class Formula(Entity):
 
 
     def update(self):
+        self.debug_text.text = ""
         self.rotation = self.real_rot + self.offset_rot
         # self.heading = self.steering_angle
-        heading_pos = self.get_heading_pos()
-        steering_pos = self.get_direction(self.steering_angle)
+        heading_vec = self.get_direction_vec(self.heading)
+        steering_vec = self.get_direction_vec(self.steering_angle)
 
-        self.position += 0.08 * self.throttle * steering_pos
-        # self.position += 0.08 * self.throttle * heading_pos
+        ## LONGITUDINAL FORCE
+        F_traction = self.engine_force # tractive force
+        F_drag = -self.drag_coef * self.speed**2 # air resistance
+        F_rr = -self.rr_coef * self.speed # rolling resistance
+        F_long = F_traction + F_drag + F_rr # longitudinal force
 
-        self.throttle = max(0., self.throttle - 0.02)
+        acc = F_long / self.mass
+        self.speed += acc * time.dt
+
+        velocity = heading_vec * self.speed
+
+        ## LATERAL 
+        turn_radius = self.wheel_base / np.sin(np.deg2rad(self.steering_angle))
+        speed = np.sqrt(np.linalg.norm(velocity))
+        rotation = speed / turn_radius
+        self.heading += time.dt * np.rad2deg(rotation)
+        self.real_rot.z = self.heading
+
+        self.debug_text.text += f"F_long: {F_long}\nAcc: {acc}\nSpeed: {self.speed}\n"
+
+        self.position += time.dt * velocity
 
         # relative positions of things
-        self.driver_pos = self.position - 1.21 * heading_pos + (0., 0.68 ,0.)
+        self.driver_pos = self.position - 1.21 * heading_vec + (0., 0.68 ,0.)
 
         self.fl_wheel.rotation = (0. , 0., self.steering_angle)
         self.fr_wheel.rotation = (0. , 0., self.steering_angle)
 
         # debugging text
-        self.text.text = f"heading: {self.heading}\n heading_pos: {heading_pos} \n steering_angle: {self.steering_angle} \n ster_pos: {steering_pos}"
+        self.debug_text.text += f"heading: {self.heading}\nsteering_angle: {self.steering_angle}"
 
-    def get_direction(self, angle):
-        heading_pos = np.array([0.,1.])
+    def get_direction_vec(self, angle):
+        vec = np.array([0.,1.])
         angle = np.deg2rad(angle)
 
         R = np.array([[np.cos(angle), np.sin(-angle)],
                      [np.sin(angle), np.cos(angle)]])
 
-        heading_pos = R @ heading_pos
-        # heading_pos /= np.sum(np.abs(heading_pos))
-        heading_pos /= np.linalg.norm(heading_pos)
+        vec = R @ vec
+        vec /= np.linalg.norm(vec)
 
-        return Vec3(heading_pos[0], 0., heading_pos[1])
-
-    def get_heading_pos(self):
-        heading_pos = np.array([0.,1.])
-        heading = np.deg2rad(self.rotation[1])
-
-        R = np.array([[np.cos(heading), np.sin(-heading)],
-                     [np.sin(heading), np.cos(heading)]])
-
-        heading_pos = np.linalg.inv(R) @ heading_pos
-        # heading_pos /= np.sum(np.abs(heading_pos))
-        heading_pos /= np.linalg.norm(heading_pos)
-
-        return Vec3(heading_pos[0], 0., heading_pos[1])
+        return np.array((vec[0], 0., vec[1]))
 

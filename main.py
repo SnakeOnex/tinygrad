@@ -24,7 +24,7 @@ def world_setup():
         texture='concrete.jpg',
         texture_scale = (8, 8),
         position=(0,0,0),
-        scale = (200, 0, 200),
+        scale = (200, 0, 500),
         collider = 'box',
         shader=lit_with_shadows_shader
     )
@@ -73,6 +73,11 @@ if __name__ == '__main__':
     def update():                  # update gets automatically called by the engine.
         if held_keys['w']:
             formula.forward()
+        elif held_keys['space']:
+            formula.brake()
+        else:
+            formula.neutral()
+
 
         if held_keys['a']:
             formula.left()
