@@ -35,8 +35,10 @@ class Formula(Entity):
         self.fr_wheel.rotation = (0. ,0., self.steering_angle)
 
         # physics things
+        self.steering_speed = 90. # degrees per second
+        self.max_steering_angle = 50.
+
         self.throttle = 0.
-        self.turn = 1.
         self.velocity = (0.,0.,0.)
 
         self.text = Text()
@@ -48,24 +50,17 @@ class Formula(Entity):
         self.throttle = min(1., self.throttle + 0.05)
 
     def left(self):
-        # self.real_rot -= Vec3(0.,self.turn,0.)
-        self.steering_angle += self.turn
+        self.steering_angle += time.dt * self.steering_speed
 
-        if self.rotation[1] >= 360:
-            self.real_rot = Vec3(0., 0., 0.)
-
-        if self.rotation[1] < 0:
-            self.real_rot = Vec3(0., 359., 0.)
+        if self.steering_angle >= self.max_steering_angle:
+            self.steering_angle = self.max_steering_angle
 
     def right(self):
-        # self.real_rot += Vec3(0., self.turn, 0.)
-        self.steering_angle -= self.turn
+        self.steering_angle -= time.dt * self.steering_speed
 
-        if self.rotation[1] >= 360:
-            self.real_rot = Vec3(0., 0., 0.)
+        if self.steering_angle <= -self.max_steering_angle:
+            self.steering_angle = -self.max_steering_angle
 
-        if self.rotation[1] < 0:
-            self.real_rot = Vec3(0., 359., 0.)
 
     def update(self):
         self.rotation = self.real_rot + self.offset_rot
@@ -89,12 +84,12 @@ class Formula(Entity):
 
     def get_direction(self, angle):
         heading_pos = np.array([0.,1.])
-        angle = np.deg2rad(self.rotation[1])
+        angle = np.deg2rad(angle)
 
         R = np.array([[np.cos(angle), np.sin(-angle)],
                      [np.sin(angle), np.cos(angle)]])
 
-        heading_pos = np.linalg.inv(R) @ heading_pos
+        heading_pos = R @ heading_pos
         # heading_pos /= np.sum(np.abs(heading_pos))
         heading_pos /= np.linalg.norm(heading_pos)
 

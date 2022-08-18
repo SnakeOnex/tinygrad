@@ -22,10 +22,11 @@ def world_setup():
         color = color.gray,
         # texture='brick',
         texture='concrete.jpg',
-        texture_scale = (64, 64),
+        texture_scale = (8, 8),
         position=(0,0,0),
         scale = (200, 0, 200),
-        collider = 'box'
+        collider = 'box',
+        shader=lit_with_shadows_shader
     )
 
     sky = Sky(
@@ -33,91 +34,65 @@ def world_setup():
         color=color.cyan
     )
 
+    pivot = Entity()
+    DirectionalLight(parent=pivot, position=(0.,10.,0.), shadows=True, rotation=(90.,0., 0.))
+
 if __name__ == '__main__':
 
     app = Ursina()
 
+    # config
+    camera.fov = 78
+
     # 1. SETUP WORLD
     world_setup()
-    camera.orthographic = False
-    camera.fox = 78
 
     # 2. RENDER CONES
     cone_track = ConeTrack('slam_hard_track.npy')
     cone_track.render_cones()
 
     # 3. RENDER THE CAR
-    player = Formula()
+    formula = Formula()
 
-    # driver_offset = Vec3(0., 1.2, -2.)
-    driver_offset = Vec3(0.,0.,0.8)
     driver = Entity(
         model='sphere', 
-        position = player.position + driver_offset,
-        rotation=player.real_rot,
+        position = formula.driver_pos,
+        rotation=formula.real_rot,
         scale=0.2
     )
 
-    cone = Entity(
-        model='models/cone_yellow.fbx', 
-        color=color.yellow, 
-        position=(0.,0.01, 0.), 
-        scale=(0.1, 0.1, 0.1),
-        shader=lit_with_shadows_shader
-    )
-
-    cone2 = Entity(
-        parent=cone,
-        model='models/cone_yellow.fbx', 
-        color=color.yellow, 
-        position=(10.,0.01, 1.), 
-        scale=(1., 1., 1.),
-        shader=lit_with_shadows_shader
-    )
-
-
-    # Entity(model='models/whole_car.stl', color=color.red, position = (1, 0.2, 1), scale=(0.001, 0.001, 0.001), rotation=(270.,0.,0.))
-
-
     # 4. HANDLE CAMERA
-    ## apparently all state has to be tied to the app object (not sure what to think)
     app.cam_mode = CameraMode.WORLD
 
-    # text = Text(text=f"{player.position}")
-
-    pivot = Entity()
-    DirectionalLight(parent=pivot, position=(0.,10.,0.), shadows=True, rotation=(90.,0., 0.))
-
     def input(key):
+        ## change camera mode
         if key == 'p':
             app.cam_mode = app.cam_mode.next()
             print(f"CAMERA MODE: {app.cam_mode}")
 
     def update():                  # update gets automatically called by the engine.
         if held_keys['w']:
-            player.forward()
+            formula.forward()
 
         if held_keys['a']:
-            player.left()
+            formula.left()
 
         if held_keys['d']:
-            player.right()
-
-        # text.text = f"Pos: {player.position}\n Rotation: {player.rotation} \nthrottle: {player.throttle}"
+            formula.right()
 
         # update camera
         if app.cam_mode == CameraMode.WORLD:
-            driver.position = player.driver_pos
-            driver.rotation = player.real_rot
+            driver.position = formula.driver_pos
+            driver.rotation = formula.real_rot
 
             camera.position = Vec3(0,15,-20)
-            camera.look_at(player)
+            camera.look_at(formula)
         elif app.cam_mode == CameraMode.FIRST_PERSON:
-            camera.position = player.driver_pos
-            camera.rotation = player.real_rot
+            camera.position = formula.driver_pos
+            camera.rotation = formula.real_rot
 
-            driver.position = player.driver_pos
-            driver.rotation = player.real_rot
+            driver.position = formula.driver_pos
+            driver.rotation = formula.real_rot
         elif app.cam_mode == CameraMode.THIRD_PERSON:
             app.cam_mode = app.cam_mode.next()
 
