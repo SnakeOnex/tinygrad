@@ -12,6 +12,7 @@ class Formula(Entity):
         self.color = color.orange
         self.position = (0.,0.,0.)
         self.shader=lit_with_shadows_shader
+        self.cam = False
 
         # relative positions of things
         self.driver_pos = (0., 0., 0.)
@@ -36,7 +37,7 @@ class Formula(Entity):
 
         ## STEERING
         self.steering_speed = 90. # degrees per second
-        self.max_steering_angle = 30. # max and min steering angle
+        self.max_steering_angle = 45. # max and min steering angle
 
         ## TRACTION
         self.max_engine_force = 400. # nM
@@ -113,7 +114,11 @@ class Formula(Entity):
         self.position += time.dt * velocity
 
         # relative positions of things
-        self.driver_pos = self.position - 1.21 * heading_vec + (0., 0.68 ,0.)
+        self.driver_pos = self.position - 1. * heading_vec + (0., 0.7 ,0.)
+
+        if self.cam:
+            camera.position = self.driver_pos
+            camera.rotation = (0.,-self.heading,0.)
 
         self.fl_wheel.rotation = (0. , 0., self.steering_angle)
         self.fr_wheel.rotation = (0. , 0., self.steering_angle)

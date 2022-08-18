@@ -69,6 +69,10 @@ if __name__ == '__main__':
         if key == 'p':
             app.cam_mode = app.cam_mode.next()
             print(f"CAMERA MODE: {app.cam_mode}")
+            if app.cam_mode is not CameraMode.FIRST_PERSON:
+                formula.cam = False
+
+    text_main = Text(origin=(+1.5,1.5))
 
     def update():                  # update gets automatically called by the engine.
         if held_keys['w']:
@@ -77,7 +81,6 @@ if __name__ == '__main__':
             formula.brake()
         else:
             formula.neutral()
-
 
         if held_keys['a']:
             formula.left()
@@ -93,8 +96,11 @@ if __name__ == '__main__':
             camera.position = Vec3(0,15,-20)
             camera.look_at(formula)
         elif app.cam_mode == CameraMode.FIRST_PERSON:
-            camera.position = formula.driver_pos
-            camera.rotation = formula.real_rot
+            formula.cam = True
+            # camera.position = formula.driver_pos
+            # camera.rotation = (0.,-formula.heading,0.)
+
+            # text_main.text = f"f_rot: {formula.real_rot}"
 
             driver.position = formula.driver_pos
             driver.rotation = formula.real_rot
