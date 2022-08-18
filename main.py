@@ -43,12 +43,20 @@ if __name__ == '__main__':
 
     # config
     camera.fov = 78
+    window.title = "VirtualMilovice"
+    window.borderless = False
+    window.fps_counter.enabled = True
+    Audio(sound_file_name='models/terrymusic.mp3', autoplay=True, loop=True)
+
 
     # 1. SETUP WORLD
     world_setup()
 
     # 2. RENDER CONES
-    cone_track = ConeTrack('slam_hard_track.npy')
+    # cone_track = ConeTrack('slam_hard_track.npy')
+    cone_track = ConeTrack()
+    # cone_track.load_from_npy('data/slam_hard_track.npy')
+    cone_track.load_from_inner_outer(inner_path='data/slam_inner.npy', outer_path='data/slam_outer.npy')
     cone_track.render_cones()
 
     # 3. RENDER THE CAR
@@ -72,7 +80,11 @@ if __name__ == '__main__':
             if app.cam_mode is not CameraMode.FIRST_PERSON:
                 formula.cam = False
 
-    text_main = Text(origin=(+1.5,1.5))
+        if key == 'r':
+            formula.position = np.array((0.,0.,0.))
+            formula.reset_state()
+
+    text_main = Text()
 
     def update():                  # update gets automatically called by the engine.
         if held_keys['w']:
@@ -97,10 +109,6 @@ if __name__ == '__main__':
             camera.look_at(formula)
         elif app.cam_mode == CameraMode.FIRST_PERSON:
             formula.cam = True
-            # camera.position = formula.driver_pos
-            # camera.rotation = (0.,-formula.heading,0.)
-
-            # text_main.text = f"f_rot: {formula.real_rot}"
 
             driver.position = formula.driver_pos
             driver.rotation = formula.real_rot

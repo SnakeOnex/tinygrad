@@ -1,12 +1,12 @@
 import numpy as np
 from pathlib import Path
+import sys
 
 from ursina import *
 from ursina.shaders import lit_with_shadows_shader
 
 class ConeTrack():
-    def __init__(self, path):
-        self.load_from_npy(path)
+    def __init__(self):
         self.cone_model = 'models/cone_yellow.fbx'
         self.cone_scale = (0.1, 0.1, 0.1)
         self.texture = None
@@ -20,6 +20,10 @@ class ConeTrack():
         self.blue_cones = cones[cones[:,2] == 0, :2].reshape(-1,2)
         self.orange_cones = cones[cones[:,2] == 2, :2].reshape(-1,2)
         self.big_cones = cones[cones[:,2] == 3, :2].reshape(-1,2)
+
+    def load_from_inner_outer(self, inner_path, outer_path):
+        self.yellow_cones = np.load(outer_path)
+        self.blue_cones = np.load(inner_path)
 
     def render_cones(self):
         def render_cone(color, pos):
@@ -35,7 +39,7 @@ class ConeTrack():
 
         [render_cone(color.yellow, (c[0], self.y_pos, c[1])) for c in self.yellow_cones]
         [render_cone(color.blue, (c[0], self.y_pos, c[1])) for c in self.blue_cones]
-        [render_cone(color.orange, (c[0], self.y_pos, c[1])) for c in self.orange_cones]
-        [render_cone(color.red, (c[0], self.y_pos, c[1])) for c in self.big_cones]
+        # [render_cone(color.orange, (c[0], self.y_pos, c[1])) for c in self.orange_cones]
+        # [render_cone(color.red, (c[0], self.y_pos, c[1])) for c in self.big_cones]
         
 
