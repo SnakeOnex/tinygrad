@@ -5,15 +5,19 @@ import sys
 import time
 import os
 import multiprocessing
+import torch.multiprocessing as mp
+
 from pathlib import Path
 import argparse
 
-from autonomous.cone_detector.cone_detector import ConeDetectionNode
 from tvojemama.logger import gen_name_with_time, create_log_folder
 from main_config import config
 
+from autonomous.cone_detector.cone_detector import ConeDetectionNode
+from missions.trackdrive.trackdrive_node import Trackdrive
 
 def main(brosbag_folder=None):
+    multiprocessing.set_start_method('spawn')
 
     # 0. create a log folder for the run
     main_log_folder = config["main_log_folder"]
@@ -28,7 +32,7 @@ def main(brosbag_folder=None):
     cone_detector = ConeDetectionNode(cone_detector_out, main_log_folder, brosbag_folder)
 
     ## MISSIONS
-    trackdrive = Trackdrive(cone_in=cone_detector_out)
+    # trackdrive = Trackdrive(cone_out=cone_detector_out)
 
     ## CAN
 
@@ -36,6 +40,8 @@ def main(brosbag_folder=None):
 
     # 2. start the processes
     cone_detector.start()
+
+    cone_detector.join()
 
 
 if __name__ == '__main__':

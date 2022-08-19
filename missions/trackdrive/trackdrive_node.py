@@ -3,7 +3,7 @@ import numpy as np
 import sys
 
 class Trackdrive():
-    def __init__(self, cone_out, can1_out, can2_out):
+    def __init__(self, cone_out, can1_out=None, can2_out=None):
         pass
 
     def receive_cone_data(self, cone_data):
