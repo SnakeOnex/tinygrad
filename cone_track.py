@@ -24,6 +24,8 @@ class ConeTrack():
     def load_from_inner_outer(self, inner_path, outer_path):
         self.yellow_cones = np.load(outer_path)
         self.blue_cones = np.load(inner_path)
+        self.orange_cones = np.array([]).reshape(-1,2)
+        self.big_cones = np.array([]).reshape(-1,2)
 
     def render_cones(self):
         def render_cone(color, pos):
@@ -39,7 +41,8 @@ class ConeTrack():
 
         [render_cone(color.yellow, (c[0], self.y_pos, c[1])) for c in self.yellow_cones]
         [render_cone(color.blue, (c[0], self.y_pos, c[1])) for c in self.blue_cones]
-        # [render_cone(color.orange, (c[0], self.y_pos, c[1])) for c in self.orange_cones]
-        # [render_cone(color.red, (c[0], self.y_pos, c[1])) for c in self.big_cones]
-        
+        [render_cone(color.orange, (c[0], self.y_pos, c[1])) for c in self.orange_cones]
+        [render_cone(color.red, (c[0], self.y_pos, c[1])) for c in self.big_cones]
 
+    def get_cones(self):
+        pass

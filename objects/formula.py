@@ -14,7 +14,7 @@ class Formula(Entity):
         self.cam = False
 
         # relative positions of things
-        self.driver_pos = (0., 0., 0.)
+        self.driver_pos = np.array([0., 0., 0.])
 
         # rotate the model so things make sense
         self.offset_rot = Vec3(270., 0., 90.)
@@ -33,7 +33,7 @@ class Formula(Entity):
         self.wheel_base = 1.5
 
         ## STEERING
-        self.steering_speed = 180. # degrees per second
+        self.steering_speed = 360. # degrees per second
         self.max_steering_angle = 60. # max and min steering angle
 
         ## TRACTION
@@ -112,18 +112,11 @@ class Formula(Entity):
         rotation = speed / turn_radius
         self.heading += time.dt * np.rad2deg(rotation)
         self.real_rot.z = self.heading
-
-        def num2str(num, pad_to=7):
-            num_str = f"{num:.2f}"
-
-            num_str = ((pad_to - len(num_str)) * " ") + num_str
-            return num_str
-
-        self.debug_text.text += f"F_long: {num2str(F_long)}\nAcc: {num2str(acc)}\nSpeed: {num2str(self.speed)}\n"
-
         self.position += time.dt * velocity
 
-        # relative positions of things
+
+
+        ## DRIVER CAMERA POSITION
         self.driver_pos = self.position - 1. * heading_vec + (0., 0.7 ,0.)
 
         if self.cam:
@@ -134,6 +127,11 @@ class Formula(Entity):
         self.fr_wheel.rotation = (0. , 0., self.steering_angle)
 
         # debugging text
+        def num2str(num, pad_to=7):
+            num_str = f"{num:.2f}"
+            return ((pad_to - len(num_str)) * " ") + num_str
+
+        self.debug_text.text += f"F_long: {num2str(F_long)}\nAcc: {num2str(acc)}\nSpeed: {num2str(self.speed)}\n"
         self.debug_text.text += f"heading: {num2str(self.heading)}\nsteering_angle: {num2str(self.steering_angle)}"
 
     def get_direction_vec(self, angle):

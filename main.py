@@ -1,11 +1,26 @@
 from ursina import *
 from ursina.shaders import lit_with_shadows_shader
 
+import multiprocessing.connection as connection
+
 from cone_track import ConeTrack
 from objects.formula import Formula
 from enum import Enum
-import sys
+import sys 
 import numpy as np
+import random
+import socket
+import pickle
+
+def global_to_local(cones, car_heading, car_position):
+    """
+    """
+    prepath = np.matmul(np.array([[np.cos(-self.alpha),np.sin(-self.alpha)],[-np.sin(-self.alpha),np.cos(-self.alpha)]]),prepath.T).T
+
+    R = np.array([[np.cons(-self.car_heading)]])
+
+    cones[:,0:2] -= car_position
+    pass
 
 class CameraMode(Enum):
     WORLD = 0
@@ -37,6 +52,13 @@ def world_setup():
     pivot = Entity()
     DirectionalLight(parent=pivot, position=(0.,10.,0.), shadows=True, rotation=(90.,0., 0.))
 
+def connect_client():
+    remote_address = "localhost", 50000
+
+    listener = connection.Listener(remote_address)
+    conn =  listener.accept()
+    return conn
+
 if __name__ == '__main__':
 
     app = Ursina()
@@ -46,20 +68,25 @@ if __name__ == '__main__':
     window.title = "VirtualMilovice"
     window.borderless = False
     window.fps_counter.enabled = True
-    Audio(sound_file_name='models/terrymusic.mp3', autoplay=True, loop=True)
 
+    if random.random() < 0.01:
+        Audio(sound_file_name='models/terrymusic.mp3', autoplay=True, loop=True)
 
-    # 1. SETUP WORLD
+    ## 1. SETUP WORLD
     world_setup()
 
-    # 2. RENDER CONES
+    # connect client
+    # conn = connect_client()
+    # app.conn = conn
+
+    ## 2. RENDER CONES
     # cone_track = ConeTrack('slam_hard_track.npy')
     cone_track = ConeTrack()
     # cone_track.load_from_npy('data/slam_hard_track.npy')
     cone_track.load_from_inner_outer(inner_path='data/slam_inner.npy', outer_path='data/slam_outer.npy')
     cone_track.render_cones()
 
-    # 3. RENDER THE CAR
+    ## 3. RENDER THE CAR
     formula = Formula()
 
     driver = Entity(
@@ -69,7 +96,7 @@ if __name__ == '__main__':
         scale=0.2
     )
 
-    # 4. HANDLE CAMERA
+    ## 4. HANDLE CAMERA
     app.cam_mode = CameraMode.WORLD
 
     def input(key):
@@ -100,6 +127,15 @@ if __name__ == '__main__':
         if held_keys['d']:
             formula.right()
 
+        print("socket sending")
+        speed_in_bytes = pickle.dumps(formula.speed)
+
+        # get cones
+        # cones_local = cone_track.get_cones_local(formula.position, formula.heading)
+
+
+        app.conn.send(formula.speed)
+
         # update camera
         if app.cam_mode == CameraMode.WORLD:
             driver.position = formula.driver_pos
@@ -116,3 +152,5 @@ if __name__ == '__main__':
             app.cam_mode = app.cam_mode.next()
 
     app.run()
+
+
