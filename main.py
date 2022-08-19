@@ -5,12 +5,15 @@ import multiprocessing.connection as connection
 
 from cone_track import ConeTrack
 from objects.formula import Formula
+from objects.cone import Cone
 from enum import Enum
 import sys 
 import numpy as np
 import random
 import socket
 import pickle
+
+from state import State
 
 def global_to_local(cones, car_heading, car_position):
     """
@@ -59,6 +62,13 @@ def connect_client():
     conn =  listener.accept()
     return conn
 
+def render_cones(state):
+    
+    pass
+
+def render_car(state):
+    pass
+
 if __name__ == '__main__':
 
     app = Ursina()
@@ -79,7 +89,10 @@ if __name__ == '__main__':
     # conn = connect_client()
     # app.conn = conn
 
-    ## 2. RENDER CONES
+    ## 2. SETUP STATE
+    state = State("circle_map.json")
+    cones = render_cones(state)
+
     # cone_track = ConeTrack('slam_hard_track.npy')
     cone_track = ConeTrack()
     # cone_track.load_from_npy('data/slam_hard_track.npy')
@@ -127,14 +140,12 @@ if __name__ == '__main__':
         if held_keys['d']:
             formula.right()
 
-        print("socket sending")
         speed_in_bytes = pickle.dumps(formula.speed)
 
         # get cones
         # cones_local = cone_track.get_cones_local(formula.position, formula.heading)
 
-
-        app.conn.send(formula.speed)
+        # app.conn.send(formula.speed)
 
         # update camera
         if app.cam_mode == CameraMode.WORLD:
