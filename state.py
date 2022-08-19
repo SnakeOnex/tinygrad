@@ -16,8 +16,8 @@ class State():
 
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
-        self.steering_speed = 360. # degrees per second
-        self.max_steering_angle = 60. # max and min steering angle
+        self.steering_speed = 90. # degrees per second
+        self.max_steering_angle = 45. # max and min steering angle
 
         self.max_engine_force = 400. # nm
         self.max_brake_force = 2000. # nm
@@ -28,7 +28,7 @@ class State():
         ## CAR STATE
         self.car_pos = np.array(map_dict["car_position"])
         self.heading = map_dict["car_heading"]
-        self.steer_angle = self.heading
+        self.steering_angle = 0.
         self.speed = 0.
         self.engine_force = 0.
         self.steering_control = "NEUTRAL" # "LEFT", "RIGHT", "NEUTRAL"
@@ -38,17 +38,30 @@ class State():
 
         ## CONTROLS
         if self.steering_control == "LEFT":
-            self.steering_angle -= timedelta * self.steering_speed
+            self.steering_angle += timedelta * self.steering_speed
+
+            if self.steering_angle >= self.max_steering_angle:
+                self.steering_angle = self.max_steering_angle
+
             self.steering_control = "NEUTRAL"
         elif self.steering_control == "RIGHT":
-            self.steering_angle += timedelta * self.steering_speed
+            self.steering_angle -= timedelta * self.steering_speed
+
+            if self.steering_angle <= -self.max_steering_angle:
+                self.steering_angle = -self.max_steering_angle
+
             self.steering_control = "NEUTRAL"
 
         if self.traction_control == "FORWARD":
             self.engine_force = self.max_engine_force
             self.traction_control = "NEUTRAL"
-        elif self.traction_control == "BREAK":
-            self.engine_force = self.max_brake_force
+        elif self.traction_control == "BRAKE":
+            self.engine_force = -self.max_brake_force
+
+            if self.speed <= 0.:
+                self.speed = 0.
+                self.engine_force = 0.
+
             self.traction_control = "NEUTRAL"
         elif self.traction_control == "NEUTRAL":
             self.engine_force = 0.
@@ -69,7 +82,7 @@ class State():
 
         heading_vec = angle_to_vector(self.heading)
         velocity = heading_vec * self.speed
-        self.position += timedelta * velocity
+        self.car_pos += timedelta * velocity
 
     def steer_left(self):
         self.steering_control = "LEFT"

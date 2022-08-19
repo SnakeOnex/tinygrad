@@ -11,7 +11,6 @@ class Formula(Entity):
         self.scale = (0.001,0.001,0.001)
         self.color = color.orange
         self.shader=lit_with_shadows_shader
-        self.cam = False
 
         # relative positions of things
         self.driver_pos = np.array([0., 0., 0.])
@@ -29,28 +28,6 @@ class Formula(Entity):
         self.rl_wheel = Tire(position=(-1500., -550., 235.), parent=self)
         self.rr_wheel = Tire(position=(-1500., 550., 235.), parent=self)
 
-        # CONFIGURATION
-        self.wheel_base = 1.5
-
-        ## STEERING
-        self.steering_speed = 360. # degrees per second
-        self.max_steering_angle = 60. # max and min steering angle
-
-        ## TRACTION
-        self.max_engine_force = 400. # nM
-        self.max_brake_force = 2000.
-        self.drag_coef = 0.4
-        self.rr_coef = self.drag_coef * 30
-        self.mass = 200.
-
-        ## CAR STATE
-        self.position = (0.,0.,0.)
-        self.heading = 0.
-        self.steering_angle = 0.
-        self.speed = 0.
-        self.engine_force = 0.
-
-        self.debug_text = Text(origin=(2.5, -3.), font='VeraMono.ttf')
 
         for key, value in kwargs.items():
             setattr(self, key, value)
@@ -88,51 +65,48 @@ class Formula(Entity):
             self.steering_angle = -self.max_steering_angle
 
 
-    def update(self):
-        self.debug_text.text = ""
-        self.rotation = self.real_rot + self.offset_rot
-        # self.heading = self.steering_angle
-        heading_vec = self.get_direction_vec(self.heading)
-        steering_vec = self.get_direction_vec(self.steering_angle)
+    # def update(self):
+        # self.debug_text.text = ""
+        # self.rotation = self.real_rot + self.offset_rot
+        # # self.heading = self.steering_angle
+        # heading_vec = self.get_direction_vec(self.heading)
+        # steering_vec = self.get_direction_vec(self.steering_angle)
 
-        ## LONGITUDINAL FORCE
-        F_traction = self.engine_force # tractive force
-        F_drag = -self.drag_coef * self.speed**2 # air resistance
-        F_rr = -self.rr_coef * self.speed # rolling resistance
-        F_long = F_traction + F_drag + F_rr # longitudinal force
+        # ## LONGITUDINAL FORCE
+        # F_traction = self.engine_force # tractive force
+        # F_drag = -self.drag_coef * self.speed**2 # air resistance
+        # F_rr = -self.rr_coef * self.speed # rolling resistance
+        # F_long = F_traction + F_drag + F_rr # longitudinal force
 
-        acc = F_long / self.mass
-        self.speed += acc * time.dt
+        # acc = F_long / self.mass
+        # self.speed += acc * time.dt
 
-        velocity = heading_vec * self.speed
+        # velocity = heading_vec * self.speed
 
-        ## LATERAL 
-        turn_radius = self.wheel_base / np.sin(np.deg2rad(self.steering_angle))
-        speed = np.sqrt(np.linalg.norm(velocity))
-        rotation = speed / turn_radius
-        self.heading += time.dt * np.rad2deg(rotation)
-        self.real_rot.z = self.heading
-        self.position += time.dt * velocity
+        # ## LATERAL 
+        # turn_radius = self.wheel_base / np.sin(np.deg2rad(self.steering_angle))
+        # speed = np.sqrt(np.linalg.norm(velocity))
+        # rotation = speed / turn_radius
+        # self.heading += time.dt * np.rad2deg(rotation)
+        # self.real_rot.z = self.heading
+        # self.position += time.dt * velocity
 
 
 
-        ## DRIVER CAMERA POSITION
-        self.driver_pos = self.position - 1. * heading_vec + (0., 0.7 ,0.)
+        # ## DRIVER CAMERA POSITION
+        # self.driver_pos = self.position - 1. * heading_vec + (0., 0.7 ,0.)
 
-        if self.cam:
-            camera.position = self.driver_pos
-            camera.rotation = (0.,-self.heading,0.)
+        # if self.cam:
+            # camera.position = self.driver_pos
+            # camera.rotation = (0.,-self.heading,0.)
 
-        self.fl_wheel.rotation = (0. , 0., self.steering_angle)
-        self.fr_wheel.rotation = (0. , 0., self.steering_angle)
+        # self.fl_wheel.rotation = (0. , 0., self.steering_angle)
+        # self.fr_wheel.rotation = (0. , 0., self.steering_angle)
 
-        # debugging text
-        def num2str(num, pad_to=7):
-            num_str = f"{num:.2f}"
-            return ((pad_to - len(num_str)) * " ") + num_str
+        # # debugging text
 
-        self.debug_text.text += f"F_long: {num2str(F_long)}\nAcc: {num2str(acc)}\nSpeed: {num2str(self.speed)}\n"
-        self.debug_text.text += f"heading: {num2str(self.heading)}\nsteering_angle: {num2str(self.steering_angle)}"
+        # self.debug_text.text += f"F_long: {num2str(F_long)}\nAcc: {num2str(acc)}\nSpeed: {num2str(self.speed)}\n"
+        # self.debug_text.text += f"heading: {num2str(self.heading)}\nsteering_angle: {num2str(self.steering_angle)}"
 
     def get_direction_vec(self, angle):
         vec = np.array([0.,1.])

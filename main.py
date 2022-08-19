@@ -14,6 +14,7 @@ import socket
 import pickle
 
 from state import State
+from math_helpers import angle_to_vector, vec_to_3d
 
 def global_to_local(cones, car_heading, car_position):
     """
@@ -63,11 +64,27 @@ def connect_client():
     return conn
 
 def render_cones(state):
-    
-    pass
+    [Cone(color=color.yellow, position=(c[0], 0.01, c[1])) for c in state.yellow_cones]
+    [Cone(color=color.blue, position=(c[0], 0.01, c[1])) for c in state.blue_cones]
+    [Cone(color=color.orange, position=(c[0], 0.01, c[1])) for c in state.orange_cones]
+    [Cone(color=color.red, position=(c[0], 0.01, c[1])) for c in state.big_cones]
 
-def render_car(state):
-    pass
+def render_car(state, formula, driver):
+    heading_vec = angle_to_vector(state.heading)
+
+    car_x, car_y = state.car_pos
+
+    driver.position = Vec3(car_x, 0., car_y) - 1. * vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
+    driver.rotation= formula.offset_rot + Vec3(0., 0., state.heading)
+
+    formula.position = Vec3(car_x, 0., car_y)
+    formula.rotation = formula.offset_rot + Vec3(0., 0, state.heading)
+
+    camera.position = driver.position
+    camera.rotation = (0.,-state.heading,0.)
+
+    formula.fl_wheel.rotation = (0. , 0., state.steering_angle)
+    formula.fr_wheel.rotation = (0. , 0., state.steering_angle)
 
 if __name__ == '__main__':
 
@@ -91,16 +108,11 @@ if __name__ == '__main__':
 
     ## 2. SETUP STATE
     state = State("circle_map.json")
-    cones = render_cones(state)
-
-    # cone_track = ConeTrack('slam_hard_track.npy')
-    cone_track = ConeTrack()
-    # cone_track.load_from_npy('data/slam_hard_track.npy')
-    cone_track.load_from_inner_outer(inner_path='data/slam_inner.npy', outer_path='data/slam_outer.npy')
-    cone_track.render_cones()
+    render_cones(state)
 
     ## 3. RENDER THE CAR
     formula = Formula()
+    driver = Entity(model='sphere', scale=0.2)
 
     driver = Entity(
         model='sphere', 
@@ -117,8 +129,6 @@ if __name__ == '__main__':
         if key == 'p':
             app.cam_mode = app.cam_mode.next()
             print(f"CAMERA MODE: {app.cam_mode}")
-            if app.cam_mode is not CameraMode.FIRST_PERSON:
-                formula.cam = False
 
         if key == 'r':
             formula.position = np.array((0.,0.,0.))
@@ -127,20 +137,26 @@ if __name__ == '__main__':
     text_main = Text()
 
     def update():                  # update gets automatically called by the engine.
+
+        text = f"Speed: {state.speed}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading}"
+        text_main.text = text
+
         if held_keys['w']:
-            formula.forward()
+            state.forward()
         elif held_keys['space']:
-            formula.brake()
+            state.brake()
         else:
             formula.neutral()
 
         if held_keys['a']:
-            formula.left()
+            state.steer_left()
+        elif held_keys['d']:
+            state.steer_right()
 
-        if held_keys['d']:
-            formula.right()
+        state.update_state(time.dt)
+        render_car(state, formula, driver)
 
-        speed_in_bytes = pickle.dumps(formula.speed)
+        # speed_in_bytes = pickle.dumps(formula.speed)
 
         # get cones
         # cones_local = cone_track.get_cones_local(formula.position, formula.heading)
