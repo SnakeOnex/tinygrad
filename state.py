@@ -6,18 +6,18 @@ from math_helpers import angle_to_vector
 class State():
     def __init__(self, map_filepath):
         with open(map_filepath, 'r') as f:
-            map_dict = json.load(f)
+            self.map_dict = json.load(f)
         
         ## MAP STATE
-        self.yellow_cones = np.array(map_dict["yellow_cones"]).reshape(-1,2)
-        self.blue_cones = np.array(map_dict["blue_cones"]).reshape(-1,2)
-        self.orange_cones = np.array(map_dict["orange_cones"]).reshape(-1,2)
-        self.big_cones = np.array(map_dict["big_cones"]).reshape(-1,2)
+        self.yellow_cones = np.array(self.map_dict["yellow_cones"]).reshape(-1,2)
+        self.blue_cones = np.array(self.map_dict["blue_cones"]).reshape(-1,2)
+        self.orange_cones = np.array(self.map_dict["orange_cones"]).reshape(-1,2)
+        self.big_cones = np.array(self.map_dict["big_cones"]).reshape(-1,2)
 
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
         self.steering_speed = 90. # degrees per second
-        self.max_steering_angle = 45. # max and min steering angle
+        self.max_steering_angle = 30. # max and min steering angle
 
         self.max_engine_force = 400. # nm
         self.max_brake_force = 2000. # nm
@@ -26,8 +26,8 @@ class State():
         self.mass = 200. # kg
 
         ## CAR STATE
-        self.car_pos = np.array(map_dict["car_position"])
-        self.heading = map_dict["car_heading"]
+        self.car_pos = np.array(self.map_dict["car_position"])
+        self.heading = self.map_dict["car_heading"]
         self.steering_angle = 0.
         self.speed = 0.
         self.engine_force = 0.
@@ -80,9 +80,15 @@ class State():
         rotation = self.speed / turn_radius
         self.heading += timedelta * np.rad2deg(rotation)
 
+        if self.heading >= 360.:
+            self.heading -= 360
+        if self.heading < 0.:
+            self.heading += 360
+
         heading_vec = angle_to_vector(self.heading)
         velocity = heading_vec * self.speed
         self.car_pos += timedelta * velocity
+
 
     def steer_left(self):
         self.steering_control = "LEFT"
@@ -95,4 +101,13 @@ class State():
 
     def brake(self):
         self.traction_control = "BRAKE"
+
+    def reset_state(self):
+        self.car_pos = np.array(self.map_dict["car_position"])
+        self.heading = self.map_dict["car_heading"]
+        self.steering_angle = 0.
+        self.speed = 0.
+        self.engine_force = 0.
+        self.steering_control = "NEUTRAL" # "LEFT", "RIGHT", "NEUTRAL"
+        self.traction_control = "NEUTRAL" # "FORWARD", "BREAK", "NEUTRAL"
 

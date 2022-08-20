@@ -3,7 +3,6 @@ from ursina.shaders import lit_with_shadows_shader
 
 import multiprocessing.connection as connection
 
-from cone_track import ConeTrack
 from objects.formula import Formula
 from objects.cone import Cone
 from enum import Enum
@@ -15,16 +14,6 @@ import pickle
 
 from state import State
 from math_helpers import angle_to_vector, vec_to_3d
-
-def global_to_local(cones, car_heading, car_position):
-    """
-    """
-    prepath = np.matmul(np.array([[np.cos(-self.alpha),np.sin(-self.alpha)],[-np.sin(-self.alpha),np.cos(-self.alpha)]]),prepath.T).T
-
-    R = np.array([[np.cons(-self.car_heading)]])
-
-    cones[:,0:2] -= car_position
-    pass
 
 class CameraMode(Enum):
     WORLD = 0
@@ -80,8 +69,6 @@ def render_car(state, formula, driver):
     formula.position = Vec3(car_x, 0., car_y)
     formula.rotation = formula.offset_rot + Vec3(0., 0, state.heading)
 
-    camera.position = driver.position
-    camera.rotation = (0.,-state.heading,0.)
 
     formula.fl_wheel.rotation = (0. , 0., state.steering_angle)
     formula.fr_wheel.rotation = (0. , 0., state.steering_angle)
@@ -107,21 +94,11 @@ if __name__ == '__main__':
     # app.conn = conn
 
     ## 2. SETUP STATE
-    state = State("circle_map.json")
+    state = State("maps/circle_map.json")
     render_cones(state)
-
-    ## 3. RENDER THE CAR
     formula = Formula()
     driver = Entity(model='sphere', scale=0.2)
-
-    driver = Entity(
-        model='sphere', 
-        position = formula.driver_pos,
-        rotation=formula.real_rot,
-        scale=0.2
-    )
-
-    ## 4. HANDLE CAMERA
+    text_main = Text()
     app.cam_mode = CameraMode.WORLD
 
     def input(key):
@@ -131,22 +108,13 @@ if __name__ == '__main__':
             print(f"CAMERA MODE: {app.cam_mode}")
 
         if key == 'r':
-            formula.position = np.array((0.,0.,0.))
-            formula.reset_state()
+            state.reset_state()
 
-    text_main = Text()
-
-    def update():                  # update gets automatically called by the engine.
-
-        text = f"Speed: {state.speed}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading}"
-        text_main.text = text
-
+    def update():  
         if held_keys['w']:
             state.forward()
         elif held_keys['space']:
             state.brake()
-        else:
-            formula.neutral()
 
         if held_keys['a']:
             state.steer_left()
@@ -155,6 +123,9 @@ if __name__ == '__main__':
 
         state.update_state(time.dt)
         render_car(state, formula, driver)
+
+        text = f"Speed: {state.speed}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading}"
+        text_main.text = text
 
         # speed_in_bytes = pickle.dumps(formula.speed)
 
@@ -165,16 +136,11 @@ if __name__ == '__main__':
 
         # update camera
         if app.cam_mode == CameraMode.WORLD:
-            driver.position = formula.driver_pos
-            driver.rotation = formula.real_rot
-
             camera.position = Vec3(0,15,-20)
             camera.look_at(formula)
         elif app.cam_mode == CameraMode.FIRST_PERSON:
-            formula.cam = True
-
-            driver.position = formula.driver_pos
-            driver.rotation = formula.real_rot
+            camera.position = driver.position
+            camera.rotation = (0.,-state.heading,0.)
         elif app.cam_mode == CameraMode.THIRD_PERSON:
             app.cam_mode = app.cam_mode.next()
 
