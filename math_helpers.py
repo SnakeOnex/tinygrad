@@ -21,12 +21,14 @@ def num2str(num, pad_to=7):
     num_str = f"{num:.2f}"
     return ((pad_to - len(num_str)) * " ") + num_str
 
-def global_to_local(cones, car_heading, car_position):
+def global_to_local(cones, car_pos, car_heading):
     """
     """
     prepath = np.matmul(np.array([[np.cos(-self.alpha),np.sin(-self.alpha)],[-np.sin(-self.alpha),np.cos(-self.alpha)]]),prepath.T).T
 
-    R = np.array([[np.cons(-self.car_heading)]])
+    R = np.array([[np.cos(-car_heading), np.sin(-car_heading)],
+                  [-np.sin(-car_heading), np.con(-car_heading)]])
 
     cones[:,0:2] -= car_position
 
+    return cones

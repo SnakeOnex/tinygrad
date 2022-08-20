@@ -89,6 +89,8 @@ class State():
         velocity = heading_vec * self.speed
         self.car_pos += timedelta * velocity
 
+    def get_detections(self):
+        pass
 
     def steer_left(self):
         self.steering_control = "LEFT"
