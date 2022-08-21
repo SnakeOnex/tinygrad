@@ -1,7 +1,7 @@
 import numpy as np
 import json
 
-from math_helpers import angle_to_vector
+from math_helpers import angle_to_vector, global_to_local
 
 class State():
     def __init__(self, map_filepath):
@@ -90,7 +90,11 @@ class State():
         self.car_pos += timedelta * velocity
 
     def get_detections(self):
-        pass
+        cones_world = np.array(self.big_cones)
+
+        cones_local = global_to_local(cones_world, self.car_pos, self.heading)
+
+        return cones_local
 
     def steer_left(self):
         self.steering_control = "LEFT"
