@@ -1,7 +1,7 @@
 import numpy as np
 import json
 
-from math_helpers import angle_to_vector
+from math_helpers import angle_to_vector, rotate_around_point
 
 class State():
     def __init__(self, map_filepath):
@@ -19,11 +19,12 @@ class State():
         self.steering_speed = 90. # degrees per second
         self.max_steering_angle = 30. # max and min steering angle
 
-        self.max_engine_force = 400. # nm
+        self.max_engine_force = 2000. # nm
         self.max_brake_force = 2000. # nm
-        self.drag_coef = 0.4
+        self.drag_coef = 4
         self.rr_coef = self.drag_coef * 30
         self.mass = 200. # kg
+        self.rotation_vector = np.array((0,0))
 
         ## CAR STATE
         self.car_pos = np.array(self.map_dict["car_position"])
@@ -51,6 +52,13 @@ class State():
                 self.steering_angle = -self.max_steering_angle
 
             self.steering_control = "NEUTRAL"
+        elif self.steering_control == "NEUTRAL":
+            if self.steering_angle > 0.15:
+                self.steering_angle -= timedelta * self.steering_speed
+            elif self.steering_angle < -0.15 :
+                self.steering_angle += timedelta * self.steering_speed
+            else:
+                self.steering_angle = 0
 
         if self.traction_control == "FORWARD":
             self.engine_force = self.max_engine_force
@@ -71,14 +79,15 @@ class State():
         F_drag = -self.drag_coef * self.speed**2 # air resistance
         F_rr = -self.rr_coef * self.speed # rolling resistance
         F_long = F_traction + F_drag + F_rr # longitudinal force
-
+        self.car_pos -= self.rotation_vector
         acc = F_long / self.mass # acceleration
         self.speed += acc * timedelta 
 
         # LATERAL
         turn_radius = self.wheel_base / np.sin(np.deg2rad(self.steering_angle))
-        rotation = self.speed / turn_radius
+        rotation = self.speed / (turn_radius*3.6)
         self.heading += timedelta * np.rad2deg(rotation)
+        self.rotation_vector = rotate_around_point(self.heading,(0,0),(-self.wheel_base,0))
 
         if self.heading >= 360.:
             self.heading -= 360
@@ -87,7 +96,10 @@ class State():
 
         heading_vec = angle_to_vector(self.heading)
         velocity = heading_vec * self.speed
+        self.car_pos += self.rotation_vector
         self.car_pos += timedelta * velocity
+        
+        
 
     def get_detections(self):
         pass
