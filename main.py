@@ -42,7 +42,6 @@ def world_setup():
         color=color.cyan
     )
     
-    
     pivot = Entity()
     DirectionalLight(parent=pivot, position=(2.,10.,2.), shadows=True, rotation=(90.,0., 0.))
 
@@ -69,7 +68,6 @@ def render_car(state, formula, driver):
 
     formula.position = Vec3(car_x, 0., car_y)
     formula.rotation = formula.offset_rot + Vec3(0., 0, state.heading)
-
 
     formula.fl_wheel.rotation = (0. , 0., state.steering_angle)
     formula.fr_wheel.rotation = (0. , 0., state.steering_angle)
@@ -128,7 +126,10 @@ if __name__ == '__main__':
         state.update_state(time.dt)
         render_car(state, formula, driver)
 
-        text = f"Speed: {state.speed}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading}"
+        detections = state.get_detections()
+
+        text = f"Speed: {state.speed}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading}i\n"
+        text += f"Detections:{detections}\n"
         text_main.text = text
 
         # speed_in_bytes = pickle.dumps(formula.speed)

@@ -2,6 +2,7 @@ import numpy as np
 import json
 
 from math_helpers import angle_to_vector, global_to_local, rotate_around_point
+from cones.geometry_functions import filter_occluded_cones
 
 class State():
     def __init__(self, map_filepath):
@@ -17,7 +18,7 @@ class State():
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
         self.steering_speed = 90. # degrees per second
-        self.max_steering_angle = 30. # max and min steering angle
+        self.max_steering_angle = 45. # max and min steering angle
 
         self.max_engine_force = 2000. # nm
         self.max_brake_force = 2000. # nm
@@ -25,6 +26,9 @@ class State():
         self.rr_coef = self.drag_coef * 30
         self.mass = 200. # kg
         self.rotation_vector = np.array((0,0))
+
+        ### CAR SENSORS
+        self.occlusion_profile = [-6., 6., 2.5, 15.]
 
         ## CAR STATE
         self.car_pos = np.array(self.map_dict["car_position"])
@@ -99,12 +103,13 @@ class State():
         self.car_pos += self.rotation_vector
         self.car_pos += timedelta * velocity
         
-        
-
     def get_detections(self):
         cones_world = np.array(self.big_cones)
 
         cones_local = global_to_local(cones_world, self.car_pos, self.heading)
+
+        ## occlusion profile
+        cones_local = filter_occluded_cones(cones_local, self.occlusion_profile)
 
         return cones_local
 

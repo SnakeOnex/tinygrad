@@ -25,15 +25,11 @@ def global_to_local(cones, car_pos, car_heading):
     """
     """
 
-    # car_heading *= -1.
     car_heading = np.deg2rad(car_heading)
     R = np.array([[np.cos(car_heading), np.sin(car_heading)],
                   [-np.sin(car_heading), np.cos(car_heading)]])
 
     cones[:,0:2] -= car_pos
-
-    # print("R: ", R.shape)
-    # print("cones: ", cones.shape)
     cones = (R @ cones.T).T
 
     return cones
