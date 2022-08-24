@@ -10,3 +10,4 @@ Simulator for testing of FSD autonomous systems. Simulator is written in python 
 - [AMZ-FSSIM](https://github.com/AMZ-Driverless/fssim)
 - [ViewSTL](https://www.viewstl.com/)
 - [Car Physics](https://asawicki.info/Mirror/Car%20Physics%20for%20Games/Car%20Physics%20for%20Games.html)
+- [Vehicle Dynamics](https://core.ac.uk/download/pdf/128709302.pdf)
