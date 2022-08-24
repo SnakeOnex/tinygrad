@@ -32,7 +32,7 @@ def main(brosbag_folder=None):
     cone_detector = ConeDetectionNode(cone_detector_out, main_log_folder, brosbag_folder)
 
     ## MISSIONS
-    # trackdrive = Trackdrive(cone_out=cone_detector_out)
+    trackdrive = Trackdrive(perception_out=cone_detector_out)
 
     ## CAN
 
@@ -40,6 +40,7 @@ def main(brosbag_folder=None):
 
     # 2. start the processes
     cone_detector.start()
+    trackdrive.start()
 
     cone_detector.join()
 

@@ -44,7 +44,6 @@ class ConeDetectionNode(mp.Process):
             # print(f"waiting to connect") self.connection, addr = self.s.accept()
             # print(f"connected by {addr}")
 
-
         self.detector = ConeDetector(config["cone_detector_opt"])
         self.localizer = ConeLocalizer(config["cone_localizer_opt"])
         self.path_planner = PathPlanner(config["path_planner_opt"])
@@ -85,29 +84,25 @@ class ConeDetectionNode(mp.Process):
         with connection.Client(listen_address) as conn:
             try:
                 while True:
-                    item = conn.recv()
-                    print("item: ", item)
+                    world_preds = conn.recv()
+                    path = self.path_planner.find_path(world_preds)
+
+                    data = {
+                        "world_preds": world_preds,
+                        "path": path
+                    }
+                    self.output_queue.put(data)
+                    self.logger.log("CONE_DETECTOR_FRAME", data)
             except EOFError:
                 pass
 
-        # with self.connection:
-            # while True:
-
-                # data = b''
-                # while True:
-                    # block = self.connection.recv(128)
-                    # if not block: break
-                    # data += block
-                # print("data: ", data)
-                # print("data_len: ", len(data))
-                # sys.exit(0)
-                # path = self.path_planner.find_path(world_preds)
-                # self.output_queue.put(path)
-                # data = {
-                    # "world_preds": world_preds,
-                    # "path": path
-                # }
-                # self.logger.log("CONE_DETECTOR_GRAME", data)
+            # path = self.path_planner.find_path(world_preds)
+            # self.output_queue.put(path)
+            # data = {
+                # "world_preds": world_preds,
+                # "path": path
+            # }
+            # self.logger.log("CONE_DETECTOR_GRAME", data)
 
     def read_zed_image(self):
         if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:

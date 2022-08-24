@@ -238,8 +238,8 @@ class PathPlanner():
         if cones.shape[0] > 0:
             planner = PathPlanning(np.array([0,0]))
 
-            blue_cones = cones[cones[:,2] == 0]
-            yellow_cones = cones[cones[:,2] == 1]
+            blue_cones = cones[cones[:,2] == 1, :]
+            yellow_cones = cones[cones[:,2] == 0, :]
             planner.find_path(blue_cones[:, :2], yellow_cones[:,:2], n_steps=self.n_steps)
             path = np.vstack(planner.start_points)
         else:

@@ -9,8 +9,8 @@ logging_opt = {
 }
 
 cone_detector_opt = {
-    # "weights": file_path / Path('weights/yolov3_tiny_640_cpu.pt'),
-    "weights": file_path / Path('weights/yolov3_cones_640_gpu.pt'),
+    "weights": file_path / Path('weights/yolov3_tiny_640_cpu.pt'),
+    # "weights": file_path / Path('weights/yolov3_cones_640_gpu.pt'),
     "image_size": 640,
     "conf_thresh": 0.5,
     "iou_thresh": 0.15,
