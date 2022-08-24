@@ -12,7 +12,7 @@ class Trackdrive(mp.Process):
             # 1. receive perception data
             percep_data = self.perception_out.get()
 
-            print(percep_data)
+            # print(percep_data)
 
     def receive_perception_data(self, cone_data):
 

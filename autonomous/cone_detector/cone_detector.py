@@ -96,14 +96,6 @@ class ConeDetectionNode(mp.Process):
             except EOFError:
                 pass
 
-            # path = self.path_planner.find_path(world_preds)
-            # self.output_queue.put(path)
-            # data = {
-                # "world_preds": world_preds,
-                # "path": path
-            # }
-            # self.logger.log("CONE_DETECTOR_GRAME", data)
-
     def read_zed_image(self):
         if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:
             self.zed.retrive_image(self.zed_image, sl.VIEW.LEFT)

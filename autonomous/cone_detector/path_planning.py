@@ -235,15 +235,16 @@ class PathPlanner():
         self.n_steps = opt["n_steps"]
 
     def find_path(self, cones):
-        if cones.shape[0] > 0:
-            planner = PathPlanning(np.array([0,0]))
+        planner = PathPlanning(np.array([0,0]))
 
-            blue_cones = cones[cones[:,2] == 1, :]
-            yellow_cones = cones[cones[:,2] == 0, :]
+        blue_cones = cones[cones[:,2] == 1, :]
+        yellow_cones = cones[cones[:,2] == 0, :]
+
+        try:
             planner.find_path(blue_cones[:, :2], yellow_cones[:,:2], n_steps=self.n_steps)
             path = np.vstack(planner.start_points)
-        else:
-            path = []
+        except:
+            path = np.array([[0., 0.]])
 
         return path
 
