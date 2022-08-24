@@ -15,6 +15,8 @@ import pickle
 from state import State
 from math_helpers import angle_to_vector, vec_to_3d, rotate_around_point
 
+CONNECTION = True
+
 class CameraMode(Enum):
     WORLD = 0
     FIRST_PERSON = 1
@@ -28,7 +30,6 @@ def world_setup():
     ground = Entity(
         model = 'cube',
         color = color.gray,
-        # texture='brick',
         texture='asp.jpg',
         texture_scale = (4, 4),
         position=(0,0,0),
@@ -90,11 +91,12 @@ if __name__ == '__main__':
     world_setup()
 
     # connect client
-    conn = connect_client()
-    app.conn = conn
-    det_msg_delta = 0.200 # s
-    app.last_det_time = time.perf_counter()
-    app.detections = None
+    if CONNECTION:
+        conn = connect_client()
+        app.conn = conn
+        det_msg_delta = 0.200 # s
+        app.last_det_time = time.perf_counter()
+        app.detections = None
 
     ## 2. SETUP STATE
     state = State("maps/circle_map.json")
@@ -128,15 +130,16 @@ if __name__ == '__main__':
 
         state.update_state(time.dt)
         render_car(state, formula, driver)
+        text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
 
         # obtain and send cone detections
-        if time.perf_counter() - app.last_det_time >= det_msg_delta:
-            app.detections = state.get_detections()
-            app.conn.send(app.detections)
-            app.last_det_time = time.perf_counter()
+        if CONNECTION:
+            if time.perf_counter() - app.last_det_time >= det_msg_delta:
+                app.detections = state.get_detections()
+                app.conn.send(app.detections)
+                app.last_det_time = time.perf_counter()
+                text += f"Detections:{app.detections}\n"
 
-        text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
-        text += f"Detections:{app.detections}\n"
         text_main.text = text
 
         # update camera
@@ -150,10 +153,6 @@ if __name__ == '__main__':
             rot_x, rot_y = rotate_around_point(-state.heading,(0,0),(10,0))
             camera.position = driver.position + Vec3(-rot_x,2,rot_y)
             camera.rotation = (0.,-state.heading,0.)
-            
-            #app.cam_mode = app.cam_mode.next()
 
     app.run()
 
-
- 
