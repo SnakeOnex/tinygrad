@@ -90,8 +90,11 @@ if __name__ == '__main__':
     world_setup()
 
     # connect client
-    # conn = connect_client()
-    # app.conn = conn
+    conn = connect_client()
+    app.conn = conn
+    det_msg_delta = 0.200 # s
+    app.last_det_time = time.perf_counter()
+    app.detections = None
 
     ## 2. SETUP STATE
     state = State("maps/circle_map.json")
@@ -126,18 +129,15 @@ if __name__ == '__main__':
         state.update_state(time.dt)
         render_car(state, formula, driver)
 
-        detections = state.get_detections()
+        # obtain and send cone detections
+        if time.perf_counter() - app.last_det_time >= det_msg_delta:
+            app.detections = state.get_detections()
+            app.conn.send(app.detections)
+            app.last_det_time = time.perf_counter()
 
-        text = f"Speed: {state.speed}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading}i\n"
-        text += f"Detections:{detections}\n"
+        text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
+        text += f"Detections:{app.detections}\n"
         text_main.text = text
-
-        # speed_in_bytes = pickle.dumps(formula.speed)
-
-        # get cones
-        # cones_local = cone_track.get_cones_local(formula.position, formula.heading)
-
-        # app.conn.send(formula.speed)
 
         # update camera
         if app.cam_mode == CameraMode.WORLD:
