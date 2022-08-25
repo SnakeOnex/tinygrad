@@ -5,7 +5,7 @@ import sys
 import time
 import os
 import multiprocessing
-import torch.multiprocessing as mp
+from multiprocessing import shared_memory
 
 from pathlib import Path
 import argparse
@@ -15,6 +15,7 @@ from main_config import config
 
 from autonomous.cone_detector.cone_detector import ConeDetectionNode
 from missions.trackdrive.trackdrive_node import Trackdrive
+from can.can1.can1_node import Can1Node, Can1RecvItems, Can1SendItems
 
 def main(brosbag_folder=None):
     multiprocessing.set_start_method('spawn')
@@ -31,15 +32,24 @@ def main(brosbag_folder=None):
     cone_detector_out = multiprocessing.Queue()
     cone_detector = ConeDetectionNode(cone_detector_out, main_log_folder, brosbag_folder)
 
-    ## MISSIONS
-    trackdrive = Trackdrive(perception_out=cone_detector_out)
-
     ## CAN
+    can1_recv_state = shared_memory.ShareableList([0. for _ in range(len(Can1RecvItems))])
+    can1_send_state = shared_memory.ShareableList([0. for _ in range(len(Can1SendItems))], name="can1_out")
+    can1 = Can1Node(mode="SIMULATION", recv_name=can1_recv_state.shm.name, send_name=can1_send_state.shm.name)
+
+    ## MISSIONS
+    trackdrive = Trackdrive(
+            perception_out=cone_detector_out,
+            can1_recv_name=can1_recv_state.shm.name,
+            can1_send_name=can1_send_state.shm.name
+    )
 
     ## ASM
 
     # 2. start the processes
     cone_detector.start()
+    time.sleep(1)
+    can1.start()
     trackdrive.start()
 
     cone_detector.join()
