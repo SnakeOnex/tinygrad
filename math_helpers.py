@@ -34,6 +34,19 @@ def global_to_local(cones, car_pos, car_heading):
 
     return cones
 
+def local_to_global(cones, car_pos, car_heading):
+    car_heading = np.deg2rad(car_heading)
+
+    R = np.array([[np.cos(car_heading), np.sin(car_heading)],
+                  [-np.sin(car_heading), np.cos(car_heading)]])
+    R = np.linalg.inv(R)
+
+    cones = (R @ cones.T).T
+
+    cones[:,0:2] += car_pos
+
+    return cones
+
 def rotate_around_point(angle,position,point):
     rot_x = np.cos(np.deg2rad(angle)-np.pi/2)*point[0] -np.sin(np.deg2rad(angle)-np.pi/2)*point[1]
     rot_y = np.sin(np.deg2rad(angle)-np.pi/2)*point[0] - np.cos(np.deg2rad(angle)-np.pi/2)*point[1]

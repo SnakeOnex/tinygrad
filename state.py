@@ -24,7 +24,7 @@ class State():
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
         self.steering_speed = 90. # degrees per second
-        self.max_steering_angle = 45. # max and min steering angle
+        self.max_steering_angle = 60. # max and min steering angle
 
         self.max_engine_force = 2000. # nm
         self.max_brake_force = 2000. # nm
@@ -116,7 +116,15 @@ class State():
         ## occlusion profile
         cones_local = filter_occluded_cones(cones_local, self.occlusion_profile)
 
+        cones_local[:, 0] *= -1
+
         return cones_local
+
+    def get_can1_state(self):
+        wheel_speed = self.speed
+        steering_actual = self.steering_angle
+
+        return (wheel_speed, steering_actual)
 
     def steer_left(self):
         self.steering_control = "LEFT"
