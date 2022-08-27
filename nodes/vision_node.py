@@ -5,14 +5,16 @@ import multiprocessing.connection as connection
 import time
 import sys
 
-from .cone_detector_config import config
+# from .cone_detector_config import config
 from cones.cone_detector import ConeDetector
 from cones.cone_localizer import ConeLocalizer
 from .path_planning import PathPlanner
 from tvojemama.logger import Logger, LogReader, name_to_log
+from config import vision_node_config as config
 
-# class ConeDetectionNode(multiprocessing.Process):
-class ConeDetectionNode(mp.Process):
+print(config)
+
+class VisionNode(mp.Process):
     def __init__(self, output_queue, main_log_folder, brosbag_path=None):
         # multiprocessing.Process.__init__(self)
         mp.Process.__init__(self)

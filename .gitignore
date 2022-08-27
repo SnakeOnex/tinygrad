@@ -2,5 +2,6 @@ __pycache__/
 autonomous/__pycache__/
 autonomous/cone_detector/__pycache__/
 autonomous/cone_detector/weights/*
+data/weights/*
 missions/__init__.py
 missions/trackdrive/__init__.py

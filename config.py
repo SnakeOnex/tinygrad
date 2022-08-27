@@ -1,7 +1,19 @@
-import numpy as np
 from pathlib import Path
+import numpy as np
+
+##################
+# GENERAL CONFIG #
+##################
 
 file_path = Path(__file__).parent
+
+config = {
+    "main_log_folder": Path.home() / Path("data/bros_logs")
+}
+
+######################
+# VISION NODE CONFIG #
+######################
 
 logging_opt = {
     "log_name": "cone_detector",
@@ -9,7 +21,7 @@ logging_opt = {
 }
 
 cone_detector_opt = {
-    "weights": file_path / Path('weights/yolov3_tiny_640_cpu.pt'),
+    "weights": file_path / Path('data/weights/yolov3_tiny_640_cpu.pt'),
     # "weights": file_path / Path('weights/yolov3_cones_640_gpu.pt'),
     "image_size": 640,
     "conf_thresh": 0.5,
@@ -19,7 +31,7 @@ cone_detector_opt = {
 }
 
 cone_localizer_opt = {
-    "hom_mat": np.load(file_path / Path("hom_mat.npy")),
+    "hom_mat": np.load(file_path / Path("data/hom_mat.npy")),
     "occlusion_profile": [-6., 6., 2.5, 15.]
 }
 
@@ -27,9 +39,16 @@ path_planner_opt = {
     "n_steps": 5
 }
 
-config = {
+vision_node_config = {
     "cone_detector_opt": cone_detector_opt,
     "cone_localizer_opt": cone_localizer_opt,
     "path_planner_opt": path_planner_opt,
     "logging_opt": logging_opt
 }
+
+##########################
+# TRACKDRIVE NODE CONFIG #
+##########################
+
+
+

@@ -11,9 +11,9 @@ from pathlib import Path
 import argparse
 
 from tvojemama.logger import gen_name_with_time, create_log_folder
-from main_config import config
+from config import config
 
-from autonomous.cone_detector.cone_detector import ConeDetectionNode
+from nodes.vision_node import VisionNode
 from missions.trackdrive.trackdrive_node import Trackdrive
 from can.can1.can1_node import Can1Node, Can1RecvItems, Can1SendItems
 
@@ -29,8 +29,8 @@ def main(brosbag_folder=None):
     # 1. processes init
 
     ## AS
-    cone_detector_out = multiprocessing.Queue()
-    cone_detector = ConeDetectionNode(cone_detector_out, main_log_folder, brosbag_folder)
+    vision_node_out = multiprocessing.Queue()
+    vision_node = VisionNode(vision_node_out, main_log_folder, brosbag_folder)
 
     ## CAN
     can1_recv_state = shared_memory.ShareableList([0. for _ in range(len(Can1RecvItems))])
@@ -39,7 +39,7 @@ def main(brosbag_folder=None):
 
     ## MISSIONS
     trackdrive = Trackdrive(
-            perception_out=cone_detector_out,
+            perception_out=vision_node_out,
             can1_recv_name=can1_recv_state.shm.name,
             can1_send_name=can1_send_state.shm.name
     )
@@ -47,12 +47,12 @@ def main(brosbag_folder=None):
     ## ASM
 
     # 2. start the processes
-    cone_detector.start()
+    vision_node.start()
     time.sleep(1)
-    can1.start()
+    # can1.start()
     trackdrive.start()
 
-    cone_detector.join()
+    vision_node.join()
 
 
 if __name__ == '__main__':
