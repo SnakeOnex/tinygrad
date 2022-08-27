@@ -2,7 +2,7 @@
 Virtuální Milovice
 
 ## About
-Simulator for testing of FSD autonomous systems written in python and using [ursina](https://www.ursinaengine.org) package for 3D rendering. Simulator offers manual driving aswell as TCP connection to Autonomous system process receiving cone detection data and sending actuator commands. 
+Simulator for testing of FSD autonomous systems written in python and using [ursina](https://www.ursinaengine.org) package for 3D rendering. It offers manual driving aswell as TCP connection to Autonomous system process receiving cone detection data and sending actuator commands. 
 
 ## Project Structure
 - **models/** - 3D prop models & Texture files
