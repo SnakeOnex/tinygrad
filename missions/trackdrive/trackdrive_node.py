@@ -4,7 +4,7 @@ import numpy as np
 import sys
 import math
 
-from can.can1.can1_node import Can1RecvItems, Can1SendItems
+from nodes.can1_node import Can1RecvItems, Can1SendItems
 
 class Trackdrive(mp.Process):
     def __init__(self, perception_out, can1_recv_name, can1_send_name):

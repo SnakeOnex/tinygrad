@@ -15,7 +15,7 @@ from config import config
 
 from nodes.vision_node import VisionNode
 from missions.trackdrive.trackdrive_node import Trackdrive
-from can.can1.can1_node import Can1Node, Can1RecvItems, Can1SendItems
+from nodes.can1_node import Can1Node, Can1RecvItems, Can1SendItems
 
 def main(brosbag_folder=None):
     multiprocessing.set_start_method('spawn')
