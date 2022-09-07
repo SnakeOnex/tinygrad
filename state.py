@@ -6,20 +6,6 @@ from cones.geometry_functions import filter_occluded_cones
 
 class State():
     def __init__(self, map_filepath):
-        with open(map_filepath, 'r') as f:
-            self.map_dict = json.load(f)
-        
-        ## MAP STATE
-        self.yellow_cones = np.array(self.map_dict["yellow_cones"]).reshape(-1,2)
-        self.blue_cones = np.array(self.map_dict["blue_cones"]).reshape(-1,2)
-        self.orange_cones = np.array(self.map_dict["orange_cones"]).reshape(-1,2)
-        self.big_cones = np.array(self.map_dict["big_cones"]).reshape(-1,2)
-
-        yc = np.hstack((self.yellow_cones, np.full((self.yellow_cones.shape[0], 1), 0)))
-        bc = np.hstack((self.blue_cones, np.full((self.blue_cones.shape[0], 1), 1)))
-        oc = np.hstack((self.orange_cones, np.full((self.orange_cones.shape[0], 1), 2)))
-        boc = np.hstack((self.big_cones, np.full((self.big_cones.shape[0], 1), 3)))
-        self.cones_world = np.vstack((yc, bc, oc, boc))
 
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
@@ -36,14 +22,7 @@ class State():
         ### CAR SENSORS
         self.occlusion_profile = [-6., 6., 2.5, 15.]
 
-        ## CAR STATE
-        self.car_pos = np.array(self.map_dict["car_position"])
-        self.heading = self.map_dict["car_heading"]
-        self.steering_angle = 0.
-        self.speed = 0.
-        self.engine_force = 0.
-        self.steering_control = "NEUTRAL" # "LEFT", "RIGHT", "NEUTRAL"
-        self.traction_control = "NEUTRAL" # "FORWARD", "BREAK", "NEUTRAL"
+        self.load_map(map_filepath)
 
     def update_state(self, timedelta):
 
@@ -108,6 +87,28 @@ class State():
         velocity = heading_vec * self.speed
         self.car_pos += self.rotation_vector
         self.car_pos += timedelta * velocity
+
+    def load_map(self, map_filepath):
+        with open(map_filepath, 'r') as f:
+            self.map_dict = json.load(f)
+        
+        ## MAP STATE
+        self.yellow_cones = np.array(self.map_dict["yellow_cones"]).reshape(-1,2)
+        self.blue_cones = np.array(self.map_dict["blue_cones"]).reshape(-1,2)
+        self.orange_cones = np.array(self.map_dict["orange_cones"]).reshape(-1,2)
+        self.big_cones = np.array(self.map_dict["big_cones"]).reshape(-1,2)
+
+        yc = np.hstack((self.yellow_cones, np.full((self.yellow_cones.shape[0], 1), 0)))
+        bc = np.hstack((self.blue_cones, np.full((self.blue_cones.shape[0], 1), 1)))
+        oc = np.hstack((self.orange_cones, np.full((self.orange_cones.shape[0], 1), 2)))
+        boc = np.hstack((self.big_cones, np.full((self.big_cones.shape[0], 1), 3)))
+        self.cones_world = np.vstack((yc, bc, oc, boc))
+
+        self.car_pos = np.array(self.map_dict["car_position"])
+        self.heading = self.map_dict["car_heading"]
+
+        ## CAR STATE
+        self.reset_state()
         
     def get_detections(self):
         cones_local = global_to_local(np.array(self.cones_world[:, 0:2]), self.car_pos, self.heading)

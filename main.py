@@ -16,7 +16,7 @@ import pickle
 from state import State
 from math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, local_to_global
 
-CONNECTION = True
+CONNECTION = False
 
 class CameraMode(Enum):
     WORLD = 0
@@ -105,7 +105,6 @@ if __name__ == '__main__':
 
     # connect client
     if CONNECTION:
-
         ## DETECTIONS CONNECTION 
         app.conn_det = connect_client("localhost", 50000)
         det_msg_delta = 0.200 # s
