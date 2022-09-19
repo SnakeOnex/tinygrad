@@ -27,7 +27,7 @@ class State():
     def update_state(self, timedelta):
 
         # CONTROLS
-        self.handle_controls()
+        self.handle_controls(timedelta)
         
         # PHYSICS
         
@@ -56,7 +56,7 @@ class State():
         self.car_pos += self.rotation_vector
         self.car_pos += timedelta * velocity
 
-    def handle_controls(self):
+    def handle_controls(self, timedelta):
         if self.steering_control == "LEFT":
             self.steering_angle += timedelta * self.steering_speed
 
