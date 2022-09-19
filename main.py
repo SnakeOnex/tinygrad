@@ -31,14 +31,14 @@ def world_setup():
     ground = Entity(
         model = 'cube',
         color = color.gray,
-        texture='asp.jpg',
+        texture='models/asp.jpg',
         texture_scale = (4, 4),
         position=(0,0,0),
         scale = (200, 0, 500),
         collider = 'box',
         shader=lit_with_shadows_shader
     )
-    skybox = load_texture('sky.jpg')
+    skybox = load_texture('models/sky.jpg')
     sky = Sky(
         texture=skybox,
         color=color.cyan
