@@ -51,3 +51,22 @@ def rotate_around_point(angle,position,point):
     rot_x = np.cos(np.deg2rad(angle)-np.pi/2)*point[0] -np.sin(np.deg2rad(angle)-np.pi/2)*point[1]
     rot_y = np.sin(np.deg2rad(angle)-np.pi/2)*point[0] - np.cos(np.deg2rad(angle)-np.pi/2)*point[1]
     return np.array((rot_x, rot_y))
+
+def filter_occluded_cones(cones_local, occlusion_profile):
+    """
+    Filters out cones outside of the occlusion profile
+    args:
+      cones_local - Nx3 np.array
+      occlusion_profile - 4 element tuple of floats (x_min, x_max, y_min, y_max)
+    ret:
+      cones_filtered - Mx3 np.array
+    """
+    left_max, right_max, forward_min, forward_max = occlusion_profile
+
+    mask_lr = (cones_local[:,0] <= right_max) & (cones_local[:,0] >= left_max)
+    mask_f = (cones_local[:,1] <= forward_max) & (cones_local[:,1] >= forward_min)
+    mask = mask_lr & mask_f
+
+    cones_filtered = cones_local[mask,:]
+    return cones_filtered
+

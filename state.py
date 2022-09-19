@@ -1,8 +1,8 @@
 import numpy as np
 import json
 
-from math_helpers import angle_to_vector, global_to_local, rotate_around_point
-from cones.geometry_functions import filter_occluded_cones
+from math_helpers import angle_to_vector, global_to_local, rotate_around_point, filter_occluded_cones
+# from cones.geometry_functions import filter_occluded_cones
 
 class State():
     def __init__(self, map_filepath):

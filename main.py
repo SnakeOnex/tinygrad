@@ -66,10 +66,10 @@ def render_path(path_list, path_entity):
     return path
 
 def render_cones(state):
-    [Cone(texture='models/yellow_cone.mtl', position=(c[0], 0.01, c[1])) for c in state.yellow_cones]
-    [Cone(model='models/blue_cone.obj',texture='models/blue_cone.mtl', position=(c[0], 0.01, c[1])) for c in state.blue_cones]
-    [Cone(model='models/orange_cone.obj',texture='models/orange_cone.mtl', position=(c[0], 0.01, c[1])) for c in state.orange_cones]
-    [Cone(model='models/big_orange_cone.obj',texture='models/big_orange_cone.mtl', position=(c[0], 0.01, c[1])) for c in state.big_cones]
+    [Cone(model='models/yellow_cone.obj', position=(c[0], 0.01, c[1])) for c in state.yellow_cones]
+    [Cone(model='models/blue_cone.obj', position=(c[0], 0.01, c[1])) for c in state.blue_cones]
+    [Cone(model='models/orange_cone.obj', position=(c[0], 0.01, c[1])) for c in state.orange_cones]
+    [Cone(model='models/big_orange_cone.obj', position=(c[0], 0.01, c[1])) for c in state.big_cones]
 
 def render_car(state, formula, driver):
     heading_vec = angle_to_vector(state.heading)
