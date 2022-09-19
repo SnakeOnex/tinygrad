@@ -1,18 +1,13 @@
 import multiprocessing as mp
 import multiprocessing.connection as connection
-# import torch.multiprocessing as mp
-# import pathos.multiprocessing as mp
 import time
 import sys
 
-# from .cone_detector_config import config
 from cones.cone_detector import ConeDetector
 from cones.cone_localizer import ConeLocalizer
 from .path_planning import PathPlanner
 from tvojemama.logger import Logger, LogReader, name_to_log
 from config import vision_node_config as config
-
-print(config)
 
 class VisionNode(mp.Process):
     def __init__(self, output_queue, main_log_folder, brosbag_path=None):
@@ -38,13 +33,6 @@ class VisionNode(mp.Process):
             self.runtime_parameters = sl.RuntimeParameters()
         elif self.mode == "BROSBAG":
             self.brosbag_gen = LogReader(name_to_log(self.log_opt["log_name"],self.brosbag_path)) if self.brosbag_path is not None else None
-        # elif self.mode == "SIMULATION":
-            # import socket
-            # self.s = socket.socket()
-            # self.s.bind(("127.0.0.1", 65432))
-            # self.s.listen()
-            # print(f"waiting to connect") self.connection, addr = self.s.accept()
-            # print(f"connected by {addr}")
 
         self.detector = ConeDetector(config["cone_detector_opt"])
         self.localizer = ConeLocalizer(config["cone_localizer_opt"])
@@ -112,6 +100,3 @@ class VisionNode(mp.Process):
 
     def read_cones_from_network(self):
         pass
-
-
-

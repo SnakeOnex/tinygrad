@@ -31,11 +31,17 @@ class Can1Node(mp.Process):
     def run(self):
         self.initialize()
 
-        if self.mode == "SIMULATION":
+        if self.mode == "CAR":
+            # CAN SETUP CODE
+
+            # CAN LOOP
+            while True:
+                pass
+
+        elif self.mode == "SIMULATION":
             """
             Listen for messages about the state of the simulation and put them into shared memory
             """
-
             print("CONNECTING")
             conn_recv = connection.Client(self.listen_address)
             print("CAN1 RECEIVE CONNECTED")
@@ -53,3 +59,4 @@ class Can1Node(mp.Process):
 
                 conn_send.send(self.can1_send_state)
                 time.sleep(1. / self.report_rate)
+                
