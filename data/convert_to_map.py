@@ -19,8 +19,6 @@ def inner_outer_to_json(inner_path, outer_path, json_path):
     with open(json_path, 'w') as f:
         json.dump(out, f, indent=4)
 
-    return
-
 if __name__ == '__main__':
 
     # 0. params

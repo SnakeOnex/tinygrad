@@ -12,6 +12,7 @@ import numpy as np
 import random
 import socket
 import pickle
+import argparse
 
 from state import State
 from math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, local_to_global
@@ -86,6 +87,10 @@ def render_car(state, formula, driver):
     formula.fr_wheel.rotation = (0. , 0., state.steering_angle)
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--map', type=str, default='maps/circle_map.json')
+    args = parser.parse_args()
+
 
     app = Ursina()
 
@@ -124,7 +129,9 @@ if __name__ == '__main__':
         app.path_entity = Entity(shader=lit_with_shadows_shader,color=color.red,model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line', thickness=50,colors=[color.red, color.red, color.red, color.red, color.red]))
 
     ## 2. SETUP STATE
-    state = State("maps/circle_map.json")
+    # state = State("maps/circle_map.json")
+    state = State(args.map)
+
     render_cones(state)
     formula = Formula()
     driver = Entity(model='sphere', scale=0.2)
