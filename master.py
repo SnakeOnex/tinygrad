@@ -58,6 +58,7 @@ def main(brosbag_folder=None):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--brosbag_folder', type=str, default=None)
+    parser.add_argument('--tcp', type=bool, default=False)
     args = parser.parse_args()
 
     main(args.brosbag_folder)
