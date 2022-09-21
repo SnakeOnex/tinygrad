@@ -71,7 +71,9 @@ class VisionNode(mp.Process):
 
     def run_simulation(self):
         listen_address = "localhost", 50000
+        print("connecting vision...")
         with connection.Client(listen_address) as conn:
+            print("vision connected!")
             try:
                 while True:
                     world_preds = conn.recv()

@@ -48,8 +48,8 @@ def main(brosbag_folder=None):
 
     # 2. start the processes
     vision_node.start()
-    time.sleep(1)
-    # can1.start()
+    time.sleep(4)
+    can1.start()
     trackdrive.start()
 
     vision_node.join()
