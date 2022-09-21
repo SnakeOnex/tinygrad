@@ -17,8 +17,6 @@ import argparse
 from state import State
 from math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, local_to_global
 
-CONNECTION = False
-
 class CameraMode(Enum):
     WORLD = 0
     FIRST_PERSON = 1
@@ -89,8 +87,8 @@ def render_car(state, formula, driver):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--map', type=str, default='maps/circle_map.json')
+    parser.add_argument('--tcp', action='store_true')
     args = parser.parse_args()
-
 
     app = Ursina()
 
@@ -109,7 +107,7 @@ if __name__ == '__main__':
     world_setup()
 
     # connect client
-    if CONNECTION:
+    if args.tcp:
         ## DETECTIONS CONNECTION 
         app.conn_det = connect_client("localhost", 50000)
         det_msg_delta = 0.200 # s
@@ -129,7 +127,6 @@ if __name__ == '__main__':
         app.path_entity = Entity(shader=lit_with_shadows_shader,color=color.red,model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line', thickness=50,colors=[color.red, color.red, color.red, color.red, color.red]))
 
     ## 2. SETUP STATE
-    # state = State("maps/circle_map.json")
     state = State(args.map)
 
     render_cones(state)
@@ -172,7 +169,7 @@ if __name__ == '__main__':
         text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
 
         # obtain and send cone detections
-        if CONNECTION and app.AS:
+        if args.tcp and app.AS:
             path = render_path(app.path_mem, app.path_entity)
             app.path_entity.model.vertices = path
             app.path_entity.model = Mesh(vertices=path, mode='line', thickness=50,colors=[color.red, color.red, color.red, color.red, color.red])

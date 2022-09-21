@@ -62,8 +62,8 @@ def generate_skidpad_track():
     orange_cones = []
     blue_cones = [[left_x - inner_diam/2,10.], [right_x + inner_diam/2,10.]]
 
-    inner_vec = np.array([[0., inner_diam/2]])
-    outer_vec = np.array([[0., inner_diam/2 + 3]])
+    inner_vec = np.array([0., inner_diam/2])
+    outer_vec = np.array([0., inner_diam/2 + 3])
 
     inner_vec = rotate_vec(inner_vec, 10.)
 
@@ -76,14 +76,15 @@ def generate_skidpad_track():
         outer_left = left_center + rotate_vec(outer_vec, i*angle_step)
         outer_right = right_center + rotate_vec(outer_vec, i*angle_step)
 
-        blue_cones.append([inner_left[:,0], inner_left[:,1]])
-        yellow_cones.append([inner_right[:,0], inner_right[:,1]])
+        # blue_cones.append([inner_left[0], inner_left[1]])
+        blue_cones.append(inner_left.tolist())
+        yellow_cones.append(inner_right.tolist())
 
-        if outer_left[0,0] < left_x:
-            yellow_cones.append([outer_left[:,0], outer_left[:,1]])
+        if outer_left[0] < left_x:
+            yellow_cones.append(outer_left.tolist())
 
-        if outer_right[0,0] > right_x:
-            blue_cones.append([outer_right[:,0], outer_right[:,1]])
+        if outer_right[0] > right_x:
+            blue_cones.append(outer_right.tolist())
 
 
     # 3. start and finish zone
@@ -172,8 +173,10 @@ if __name__ == '__main__':
 
     plot_map(skidpad_dict)
 
-    # with open("acceleration_map.json", 'w') as f:
-        # json.dump(acc_dict, f, indent=4)
+    print(skidpad_dict)
+
+    with open("skidpad_map.json", 'w') as f:
+        json.dump(skidpad_dict, f, indent=4)
 
 
 
