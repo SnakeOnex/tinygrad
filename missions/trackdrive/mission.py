@@ -7,6 +7,8 @@ import time
 
 from nodes.can1_node import Can1RecvItems, Can1SendItems
 
+from trackdrive import Trackdrive
+
 class Mission(mp.Process):
     def __init__(self, perception_out, can1_recv_name, can1_send_name):
         mp.Process.__init__(self)
@@ -15,31 +17,33 @@ class Mission(mp.Process):
         self.can1_send_name = can1_send_name
 
     def initialize(self):
+        self.frequency = 10
+
         self.can1_recv_state = shared_memory.ShareableList(name=self.can1_recv_name)
         self.can1_send_state = shared_memory.ShareableList(name=self.can1_send_name)
         self.path_sharemem = shared_memory.ShareableList([0. for _ in range(2*5)], name="path")
 
+        self.mission = Trackdrive(self.can1_recv_state, self.perception_out)
+
     def run(self):
-        self.initialize()
+        self.initialize() 
 
         while True:
         	start_time = time.perf_counter()
 
             # 1. receive perception data
             percep_data = self.perception_out.get()
-
             wheel_speed = self.can1_recv_state[Can1RecvItems.wheel_speed.value]
-            path = percep_data["path"]
 
-            print("TRACKDRIVE: PATH: ", path)
+            # try:
+            self.mission.loop()
+            # except O:
+                #EMERGENCY CODE
+                # pass
 
-            for i in range(min(path.shape[0], 5)):
-                self.path_sharemem[i] = float(path[i,0])
-                self.path_sharemem[i+path.shape[0]-1] = float(path[i,1])
-
-            delta, _, log = self.stanley_steering(path, wheel_speed, self.linear_gain, self.nonlinear_gain)
-
-            print("TRACKDRIVE: CONROLLER: ", log)
 
             self.can1_send_state[Can1SendItems.steering.value] = float(delta)
+
+            end_time = time.perf_counter()
+            time.sleep(end_time - start_time)
             
