@@ -6,44 +6,31 @@ import math
 
 from nodes.can1_node import Can1RecvItems, Can1SendItems
 
-class Trackdrive(mp.Process):
-    def __init__(self, perception_out, can1_recv_name, can1_send_name):
+class Trackdrive():
+    def __init__(self, perception_out, can1_recv_state, can1_send_state):
         mp.Process.__init__(self)
         self.perception_out = perception_out
-        self.can1_recv_name = can1_recv_name
-        self.can1_send_name = can1_send_name
+        self.can1_recv_state = can1_recv_state
+        self.can1_send_state = can1_send_state
 
         ## CONTROLLER CONFIGURATION
         self.linear_gain = 2.05
         self.nonlinear_gain = 1.5
-        # lookahead_dist = 3.3
 
-    def initialize(self):
-        self.can1_recv_state = shared_memory.ShareableList(name=self.can1_recv_name)
-        self.can1_send_state = shared_memory.ShareableList(name=self.can1_send_name)
-        self.path_sharemem = shared_memory.ShareableList([0. for _ in range(2*5)], name="path")
+    def loop(self):
+        # 1. receive perception data
 
-    def run(self):
-        self.initialize()
+        percep_data = self.perception_out.get()
 
-        while True:
-            # 1. receive perception data
+        while not self.perception_out.empty():
             percep_data = self.perception_out.get()
 
-            wheel_speed = self.can1_recv_state[Can1RecvItems.wheel_speed.value]
-            path = percep_data["path"]
+        wheel_speed = self.can1_recv_state[Can1RecvItems.wheel_speed.value]
+        path = percep_data["path"]
 
-            print("TRACKDRIVE: PATH: ", path)
+        delta, _, log = self.stanley_steering(path, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
-            for i in range(min(path.shape[0], 5)):
-                self.path_sharemem[i] = float(path[i,0])
-                self.path_sharemem[i+path.shape[0]-1] = float(path[i,1])
-
-            delta, _, log = self.stanley_steering(path, wheel_speed, self.linear_gain, self.nonlinear_gain)
-
-            print("TRACKDRIVE: CONROLLER: ", log)
-
-            self.can1_send_state[Can1SendItems.steering.value] = float(delta)
+        self.can1_send_state[Can1SendItems.steering.value] = float(delta)
             
     def stanley_steering(self, path, speed, gain, lateralGain, max_range=22.5):
         index = len(path)-1
@@ -78,5 +65,3 @@ class Trackdrive(mp.Process):
                         "delta" : delta
                         }
         return delta, index, log_message
-
-

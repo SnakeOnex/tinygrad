@@ -14,8 +14,8 @@ from tvojemama.logger import gen_name_with_time, create_log_folder
 from config import config
 
 from nodes.vision_node import VisionNode
-from missions.trackdrive.trackdrive_node import Trackdrive
 from nodes.can1_node import Can1Node, Can1RecvItems, Can1SendItems
+from nodes.mission_node import MissionNode
 
 def main(brosbag_folder=None):
     multiprocessing.set_start_method('spawn')
@@ -35,10 +35,10 @@ def main(brosbag_folder=None):
     ## CAN
     can1_recv_state = shared_memory.ShareableList([0. for _ in range(len(Can1RecvItems))])
     can1_send_state = shared_memory.ShareableList([0. for _ in range(len(Can1SendItems))], name="can1_out")
-    can1 = Can1Node(mode="SIMULATION", recv_name=can1_recv_state.shm.name, send_name=can1_send_state.shm.name)
+    can1_node = Can1Node(mode="SIMULATION", recv_name=can1_recv_state.shm.name, send_name=can1_send_state.shm.name)
 
     ## MISSIONS
-    trackdrive = Trackdrive(
+    mission_node = MissionNode(
             perception_out=vision_node_out,
             can1_recv_name=can1_recv_state.shm.name,
             can1_send_name=can1_send_state.shm.name
@@ -49,8 +49,8 @@ def main(brosbag_folder=None):
     # 2. start the processes
     vision_node.start()
     time.sleep(4)
-    can1.start()
-    trackdrive.start()
+    can1_node.start()
+    mission_node.start()
 
     vision_node.join()
 
