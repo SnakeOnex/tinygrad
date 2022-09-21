@@ -49,7 +49,7 @@ def world_setup():
 def connect_client(address, port):
     remote_address = address, port
     listener = connection.Listener(remote_address)
-    conn =  listener.accept()
+    conn = listener.accept()
     return conn
 
 def render_path(path_list, path_entity):
@@ -110,18 +110,21 @@ if __name__ == '__main__':
     if args.tcp:
         ## DETECTIONS CONNECTION 
         app.conn_det = connect_client("localhost", 50000)
-        det_msg_delta = 0.200 # s
+        det_msg_delta = 1. / 60 # s
         app.last_det_time = time.perf_counter()
         app.detections = None
+        print("vision connected")
 
         ## CAN1 CONNECTION
         app.conn_can1_out = connect_client("localhost", 50001)
         can1_msg_delta = 0.200 # s
         app.last_can1_time = time.perf_counter()
         app.can1_state = None
+        print("can1 connected")
 
         app.conn_can1_in = connect_client("localhost", 50002)
         app.can1_in_state = None
+        print("can1_in connected")
 
         app.path_mem = shared_memory.ShareableList(name="path")
         app.path_entity = Entity(shader=lit_with_shadows_shader,color=color.red,model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line', thickness=50,colors=[color.red, color.red, color.red, color.red, color.red]))
