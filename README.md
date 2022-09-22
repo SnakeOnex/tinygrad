@@ -19,3 +19,4 @@ Simulator for testing of FSD autonomous systems written in python and using [urs
 - [ViewSTL](https://www.viewstl.com/)
 - [Car Physics](https://asawicki.info/Mirror/Car%20Physics%20for%20Games/Car%20Physics%20for%20Games.html)
 - [Vehicle Dynamics](https://core.ac.uk/download/pdf/128709302.pdf)
+- [python-can](https://github.com/hardbyte/python-can)
