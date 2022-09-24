@@ -71,18 +71,22 @@ def render_cones(state):
     [Cone(model='models/big_orange_cone.obj', position=(c[0], 0.01, c[1])) for c in state.big_cones]
 
 def render_car(state, formula, driver):
-    heading_vec = angle_to_vector(state.heading)
 
-    car_x, car_y = state.car_pos
+    car_x = state[0]
+    car_y = state[1]
+    heading = state[2]
+    steering_angle = state[3]
+
+    heading_vec = angle_to_vector(heading)
 
     driver.position = Vec3(car_x, 0., car_y) - 1. * vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
-    driver.rotation= formula.offset_rot + Vec3(0., 0., state.heading)
+    driver.rotation= formula.offset_rot + Vec3(0., 0., heading)
 
     formula.position = Vec3(car_x, 0., car_y)
-    formula.rotation = formula.offset_rot + Vec3(0., 0, state.heading)
+    formula.rotation = formula.offset_rot + Vec3(0., 0, heading)
 
-    formula.fl_wheel.rotation = (0. , 0., state.steering_angle)
-    formula.fr_wheel.rotation = (0. , 0., state.steering_angle)
+    formula.fl_wheel.rotation = (0. , 0., steering_angle)
+    formula.fr_wheel.rotation = (0. , 0., steering_angle)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -130,9 +134,13 @@ if __name__ == '__main__':
         app.path_entity = Entity(shader=lit_with_shadows_shader,color=color.red,model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line', thickness=50,colors=[color.red, color.red, color.red, color.red, color.red]))
 
     ## 2. SETUP STATE
-    state = State(args.map)
+    # state = State(args.map)
+    # visual_state = shared_memory.ShareableList(name="visual_state")
+    # visual_state = shared_memory.ShareableList(name="visual_state")
+    visual_state = shared_memory.ShareableList([0., 0., 180., 40.], name="visual_state2")
+    # visual_state = shared_memory.SharedMemory(create=True, size=4, name="visual_state2")
 
-    render_cones(state)
+    # render_cones(state)
     formula = Formula()
     driver = Entity(model='sphere', scale=0.2)
     text_main = Text()
@@ -155,21 +163,21 @@ if __name__ == '__main__':
             app.text_AS.text = "AS: ON"
 
     def update():  
-        if held_keys['w']:
-            state.forward()
-        elif held_keys['space']:
-            state.brake()
+        # if held_keys['w']:
+            # state.forward()
+        # elif held_keys['space']:
+            # state.brake()
 
-        if held_keys['a']:
-            state.steer_left()
-        elif held_keys['d']:
-            state.steer_right()
-        else:
-            state.steering_control = "NEUTRAL"
+        # if held_keys['a']:
+            # state.steer_left()
+        # elif held_keys['d']:
+            # state.steer_right()
+        # else:
+            # state.steering_control = "NEUTRAL"
 
-        state.update_state(time.dt)
-        render_car(state, formula, driver)
-        text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
+        # state.update_state(time.dt)
+        render_car(visual_state, formula, driver)
+        # text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
 
         # obtain and send cone detections
         if args.tcp and app.AS:
@@ -205,11 +213,12 @@ if __name__ == '__main__':
             camera.look_at(formula)
         elif app.cam_mode == CameraMode.FIRST_PERSON:
             camera.position = driver.position
-            camera.rotation = (0.,-state.heading,0.)
+            # camera.rotation = (0.,-state.heading,0.)
+            camera.rotation = (0.,-visual_state[2],0.)
         elif app.cam_mode == CameraMode.THIRD_PERSON:
-            rot_x, rot_y = rotate_around_point(-state.heading,(0,0),(10,0))
+            rot_x, rot_y = rotate_around_point(-visual_state[2],(0,0),(10,0))
             camera.position = driver.position + Vec3(-rot_x,2,rot_y)
-            camera.rotation = (0.,-state.heading,0.)
+            camera.rotation = (0.,-visual_state[2],0.)
 
     app.run()
 
