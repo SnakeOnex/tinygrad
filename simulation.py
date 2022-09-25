@@ -21,18 +21,24 @@ def update_visual_state(visual_state, state):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--map', type=str, default='maps/circle_map.json')
-    parser.add_argument('--tcp', action='store_true')
+    parser.add_argument('--comm', type=str, default='udp') # shared_mem
     args = parser.parse_args()
 
     state = State(args.map)
 
     state.forward()
 
-
-    freq = 100 # Hz
+    freq = 1000 # Hz
     per = 1./freq
 
-    visual_state = [31.2, 23.4, 135., 40.]
+    visual_state = [0., 0., 0., 0.]
+
+    if args.comm == "shared_mem":
+        # visual_state = shared_memory.ShareableList(visual_state, name="visual_state")
+        visual_state = shared_memory.ShareableList(name="visual_state")
+        unregister("/visual_state", "shared_memory")
+
+    update_visual_state(visual_state, state)
 
     client = ('127.0.0.1', 1337)
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -42,16 +48,20 @@ if __name__ == '__main__':
     print("len: ", len(data))
     s.sendto(data, client)
 
-    # visual_state = shared_memory.ShareableList([0., 0., 180., 40.], name="visual_state")
     # exit(0)
-    update_visual_state(visual_state, state)
 
     while True:
         state.update_state(per)
         state.forward()
 
+        # update visual state and send to simulation graphical visualizer
         update_visual_state(visual_state, state)
-        data = struct.pack('<4f', *visual_state)
-        s.sendto(data, client)
+
+        if args.comm == "udp":
+            data = struct.pack('<4f', *visual_state)
+            s.sendto(data, client)
+        elif args.comm == "shared_mem":
+            # nothing needs to be done
+            pass
 
         time.sleep(per)

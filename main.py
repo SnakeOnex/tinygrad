@@ -3,9 +3,10 @@ from ursina.shaders import lit_with_shadows_shader
 
 import multiprocessing.connection as connection
 from multiprocessing import shared_memory
+import socket
+import struct
+import select
 
-from objects.formula import Formula
-from objects.cone import Cone
 from enum import Enum
 import sys 
 import numpy as np
@@ -14,6 +15,8 @@ import socket
 import pickle
 import argparse
 
+from objects.formula import Formula
+from objects.cone import Cone
 from state import State
 from math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, local_to_global
 
@@ -97,6 +100,7 @@ if __name__ == '__main__':
     app = Ursina()
 
     # config
+    communication = "shared_mem" # "udp", "shared_mem"
     camera.fov = 78
     window.title = "VirtualMilovice"
     window.size = (1280,720)
@@ -135,27 +139,23 @@ if __name__ == '__main__':
 
     ## 2. SETUP STATE
     # state = State(args.map)
-    # visual_state = shared_memory.ShareableList(name="visual_state")
-    # visual_state = shared_memory.ShareableList(name="visual_state")
-    #visual_state = shared_memory.ShareableList([0., 0., 180., 40.], name="visual_state2")
 
-    import socket
-    import struct
-    import select
+    if communication == "udp":
+        host = '127.0.0.1'
+        port = 1337
+        server = ('127.0.0.1', 1337)
 
-    host = '127.0.0.1'
-    port = 1337
-    server = ('127.0.0.1', 1337)
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.bind((host, port))
+        poller = select.poll()
+        poller.register(s, select.POLLIN)
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind((host, port))
-
-    data = s.recvfrom(16)
-    print("data: ", data)
-    visual_state = struct.unpack('<4f', data[0])
-    print("unpacked: ", visual_state)
-
-    # visual_state = shared_memory.SharedMemory(create=True, size=4, name="visual_state2")
+        data = s.recvfrom(16)
+        app.visual_state = struct.unpack('<4f', data[0])
+    elif communication == "shared_mem":
+        # app.visual_state = shared_memory.ShareableList(name="visual_state")
+        app.visual_state = shared_memory.ShareableList([0.,0.,0.,0.], name="visual_state")
+        print("got shared mem visual state")
 
     # render_cones(state)
     formula = Formula()
@@ -180,11 +180,18 @@ if __name__ == '__main__':
             app.text_AS.text = "AS: ON"
 
     def update():  
-        data = None
-        while select.select([s], [], [], 1.)[0]:
-            data = s.recvfrom(16)
-        print("data: ", data)
-        visual_state = struct.unpack('<4f', data[0])
+        # while select.POLLIN:
+        while True and communication == "udp":
+            app.evts = poller.poll(0.)
+            if len(app.evts) == 0:
+                print("breaking")
+                break
+            sock, evt = app.evts[0]
+            if evt:
+                data = s.recvfrom(16)
+                print("data: ", data)
+                app.visual_state = struct.unpack('<4f', data[0])
+
         # if held_keys['w']:
             # state.forward()
         # elif held_keys['space']:
@@ -198,7 +205,7 @@ if __name__ == '__main__':
             # state.steering_control = "NEUTRAL"
 
         # state.update_state(time.dt)
-        render_car(visual_state, formula, driver)
+        render_car(app.visual_state, formula, driver)
         # text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
 
         # obtain and send cone detections
@@ -236,11 +243,11 @@ if __name__ == '__main__':
         elif app.cam_mode == CameraMode.FIRST_PERSON:
             camera.position = driver.position
             # camera.rotation = (0.,-state.heading,0.)
-            camera.rotation = (0.,-visual_state[2],0.)
+            camera.rotation = (0.,-app.visual_state[2],0.)
         elif app.cam_mode == CameraMode.THIRD_PERSON:
-            rot_x, rot_y = rotate_around_point(-visual_state[2],(0,0),(10,0))
+            rot_x, rot_y = rotate_around_point(-app.visual_state[2],(0,0),(10,0))
             camera.position = driver.position + Vec3(-rot_x,2,rot_y)
-            camera.rotation = (0.,-visual_state[2],0.)
+            camera.rotation = (0.,-app.visual_state[2],0.)
 
     app.run()
 
