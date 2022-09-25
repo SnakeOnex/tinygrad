@@ -137,7 +137,24 @@ if __name__ == '__main__':
     # state = State(args.map)
     # visual_state = shared_memory.ShareableList(name="visual_state")
     # visual_state = shared_memory.ShareableList(name="visual_state")
-    visual_state = shared_memory.ShareableList([0., 0., 180., 40.], name="visual_state2")
+    #visual_state = shared_memory.ShareableList([0., 0., 180., 40.], name="visual_state2")
+
+    import socket
+    import struct
+    import select
+
+    host = '127.0.0.1'
+    port = 1337
+    server = ('127.0.0.1', 1337)
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.bind((host, port))
+
+    data = s.recvfrom(16)
+    print("data: ", data)
+    visual_state = struct.unpack('<4f', data[0])
+    print("unpacked: ", visual_state)
+
     # visual_state = shared_memory.SharedMemory(create=True, size=4, name="visual_state2")
 
     # render_cones(state)
@@ -163,6 +180,11 @@ if __name__ == '__main__':
             app.text_AS.text = "AS: ON"
 
     def update():  
+        data = None
+        while select.select([s], [], [], 1.)[0]:
+            data = s.recvfrom(16)
+        print("data: ", data)
+        visual_state = struct.unpack('<4f', data[0])
         # if held_keys['w']:
             # state.forward()
         # elif held_keys['space']:
