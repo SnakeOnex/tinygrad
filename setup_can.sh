@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CAN1_PORT="CAN1_powertrain"
+CAN1_PORT=0
 #CAN3_PORT="CAN3"
 
 sudo modprobe vcan

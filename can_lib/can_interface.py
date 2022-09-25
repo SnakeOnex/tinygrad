@@ -1,8 +1,8 @@
-# import the library
 import can
 from pathlib import Path
-from candb import CanDB
-from can_ids import CanIds
+
+from .candb import CanDB
+from .can_ids import CanIds
 
 class CanInterface():
     def __init__(self, can_json_path, channel_id, recv_self=True):
@@ -13,7 +13,7 @@ class CanInterface():
         """
         self.channel_id = channel_id
 
-        self.candb = CanDB([Path("D1.json")])
+        self.candb = CanDB([Path(can_json_path)])
         self.bus = can.Bus(interface="socketcan", channel=channel_id, receive_own_messages=recv_self)
 
     def send_can_msg(self, values, message_id):
@@ -35,10 +35,9 @@ class CanInterface():
         values = self.candb.parseData(0, msg_id, message.data, message.timestamp)
         return values
 
-
 if __name__ == '__main__':
     # 1. INITIALIZATION
-    can_interface = CanInterface([Path("D1.json")])
+    can_interface = CanInterface(Path("can/D1.json"), "CAN1_powertrain")
     ## CAN_DB
     candb = CanDB([Path("D1.json")])
 
