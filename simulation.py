@@ -6,7 +6,8 @@ import struct
 from multiprocessing import shared_memory
 from state import State
 from multiprocessing.resource_tracker import unregister
-from can.can_interface import CanInterface
+from pycandb.can_interface import CanInterface
+from state_to_can import can1_send_callbacks
 
 def update_visual_state(visual_state, state):
     car_x, car_y = state.car_pos
@@ -37,17 +38,24 @@ if __name__ == '__main__':
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     ## CAN interface setup
-    CAN1 = CanInterface("can/D1.json", 0, False)
+    CAN1 = CanInterface("can_lib/D1.json", 0, False)
+    can_ids = CAN1.get_canids_dict()
 
     ## simulation frequency
-    freq = 1000 # Hz
+    freq = 100 # Hz
     per = 1./freq
-
 
 
     while True:
         state.update_state(per)
         state.forward()
+
+        # send CAN1 messages
+        for msg_name, callback_fn in can1_send_callbacks.items():
+            print(msg_name, callback_fn)
+            values = callback_fn(state)
+            CAN1.send_can_msg(values, can_ids[msg_name])
+
 
         # update visual state and send to simulation graphical visualizer
         update_visual_state(visual_state, state)
@@ -58,4 +66,5 @@ if __name__ == '__main__':
             # nothing needs to be done
             pass
 
+        # exit(0)
         time.sleep(per)
