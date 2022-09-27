@@ -1,6 +1,6 @@
 import math
 
-## CAN1
+## CAN1 SEND
 def state_to_MCR_ActualValues_A(state):
     act_InverterStatus = 0
     act_InverterReady = 0
@@ -19,4 +19,13 @@ def state_to_MCR_ActualValues_A(state):
 
 can1_send_callbacks = {
     "MCR_ActualValues_A" : state_to_MCR_ActualValues_A
+}
+
+## CAN1 RECV
+
+def receive_XVR_Control(state, values):
+    state.steering_angle = values[0]
+
+can1_recv_callbacks = {
+    "XVR_Control" : receive_XVR_Control
 }

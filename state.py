@@ -12,7 +12,8 @@ class State():
         self.steering_speed = 90. # degrees per second
         self.max_steering_angle = 60. # max and min steering angle
 
-        self.max_engine_force = 2000. # nm
+
+        self.max_engine_force = 800. # nm
         self.max_brake_force = 2000. # nm
         self.drag_coef = 4
         self.rr_coef = self.drag_coef * 30

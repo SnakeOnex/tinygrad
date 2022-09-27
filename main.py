@@ -100,7 +100,7 @@ if __name__ == '__main__':
     app = Ursina()
 
     # config
-    communication = "shared_mem" # "udp", "shared_mem"
+    communication = "udp" # "udp", "shared_mem"
     camera.fov = 78
     window.title = "VirtualMilovice"
     window.size = (1280,720)
@@ -138,7 +138,7 @@ if __name__ == '__main__':
         app.path_entity = Entity(shader=lit_with_shadows_shader,color=color.red,model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line', thickness=50,colors=[color.red, color.red, color.red, color.red, color.red]))
 
     ## 2. SETUP STATE
-    # state = State(args.map)
+    state = State(args.map)
 
     if communication == "udp":
         host = '127.0.0.1'
@@ -157,7 +157,7 @@ if __name__ == '__main__':
         app.visual_state = shared_memory.ShareableList([0.,0.,0.,0.], name="visual_state")
         print("got shared mem visual state")
 
-    # render_cones(state)
+    render_cones(state)
     formula = Formula()
     driver = Entity(model='sphere', scale=0.2)
     text_main = Text()

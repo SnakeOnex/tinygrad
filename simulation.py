@@ -5,9 +5,10 @@ import struct
 
 from multiprocessing import shared_memory
 from state import State
+import multiprocessing.connection as connection
 from multiprocessing.resource_tracker import unregister
 from pycandb.can_interface import CanInterface
-from state_to_can import can1_send_callbacks
+from state_to_can import can1_send_callbacks, can1_recv_callbacks
 
 def update_visual_state(visual_state, state):
     car_x, car_y = state.car_pos
@@ -27,6 +28,13 @@ if __name__ == '__main__':
 
     state = State(args.map)
 
+    # vision simulatino connection
+    remote_address = "localhost", 50000
+    listener = connection.Listener(remote_address)
+    vision_conn = listener.accept()
+    vision_freq = 30 # hz
+    vision_time = 0.
+
     ## visual state communication with graphical interface setup
     visual_state = [0., 0., 0., 0.]
     if args.comm == "shared_mem":
@@ -38,8 +46,7 @@ if __name__ == '__main__':
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
     ## CAN interface setup
-    CAN1 = CanInterface("can_lib/D1.json", 0, False)
-    can_ids = CAN1.get_canids_dict()
+    CAN1 = CanInterface("can_lib/D1.json", 0, True)
 
     ## simulation frequency
     freq = 100 # Hz
@@ -50,16 +57,36 @@ if __name__ == '__main__':
         state.update_state(per)
         state.forward()
 
+        curr_time = time.perf_counter()
+
+        # send vision simulation
+        if (curr_time - vision_time) >= 1. / vision_freq:
+            # print("sending detecitons")
+            vision_conn.send(state.get_detections())
+            vision_time = curr_time
+
         # send CAN1 messages
         for msg_name, callback_fn in can1_send_callbacks.items():
-            print(msg_name, callback_fn)
             values = callback_fn(state)
-            CAN1.send_can_msg(values, can_ids[msg_name])
+            CAN1.send_can_msg(values, CAN1.name2id[msg_name])
+
+        # receive CAN1 messages
+        while True:
+            can_msg = CAN1.recv_can_msg(0.)
+            
+            if can_msg is None or CAN1.id2name[can_msg.arbitration_id] not in can1_recv_callbacks:
+                break
+
+            # update state
+            values = CAN1.read_can_msg(can_msg)
+            can1_recv_callbacks[CAN1.id2name[can_msg.arbitration_id]](state, values)
+            print("setting steering_angle to: ", values[0])
 
 
         # update visual state and send to simulation graphical visualizer
         update_visual_state(visual_state, state)
         if args.comm == "udp":
+            # print("send visual")
             data = struct.pack('<4f', *visual_state)
             s.sendto(data, client)
         elif args.comm == "shared_mem":
