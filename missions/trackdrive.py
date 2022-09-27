@@ -7,11 +7,10 @@ import math
 from nodes.can1_node import Can1RecvItems, Can1SendItems
 
 class Trackdrive():
-    def __init__(self, perception_out, can1_recv_state, can1_send_state):
+    def __init__(self, perception_out, can1_recv_state):
         mp.Process.__init__(self)
         self.perception_out = perception_out
         self.can1_recv_state = can1_recv_state
-        self.can1_send_state = can1_send_state
 
         ## CONTROLLER CONFIGURATION
         self.linear_gain = 2.05
@@ -30,7 +29,10 @@ class Trackdrive():
 
         delta, _, log = self.stanley_steering(path, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
-        self.can1_send_state[Can1SendItems.steering.value] = float(delta)
+        # self.can1_send_state[Can1SendItems.steering.value] = float(delta)
+
+        return delta, _
+
             
     def stanley_steering(self, path, speed, gain, lateralGain, max_range=22.5):
         index = len(path)-1

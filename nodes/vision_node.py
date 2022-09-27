@@ -35,7 +35,10 @@ class VisionNode(mp.Process):
         elif self.mode == "BROSBAG":
             self.brosbag_gen = LogReader(name_to_log(self.log_opt["log_name"],self.brosbag_path)) if self.brosbag_path is not None else None
         elif self.mode == "SIMULATION":
-            self.path_sharemem = shared_memory.ShareableList([0. for _ in range(2*5)], name="path")
+            # self.path_sharemem = shared_memory.ShareableList([0. for _ in range(2*5)], name="path")
+            # self.path_sharemem = shared_memory.ShareableList(name="path")
+            pass
+
 
         self.detector = ConeDetector(config["cone_detector_opt"])
         self.localizer = ConeLocalizer(config["cone_localizer_opt"])
@@ -87,9 +90,9 @@ class VisionNode(mp.Process):
                         "path": path
                     }
 
-                    for i in range(min(path.shape[0], 5)):
-                        self.path_sharemem[i] = float(path[i,0])
-                        self.path_sharemem[i+path.shape[0]-1] = float(path[i,1])
+                    # for i in range(min(path.shape[0], 5)):
+                    #     self.path_sharemem[i] = float(path[i,0])
+                    #     self.path_sharemem[i+path.shape[0]-1] = float(path[i,1])
 
                     self.output_queue.put(data)
                     self.logger.log("CONE_DETECTOR_FRAME", data)

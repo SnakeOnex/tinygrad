@@ -9,19 +9,22 @@ from nodes.can1_node import Can1RecvItems, Can1SendItems
 
 from missions.trackdrive import Trackdrive
 
+from pycandb.can_interface import CanInterface
+
 class MissionNode(mp.Process):
-    def __init__(self, perception_out, can1_recv_name, can1_send_name):
+    def __init__(self, perception_out, can1_recv_name):
         mp.Process.__init__(self)
         self.perception_out = perception_out
         self.can1_recv_name = can1_recv_name
-        self.can1_send_name = can1_send_name
 
         self.frequency = 10 # Hz
 
     def initialize(self):
         self.can1_recv_state = shared_memory.ShareableList(name=self.can1_recv_name)
-        self.can1_send_state = shared_memory.ShareableList(name=self.can1_send_name)
-        self.mission = Trackdrive(self.perception_out, self.can1_recv_state, self.can1_send_state)
+        self.mission = Trackdrive(self.perception_out, self.can1_recv_state)
+
+        self.CAN1 = CanInterface("data/D1.json", 0, False)
+
 
     def run(self):
         self.initialize()
@@ -31,7 +34,10 @@ class MissionNode(mp.Process):
             print("start: ", start_time)
 
             # 1. receive perception data
-            self.mission.loop()
+            steering_angle, torq = self.mission.loop()
+
+            self.CAN1.send_can_msg([steering_angle], self.CAN1.name2id["XVR_Control"])
+            print("sent a CAN1 message!")
 
             end_time = time.perf_counter()
             print("end: ", end_time)

@@ -34,14 +34,13 @@ def main(brosbag_folder=None):
 
     ## CAN
     can1_recv_state = shared_memory.ShareableList([0. for _ in range(len(Can1RecvItems))])
-    can1_send_state = shared_memory.ShareableList([0. for _ in range(len(Can1SendItems))], name="can1_out")
-    can1_node = Can1Node(mode="SIMULATION", recv_name=can1_recv_state.shm.name, send_name=can1_send_state.shm.name)
+
+    can1_node = Can1Node(mode="SIMULATION", recv_name=can1_recv_state.shm.name)
 
     ## MISSIONS
     mission_node = MissionNode(
             perception_out=vision_node_out,
             can1_recv_name=can1_recv_state.shm.name,
-            can1_send_name=can1_send_state.shm.name
     )
 
     ## ASM
