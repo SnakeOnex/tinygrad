@@ -114,29 +114,6 @@ if __name__ == '__main__':
     ## 1. SETUP WORLD
     world_setup()
 
-    # connect client
-    if args.tcp:
-        ## DETECTIONS CONNECTION 
-        app.conn_det = connect_client("localhost", 50000)
-        det_msg_delta = 1. / 60 # s
-        app.last_det_time = time.perf_counter()
-        app.detections = None
-        print("vision connected")
-
-        ## CAN1 CONNECTION
-        app.conn_can1_out = connect_client("localhost", 50001)
-        can1_msg_delta = 0.200 # s
-        app.last_can1_time = time.perf_counter()
-        app.can1_state = None
-        print("can1 connected")
-
-        app.conn_can1_in = connect_client("localhost", 50002)
-        app.can1_in_state = None
-        print("can1_in connected")
-
-        app.path_mem = shared_memory.ShareableList(name="path")
-        app.path_entity = Entity(shader=lit_with_shadows_shader,color=color.red,model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line', thickness=50,colors=[color.red, color.red, color.red, color.red, color.red]))
-
     ## 2. SETUP STATE
     state = State(args.map)
 
@@ -165,6 +142,10 @@ if __name__ == '__main__':
     app.text_AS = Text(text="AS: OFF",origin=(3.5, -5.), color=color.red)
     app.cam_mode = CameraMode.WORLD
 
+
+    app.update_count = 0
+    app.frame_start = time.perf_counter()
+
     def input(key):
         ## change camera mode
         if key == 'p':
@@ -181,6 +162,7 @@ if __name__ == '__main__':
 
     def update():  
         # while select.POLLIN:
+
         while True and communication == "udp":
             app.evts = poller.poll(0.)
             if len(app.evts) == 0:
@@ -191,6 +173,10 @@ if __name__ == '__main__':
                 data = s.recvfrom(16)
                 print("data: ", data)
                 app.visual_state = struct.unpack('<4f', data[0])
+                app.update_count += 1
+
+
+        render_car(app.visual_state, formula, driver)
 
         # if held_keys['w']:
             # state.forward()
@@ -205,36 +191,35 @@ if __name__ == '__main__':
             # state.steering_control = "NEUTRAL"
 
         # state.update_state(time.dt)
-        render_car(app.visual_state, formula, driver)
         # text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
 
         # obtain and send cone detections
-        if args.tcp and app.AS:
-            path = render_path(app.path_mem, app.path_entity)
-            app.path_entity.model.vertices = path
-            app.path_entity.model = Mesh(vertices=path, mode='line', thickness=50,colors=[color.red, color.red, color.red, color.red, color.red])
+        # if args.tcp and app.AS:
+        #     path = render_path(app.path_mem, app.path_entity)
+        #     app.path_entity.model.vertices = path
+        #     app.path_entity.model = Mesh(vertices=path, mode='line', thickness=50,colors=[color.red, color.red, color.red, color.red, color.red])
 
-            if time.perf_counter() - app.last_det_time >= det_msg_delta:
-                app.detections = state.get_detections()
-                app.conn_det.send(app.detections)
-                app.last_det_time = time.perf_counter()
-            # text += f"Detections:{app.detections}\n"
+        #     if time.perf_counter() - app.last_det_time >= det_msg_delta:
+        #         app.detections = state.get_detections()
+        #         app.conn_det.send(app.detections)
+        #         app.last_det_time = time.perf_counter()
+        #     # text += f"Detections:{app.detections}\n"
 
-        # obtain and send can1 state
-            if time.perf_counter() - app.last_can1_time >= can1_msg_delta:
-                app.can1_state = state.get_can1_state()
-                app.conn_can1_out.send(app.can1_state)
-                app.last_can1_time = time.perf_counter()
+        # # obtain and send can1 state
+        #     if time.perf_counter() - app.last_can1_time >= can1_msg_delta:
+        #         app.can1_state = state.get_can1_state()
+        #         app.conn_can1_out.send(app.can1_state)
+        #         app.last_can1_time = time.perf_counter()
 
-            if app.conn_can1_in.poll():
-                app.can1_in_state = list(app.conn_can1_in.recv())
-                state.steering_angle = app.can1_in_state[0]
-                state.forward()
+        #     if app.conn_can1_in.poll():
+        #         app.can1_in_state = list(app.conn_can1_in.recv())
+        #         state.steering_angle = app.can1_in_state[0]
+        #         state.forward()
 
             # text += f"Can1: {app.can1_state}\n"
             # text += f"Can1_in: {app.can1_in_state}\n"
 
-        text_main.text = text
+        # text_main.text = text
 
         # update camera
         if app.cam_mode == CameraMode.WORLD:

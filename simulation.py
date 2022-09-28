@@ -15,10 +15,10 @@ def update_visual_state(visual_state, state):
     car_heading = state.heading
     steering_angle = state.steering_angle
 
-    visual_state[0] = int(car_x)
-    visual_state[1] = int(car_y)
-    visual_state[2] = int(car_heading)
-    visual_state[3] = int(steering_angle)
+    visual_state[0] = car_x
+    visual_state[1] = car_y
+    visual_state[2] = car_heading
+    visual_state[3] = steering_angle
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -56,6 +56,7 @@ if __name__ == '__main__':
     while True:
         state.update_state(per)
         state.forward()
+        # state.steer_left()
 
         curr_time = time.perf_counter()
 
@@ -68,7 +69,9 @@ if __name__ == '__main__':
         # send CAN1 messages
         for msg_name, callback_fn in can1_send_callbacks.items():
             values = callback_fn(state)
+
             CAN1.send_can_msg(values, CAN1.name2id[msg_name])
+
 
         # receive CAN1 messages
         while True:
@@ -88,6 +91,7 @@ if __name__ == '__main__':
         if args.comm == "udp":
             # print("send visual")
             data = struct.pack('<4f', *visual_state)
+            print(f"visual_state: {visual_state}")
             s.sendto(data, client)
         elif args.comm == "shared_mem":
             # nothing needs to be done
