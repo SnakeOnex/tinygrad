@@ -47,9 +47,12 @@ def main(brosbag_folder=None):
 
     # 2. start the processes
     vision_node.start()
-    time.sleep(4)
+    print("VISION NODE STARTED")
+    # time.sleep(4)
     can1_node.start()
+    print("CAN1 NODE STARTED")
     mission_node.start()
+    print("MISSION NODE STARTED")
 
     vision_node.join()
 

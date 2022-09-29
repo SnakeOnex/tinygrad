@@ -22,11 +22,9 @@ class Can1Node(mp.Process):
         self.mode = mode # "SIMULATION", "CAN"
         self.bus_name = "can1"
         self.report_rate = 100 # hz
-
         self.recv_name = recv_name
 
     def initialize(self):
-        print("CAN1 INIT")
         self.can1_recv_state = shared_memory.ShareableList(name=self.recv_name)
         self.CAN1 = CanInterface("data/D1.json", 0, False)
 
@@ -40,7 +38,6 @@ class Can1Node(mp.Process):
 
         while True:
             msg = self.CAN1.recv_can_msg()
-            # print("msg: ", msg)
 
             if msg.arbitration_id in self.message_callbacks:
                 values = self.CAN1.read_can_msg(msg)
@@ -53,3 +50,4 @@ class Can1Node(mp.Process):
         
         wheel_speed = float(values[3]) * WHEEL_SPEED_TO_MS
         self.can1_recv_state[Can1RecvItems.wheel_speed.value] = wheel_speed
+        

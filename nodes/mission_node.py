@@ -31,20 +31,15 @@ class MissionNode(mp.Process):
 
         while True:
             start_time = time.perf_counter()
-            print("start: ", start_time)
 
             # 1. receive perception data
             steering_angle, torq = self.mission.loop()
 
             self.CAN1.send_can_msg([steering_angle], self.CAN1.name2id["XVR_Control"])
-            print("sent a CAN1 message!")
 
             end_time = time.perf_counter()
-            print("end: ", end_time)
-            print("loop_delta: ", end_time - start_time)
+            # print("loop_delta: ", end_time - start_time)
             time_to_sleep = (1. / self.frequency) - (end_time - start_time)
 
             if time_to_sleep > 0.:
-                print("sleeping: ", time_to_sleep)
                 time.sleep(time_to_sleep)
-            

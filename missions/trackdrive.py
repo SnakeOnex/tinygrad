@@ -29,8 +29,6 @@ class Trackdrive():
 
         delta, _, log = self.stanley_steering(path, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
-        # self.can1_send_state[Can1SendItems.steering.value] = float(delta)
-
         return delta, _
 
             
