@@ -20,6 +20,10 @@ from objects.cone import Cone
 from state import State
 from math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, local_to_global
 
+HOST = '127.0.0.1'
+VISUAL_PORT = 1337
+MAP_PORT = 1338
+
 class CameraMode(Enum):
     WORLD = 0
     FIRST_PERSON = 1
@@ -55,6 +59,13 @@ def connect_client(address, port):
     conn = listener.accept()
     return conn
 
+def bind_udp_socket(host, port):
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.bind((host, port))
+
+    return s
+
+
 def render_path(path_list, path_entity):
     path = np.array([[app.path_mem[i] for i in range(0, len(app.path_mem)//2)], [app.path_mem[i] for i in range(len(app.path_mem)//2, len(app.path_mem))]]).T
 
@@ -62,7 +73,7 @@ def render_path(path_list, path_entity):
     path = local_to_global(path, state.car_pos, state.heading)
     path = [vec_to_3d(p, y=0.01) for p in path]
 
-    print("path: ", path)
+    # print("path: ", path)
     # path_entity = Entity(shader=lit_with_shadows_shader,color=color.red,model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line', thickness=5,colors=[color.red, color.red]))
     path_entity.model.vertices = path
     return path
@@ -118,21 +129,17 @@ if __name__ == '__main__':
     state = State(args.map)
 
     if communication == "udp":
-        host = '127.0.0.1'
-        port = 1337
-        server = ('127.0.0.1', 1337)
-
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.bind((host, port))
+        map_socket = bind_udp_socket(HOST, MAP_PORT)
+        visual_socket = bind_udp_socket(HOST, VISUAL_PORT)
         poller = select.poll()
-        poller.register(s, select.POLLIN)
+        poller.register(visual_socket, select.POLLIN)
 
-        data = s.recvfrom(16)
+        data = visual_socket.recvfrom(16)
         app.visual_state = struct.unpack('<4f', data[0])
     elif communication == "shared_mem":
         # app.visual_state = shared_memory.ShareableList(name="visual_state")
         app.visual_state = shared_memory.ShareableList([0.,0.,0.,0.], name="visual_state")
-        print("got shared mem visual state")
+        # print("got shared mem visual state")
 
     render_cones(state)
     formula = Formula()
@@ -161,17 +168,13 @@ if __name__ == '__main__':
             app.text_AS.text = "AS: ON"
 
     def update():  
-        # while select.POLLIN:
-
         while True and communication == "udp":
             app.evts = poller.poll(0.)
             if len(app.evts) == 0:
-                print("breaking")
                 break
             sock, evt = app.evts[0]
             if evt:
-                data = s.recvfrom(16)
-                print("data: ", data)
+                data = visual_socket.recvfrom(16)
                 app.visual_state = struct.unpack('<4f', data[0])
                 app.update_count += 1
 
@@ -192,32 +195,6 @@ if __name__ == '__main__':
 
         # state.update_state(time.dt)
         # text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
-
-        # obtain and send cone detections
-        # if args.tcp and app.AS:
-        #     path = render_path(app.path_mem, app.path_entity)
-        #     app.path_entity.model.vertices = path
-        #     app.path_entity.model = Mesh(vertices=path, mode='line', thickness=50,colors=[color.red, color.red, color.red, color.red, color.red])
-
-        #     if time.perf_counter() - app.last_det_time >= det_msg_delta:
-        #         app.detections = state.get_detections()
-        #         app.conn_det.send(app.detections)
-        #         app.last_det_time = time.perf_counter()
-        #     # text += f"Detections:{app.detections}\n"
-
-        # # obtain and send can1 state
-        #     if time.perf_counter() - app.last_can1_time >= can1_msg_delta:
-        #         app.can1_state = state.get_can1_state()
-        #         app.conn_can1_out.send(app.can1_state)
-        #         app.last_can1_time = time.perf_counter()
-
-        #     if app.conn_can1_in.poll():
-        #         app.can1_in_state = list(app.conn_can1_in.recv())
-        #         state.steering_angle = app.can1_in_state[0]
-        #         state.forward()
-
-            # text += f"Can1: {app.can1_state}\n"
-            # text += f"Can1_in: {app.can1_in_state}\n"
 
         # text_main.text = text
 

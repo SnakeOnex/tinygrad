@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
     state = State(args.map)
 
-    # vision simulatino connection
+    # vision simulation connection
     remote_address = "localhost", 50000
     listener = connection.Listener(remote_address)
     vision_conn = listener.accept()
@@ -42,8 +42,13 @@ if __name__ == '__main__':
         visual_state = shared_memory.ShareableList(name="visual_state")
         unregister("/visual_state", "shared_memory")
     update_visual_state(visual_state, state)
-    client = ('127.0.0.1', 1337)
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    ## Visual state connection 
+    visual_addr = ('127.0.0.1', 1337)
+    visual_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+    map_addr = ('127.0.0.1', 1338)
+    map_socket = socket.socket(socket.AF_INET, SOCK_DGRAM)
 
     ## CAN interface setup
     CAN1 = CanInterface("can_lib/D1.json", 0, True)
@@ -51,7 +56,6 @@ if __name__ == '__main__':
     ## simulation frequency
     freq = 100 # Hz
     per = 1./freq
-
 
     while True:
         state.update_state(per)
@@ -72,7 +76,6 @@ if __name__ == '__main__':
 
             CAN1.send_can_msg(values, CAN1.name2id[msg_name])
 
-
         # receive CAN1 messages
         while True:
             can_msg = CAN1.recv_can_msg(0.)
@@ -83,16 +86,12 @@ if __name__ == '__main__':
             # update state
             values = CAN1.read_can_msg(can_msg)
             can1_recv_callbacks[CAN1.id2name[can_msg.arbitration_id]](state, values)
-            print("setting steering_angle to: ", values[0])
-
 
         # update visual state and send to simulation graphical visualizer
         update_visual_state(visual_state, state)
         if args.comm == "udp":
-            # print("send visual")
             data = struct.pack('<4f', *visual_state)
-            print(f"visual_state: {visual_state}")
-            s.sendto(data, client)
+            visual_socket.sendto(data, client)
         elif args.comm == "shared_mem":
             # nothing needs to be done
             pass
