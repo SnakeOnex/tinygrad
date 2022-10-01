@@ -3,7 +3,6 @@ import time
 import socket
 import struct
 
-from multiprocessing import shared_memory
 from state import State
 import multiprocessing.connection as connection
 from multiprocessing.resource_tracker import unregister
@@ -23,7 +22,7 @@ def update_visual_state(visual_state, state):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--map', type=str, default='maps/circle_map.json')
-    parser.add_argument('--comm', type=str, default='udp') # shared_mem
+    parser.add_argument('--comm', type=str, default='udp')
     args = parser.parse_args()
 
     state = State(args.map)
@@ -37,10 +36,7 @@ if __name__ == '__main__':
 
     ## visual state communication with graphical interface setup
     visual_state = [0., 0., 0., 0.]
-    if args.comm == "shared_mem":
-        # visual_state = shared_memory.ShareableList(visual_state, name="visual_state")
-        visual_state = shared_memory.ShareableList(name="visual_state")
-        unregister("/visual_state", "shared_memory")
+
     update_visual_state(visual_state, state)
 
     ## Visual state connection 
@@ -92,9 +88,6 @@ if __name__ == '__main__':
         if args.comm == "udp":
             data = struct.pack('<4f', *visual_state)
             visual_socket.sendto(data, client)
-        elif args.comm == "shared_mem":
-            # nothing needs to be done
-            pass
 
         # exit(0)
         time.sleep(per)
