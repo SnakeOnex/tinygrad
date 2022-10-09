@@ -15,6 +15,7 @@ from config import config
 
 from nodes.vision_node import VisionNode
 from nodes.can1_node import Can1Node, Can1RecvItems, Can1SendItems
+from nodes.can2_node import Can2Node, Can2RecvItems, Can2SendItems
 from nodes.mission_node import MissionNode
 
 def main(brosbag_folder=None):
@@ -34,13 +35,16 @@ def main(brosbag_folder=None):
 
     ## CAN
     can1_recv_state = shared_memory.ShareableList([0. for _ in range(len(Can1RecvItems))])
+    can2_recv_state = shared_memory.ShareableList([0. for _ in range(len(Can2RecvItems))])
 
     can1_node = Can1Node(mode="SIMULATION", recv_name=can1_recv_state.shm.name)
+    can2_node = Can2Node(mode="SIMULATION", recv_name=can2_recv_state.shm.name)
 
     ## MISSIONS
     mission_node = MissionNode(
             perception_out=vision_node_out,
             can1_recv_name=can1_recv_state.shm.name,
+            can2_recv_name=can2_recv_state.shm.name
     )
 
     ## ASM
@@ -51,6 +55,8 @@ def main(brosbag_folder=None):
     # time.sleep(4)
     can1_node.start()
     print("CAN1 NODE STARTED")
+    can2_node.start()
+    print("CAN2 NODE STARTED")
     mission_node.start()
     print("MISSION NODE STARTED")
 

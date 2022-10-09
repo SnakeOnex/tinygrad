@@ -28,9 +28,9 @@ class Can1Node(mp.Process):
         self.can1_recv_state = shared_memory.ShareableList(name=self.recv_name)
         self.CAN1 = CanInterface("data/D1.json", 0, False)
 
-
         self.message_callbacks = {
             self.CAN1.name2id["MCR_ActualValues_A"]: self.receive_MCR_ActualValues_A,
+            # self.CAN1.name2id["RES_Status"]: self.receive_MCR_ActualValues_A,
         }
 
     def run(self):
@@ -50,4 +50,3 @@ class Can1Node(mp.Process):
         
         wheel_speed = float(values[3]) * WHEEL_SPEED_TO_MS
         self.can1_recv_state[Can1RecvItems.wheel_speed.value] = wheel_speed
-        

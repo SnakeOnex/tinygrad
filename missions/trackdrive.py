@@ -29,7 +29,7 @@ class Trackdrive():
 
         delta, _, log = self.stanley_steering(path, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
-        return delta, _
+        return delta, 5.
 
             
     def stanley_steering(self, path, speed, gain, lateralGain, max_range=22.5):
