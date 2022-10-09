@@ -18,11 +18,13 @@ import argparse
 from objects.formula import Formula
 from objects.cone import Cone
 from state import State
+
+from network_helpers import connect_client, bind_udp_socket
 from math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, local_to_global
 
 HOST = '127.0.0.1'
 VISUAL_PORT = 1337
-MAP_PORT = 1338
+CONTROLS_PORT = 1338
 
 class CameraMode(Enum):
     WORLD = 0
@@ -52,18 +54,6 @@ def world_setup():
     
     pivot = Entity()
     DirectionalLight(parent=pivot, position=(2.,10.,2.), shadows=True, rotation=(90.,0., 0.))
-
-def connect_client(address, port):
-    remote_address = address, port
-    listener = connection.Listener(remote_address)
-    conn = listener.accept()
-    return conn
-
-def bind_udp_socket(host, port):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.bind((host, port))
-
-    return s
 
 
 def render_path(path_list, path_entity):
@@ -128,18 +118,16 @@ if __name__ == '__main__':
     ## 2. SETUP STATE
     state = State(args.map)
 
+    controls_addr = (HOST, CONTROLS_PORT)
+    controls_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    app.controls_state = [0, 0, 0, 0] # go_signal
+
     if communication == "udp":
-        map_socket = bind_udp_socket(HOST, MAP_PORT)
-        visual_socket = bind_udp_socket(HOST, VISUAL_PORT)
-        poller = select.poll()
-        poller.register(visual_socket, select.POLLIN)
+        visual_socket, visual_poller = bind_udp_socket(HOST, VISUAL_PORT)
 
         data = visual_socket.recvfrom(16)
         app.visual_state = struct.unpack('<4f', data[0])
-    elif communication == "shared_mem":
-        # app.visual_state = shared_memory.ShareableList(name="visual_state")
-        app.visual_state = shared_memory.ShareableList([0.,0.,0.,0.], name="visual_state")
-        # print("got shared mem visual state")
+
 
     render_cones(state)
     formula = Formula()
@@ -167,9 +155,14 @@ if __name__ == '__main__':
             app.text_AS.color = color.lime
             app.text_AS.text = "AS: ON"
 
+        if key == 'g':
+            app.controls_state[0] = 1
+            data = struct.pack('<4i', *app.controls_state)
+            controls_socket.sendto(data, (HOST, CONTROLS_PORT))
+
     def update():  
         while True and communication == "udp":
-            app.evts = poller.poll(0.)
+            app.evts = visual_poller.poll(0.)
             if len(app.evts) == 0:
                 break
             sock, evt = app.evts[0]

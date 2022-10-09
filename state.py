@@ -21,7 +21,7 @@ class State():
 
         ## CAR STATE
         self.tson = True
-        self.go_signal = 1
+        self.go_signal = 0
 
         self.speed_set_point = 0.
 

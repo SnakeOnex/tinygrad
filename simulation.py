@@ -10,6 +10,12 @@ from multiprocessing.resource_tracker import unregister
 from pycandb.can_interface import CanInterface
 from state_to_can import can1_send_callbacks, can2_send_callbacks, can1_recv_callbacks
 
+from network_helpers import connect_client, bind_udp_socket
+
+HOST = '127.0.0.1'
+VISUAL_PORT = 1337
+CONTROLS_PORT = 1338
+
 def update_visual_state(visual_state, state):
     car_x, car_y = state.car_pos
     car_heading = state.heading
@@ -45,11 +51,11 @@ if __name__ == '__main__':
     update_visual_state(visual_state, state)
 
     ## Visual state connection 
-    visual_addr = ('127.0.0.1', 1337)
+
+    visual_addr = (HOST, VISUAL_PORT)
     visual_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    # map_addr = ('127.0.0.1', 1338)
-    # map_socket = socket.socket(socket.AF_INET, SOCK_DGRAM)
+    controls_socket, controls_poller = bind_udp_socket(HOST, CONTROLS_PORT)
 
     ## CAN interface setup
     CAN1 = CanInterface("data/D1.json", 0, True)
@@ -65,6 +71,20 @@ if __name__ == '__main__':
         # state.steer_left()
 
         curr_time = time.perf_counter()
+
+        # receive controls
+        while True:
+            evts = controls_poller.poll(0.)
+            if len(evts) == 0:
+                break
+            sock, evt = evts[0]
+            if evt:
+                data = controls_socket.recvfrom(16)
+                controls_state = struct.unpack('<4i', data[0])
+
+                if controls_state[0]:
+                    print("SENDING GO SIGNAL")
+                    state.go_signal = 1
 
         # send vision simulation
         if (curr_time - vision_time) >= 1. / vision_freq:
@@ -87,9 +107,12 @@ if __name__ == '__main__':
         # receive CAN1 messages
         while True:
             can_msg = CAN1.recv_can_msg(0.)
-            
-            if can_msg is None or CAN1.id2name[can_msg.arbitration_id] not in can1_recv_callbacks:
+
+            if can_msg is None:
                 break
+
+            if CAN1.id2name[can_msg.arbitration_id] not in can1_recv_callbacks:
+                continue
 
             # update state
             values = CAN1.read_can_msg(can_msg)
