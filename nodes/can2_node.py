@@ -37,9 +37,6 @@ class Can2Node(mp.Process):
         while True:
             msg = self.CAN2.recv_can_msg()
 
-            # print("received msg.id: ", msg.arbitration_id)
-            # print("CAN_msg: ", msg)
-
             if msg.arbitration_id in self.message_callbacks:
                 values = self.CAN2.read_can_msg(msg)
                 # print(f"received msg: {self.CAN2.id2name[msg.arbitration_id]} values: {values}")
