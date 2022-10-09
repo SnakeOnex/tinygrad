@@ -12,13 +12,18 @@ class State():
         self.steering_speed = 90. # degrees per second
         self.max_steering_angle = 60. # max and min steering angle
 
-
         self.max_engine_force = 800. # nm
         self.max_brake_force = 2000. # nm
         self.drag_coef = 4
         self.rr_coef = self.drag_coef * 30
         self.mass = 200. # kg
         self.rotation_vector = np.array((0,0))
+
+        ## CAR STATE
+        self.tson = True
+        self.go_signal = 1
+
+        self.speed_set_point = 0.
 
         ### CAR SENSORS
         self.occlusion_profile = [-6., 6., 2.5, 15.]
@@ -28,9 +33,16 @@ class State():
     def update_state(self, timedelta):
 
         # CONTROLS
-        self.handle_controls(timedelta)
-        
-        # PHYSICS
+
+        # print("speed_set_point: ", self.speed_set_point)
+        if self.speed_set_point > self.speed:
+            self.engine_force = self.max_engine_force
+        else:
+            self.engine_force = 0.
+
+        # self.handle_controls(timedelta)
+
+
         
         ## LONGITUDINAL
         F_traction = self.engine_force # tractive force

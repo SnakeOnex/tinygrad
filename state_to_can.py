@@ -17,8 +17,38 @@ def state_to_MCR_ActualValues_A(state):
     values = [act_InverterStatus, act_InverterReady, act_InverterErrorStatus, act_Speed, act_Torque, act_Power, act_MotorTemperature]
     return values
 
+def state_to_RES_Status(state):
+    E_stop = 0 
+    Switch = 0
+
+    Go_Signal = state.go_signal
+
+    Object_2000h = 0
+    Object_2001h = 0
+    Object_2002h = 0
+    Object_2003h = 0
+    E_Stop_2 = 0
+    Object_2004h = 0
+    Object_2005h = 0
+    Radio_Quality = 0
+    TX_to_RX = 0
+    RX_to_TX = 0
+    Battery = 0
+    Command = 0
+    PreAlarmInterrupt = 0
+
+    values = [E_stop, Switch, Go_Signal, Object_2000h, Object_2001h, Object_2002h, Object_2003h, E_Stop_2, Object_2004h,
+              Object_2005h, Radio_Quality, TX_to_RX, RX_to_TX, Battery, Command, PreAlarmInterrupt]
+
+    return values
+
+
 can1_send_callbacks = {
-    "MCR_ActualValues_A" : state_to_MCR_ActualValues_A
+    "MCR_ActualValues_A" : state_to_MCR_ActualValues_A,
+}
+
+can2_send_callbacks = {
+    "RES_Status" : state_to_RES_Status
 }
 
 ## CAN1 RECV
@@ -26,6 +56,11 @@ can1_send_callbacks = {
 def receive_XVR_Control(state, values):
     state.steering_angle = values[0]
 
+def receive_XVR_SetpointsMotor_A(state, values):
+    state.speed_set_point = values[4]
+    print("received set point: ", state.speed_set_point)
+
 can1_recv_callbacks = {
-    "XVR_Control" : receive_XVR_Control
+    "XVR_Control" : receive_XVR_Control,
+    "XVR_SetpointsMotor_A" : receive_XVR_SetpointsMotor_A
 }

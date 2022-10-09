@@ -2,12 +2,13 @@ import argparse
 import time
 import socket
 import struct
+import os
 
 from state import State
 import multiprocessing.connection as connection
 from multiprocessing.resource_tracker import unregister
 from pycandb.can_interface import CanInterface
-from state_to_can import can1_send_callbacks, can1_recv_callbacks
+from state_to_can import can1_send_callbacks, can2_send_callbacks, can1_recv_callbacks
 
 def update_visual_state(visual_state, state):
     car_x, car_y = state.car_pos
@@ -23,7 +24,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--map', type=str, default='maps/circle_map.json')
     parser.add_argument('--comm', type=str, default='udp')
+    parser.add_argument('--gui', action='store_true')
     args = parser.parse_args()
+
+    if args.gui:
+        os.system("python simulation_gui.py&")
 
     state = State(args.map)
 
@@ -43,11 +48,12 @@ if __name__ == '__main__':
     visual_addr = ('127.0.0.1', 1337)
     visual_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-    map_addr = ('127.0.0.1', 1338)
-    map_socket = socket.socket(socket.AF_INET, SOCK_DGRAM)
+    # map_addr = ('127.0.0.1', 1338)
+    # map_socket = socket.socket(socket.AF_INET, SOCK_DGRAM)
 
     ## CAN interface setup
-    CAN1 = CanInterface("can_lib/D1.json", 0, True)
+    CAN1 = CanInterface("data/D1.json", 0, True)
+    CAN2 = CanInterface("data/D1.json", 1, True)
 
     ## simulation frequency
     freq = 100 # Hz
@@ -55,7 +61,7 @@ if __name__ == '__main__':
 
     while True:
         state.update_state(per)
-        state.forward()
+        # state.forward()
         # state.steer_left()
 
         curr_time = time.perf_counter()
@@ -69,8 +75,14 @@ if __name__ == '__main__':
         # send CAN1 messages
         for msg_name, callback_fn in can1_send_callbacks.items():
             values = callback_fn(state)
-
             CAN1.send_can_msg(values, CAN1.name2id[msg_name])
+
+        # send CAN2 messages
+        for msg_name, callback_fn in can2_send_callbacks.items():
+            values = callback_fn(state)
+
+            # print(f"sending {msg_name} message, values: {values}")
+            CAN2.send_can_msg(values, CAN2.name2id[msg_name])
 
         # receive CAN1 messages
         while True:
@@ -87,7 +99,7 @@ if __name__ == '__main__':
         update_visual_state(visual_state, state)
         if args.comm == "udp":
             data = struct.pack('<4f', *visual_state)
-            visual_socket.sendto(data, client)
+            visual_socket.sendto(data, visual_addr)
 
         # exit(0)
         time.sleep(per)
