@@ -111,7 +111,6 @@ if __name__ == '__main__':
 
                 if controls_state[0]:
                     print("SENDING GO SIGNAL")
-                    track_marshall = Track_marshall(state)
                     state.go_signal = 1
 
         # send vision simulation

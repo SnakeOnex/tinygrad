@@ -1,4 +1,5 @@
 from simulation import KEYBOARDS_PORT
+from track_marshall import Track_marshall
 from ursina import *
 from ursina.shaders import lit_with_shadows_shader
 
@@ -76,22 +77,28 @@ def render_path(path_list, path_entity):
 
 
 def render_cones(state):
-    yellow_cones = []
+    cones = []
+    # 0.01
     for c in state.yellow_cones:
-        cone = Cone(model='models/yellow_cone.obj', position=Vec3(c[0], 0, c[1]))
+        cone = Cone(model='models/yellow_cone.obj', position=Vec3(c[0], 0.01, c[1]))
         cone.collider = BoxCollider(cone, center=Vec3(3, 0, 10), size=Vec3(10000, 10000, 10000))
-        yellow_cones.append(cone)
-    # yellow_cones = [Cone(model='models/yellow_cone.obj', position=Vec3(c[0], 0, c[1]))
-    # yellow_cones = [Entity(model='cube', color=color.gray, scale=2, collider='box', position=(c[0], 0.01, c[1]),
-    #        origin_y=-.5)
-    #  for c in state.yellow_cones]
-    [Cone(model='models/blue_cone.obj', position=(c[0], 0.01, c[1]))
-     for c in state.blue_cones]
-    [Cone(model='models/orange_cone.obj', position=(c[0], 0.01, c[1]))
-     for c in state.orange_cones]
-    [Cone(model='models/big_orange_cone.obj', position=(c[0], 0.01, c[1]))
-     for c in state.big_cones]
-    return yellow_cones
+        cones.append(cone)
+
+    for c in state.blue_cones:
+        cone = Cone(model='models/blue_cone.obj', position=Vec3(c[0], 0.01, c[1]))
+        cone.collider = BoxCollider(cone, center=Vec3(3, 0, 10), size=Vec3(10000, 10000, 10000))
+        cones.append(cone)
+
+    for c in state.orange_cones:
+        cone = Cone(model='models/orange_cone.obj', position=(c[0], 0.01, c[1]))
+        cone.collider = BoxCollider(cone, center=Vec3(3, 0, 10), size=Vec3(10000, 10000, 10000))
+        cones.append(cone)
+    for c in state.big_cones:
+        cone = Cone(model='models/big_orange_cone.obj', position=(c[0], 0.01, c[1]))
+        cone.collider = BoxCollider(cone, center=Vec3(3, 0, 10), size=Vec3(10000, 10000, 10000))
+        cones.append(cone)
+
+    return cones
 
 
 def render_car(state, formula, driver):
@@ -140,6 +147,9 @@ if __name__ == '__main__':
     # 2. SETUP STATE
     state = State(args.map)
 
+    # 3rd SETUP Track Marshall
+    marshall = Track_marshall()
+
     controls_addr = (HOST, CONTROLS_PORT)
     controls_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     app.controls_state = [0, 0, 0, 0]  # go_signal
@@ -155,14 +165,13 @@ if __name__ == '__main__':
         data = visual_socket.recvfrom(16)
         app.visual_state = struct.unpack('<4f', data[0])
 
-    yellow_cones = render_cones(state)
+    cones = render_cones(state)
     formula = Formula()
     driver = Entity(model='sphere', scale=0.2)
-    trigger_box = Entity(model='cube', color=color.gray, scale=2, collider='box', position=Vec3(1, 0, 2),
-                         origin_y=-.5)
     text_main = Text()
     Text.size = 0.05
     app.text_AS = Text(text="AS: OFF", origin=(3.5, -5.), color=color.red)
+    app.text_hit_cones = Text(text="Hit cones: {0}".format(marshall.num_of_hit_cones), origin=(-2, -9.), color=color.red)
     app.cam_mode = CameraMode.WORLD
 
     app.update_count = 0
@@ -225,7 +234,6 @@ if __name__ == '__main__':
             keyboard_socket.sendto(data, (HOST, KEYBOARDS_PORT))
 
         render_car(app.visual_state, formula, driver)
-        c = state.yellow_cones[0]
         # print(c)
         # trigger_box = Entity(model='cube', collider='box', color=color.gray, scale=2, collider='box', position=Vec3(1, 0, 2),
         #                      origin_y=-.5)
@@ -243,15 +251,17 @@ if __name__ == '__main__':
 
         # else:
         #     trigger_box.color = color.gray
-        for yellow in yellow_cones:
-            if formula.intersects(yellow).hit:
-                yellow.rotation = (90, 90,90)
-                yellow.y += 0.005
-                # yellow.model = 'models/big_orange_cone.obj'
-                # else:
+        # np_cones = np.array(cones)
+        # collided_cones = np_cones[formula.intersects(np_cones).hit]
+        for cone in cones:
+            if formula.intersects(cone).hit:
+                if not cone.hit_by_formula:
+                    cone.hit_by_formula = True
+                    marshall.num_of_hit_cones += 1
+                    app.text_hit_cones.text = "Hit cones: {0}".format(marshall.num_of_hit_cones)
+                cone.rotation = (90, 90,90)
+                cone.y += 0.005
 
-            else:
-                yellow.color = color.gray
             #     cone.color = color.red
         # state.update_state(time.dt)
         # text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
