@@ -12,11 +12,13 @@ from pycandb.can_interface import CanInterface
 from state_to_can import can1_send_callbacks, can2_send_callbacks, can1_recv_callbacks
 
 from network_helpers import connect_client, bind_udp_socket
+from track_marshall import Track_marshall
 
 HOST = '127.0.0.1'
 VISUAL_PORT = 1337
 CONTROLS_PORT = 1338
 KEYBOARDS_PORT = 1339
+
 
 def update_visual_state(visual_state, state):
     car_x, car_y = state.car_pos
@@ -27,6 +29,7 @@ def update_visual_state(visual_state, state):
     visual_state[1] = car_y
     visual_state[2] = car_heading
     visual_state[3] = steering_angle
+
 
 def handle_keys(keyboard_poller, keyboard_socket, state):
     while True:
@@ -108,17 +111,17 @@ if __name__ == '__main__':
 
                 if controls_state[0]:
                     print("SENDING GO SIGNAL")
+                    track_marshall = Track_marshall(state)
                     state.go_signal = 1
-
-        handle_keys(keyboard_poller, keyboard_socket, state)
 
         # send vision simulation
         if args.autonomous and (curr_time - vision_time) >= 1. / vision_freq:
             # print("sending detecitons")
-            
+
             vision_conn.send(state.get_detections())
             vision_time = curr_time
-
+        elif not args.autonomous:
+            handle_keys(keyboard_poller, keyboard_socket, state)
         # send CAN1 messages
         for msg_name, callback_fn in can1_send_callbacks.items():
             values = callback_fn(state)
@@ -145,7 +148,8 @@ if __name__ == '__main__':
             values = CAN1.read_can_msg(can_msg)
             can1_recv_callbacks[CAN1.id2name[can_msg.arbitration_id]](state, values)
 
-        handle_keys(keyboard_poller, keyboard_socket, state)
+        if not args.autonomous:
+            handle_keys(keyboard_poller, keyboard_socket, state)
 
         # update visual state and send to simulation graphical visualizer
         update_visual_state(visual_state, state)

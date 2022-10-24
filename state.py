@@ -67,8 +67,7 @@ class State():
         velocity = heading_vec * self.speed
         self.car_pos += self.rotation_vector
         self.car_pos += timedelta * velocity
-        
-        print("position is:", self.car_pos)
+
 
     def handle_controls(self, timedelta):
         if self.steering_control == "LEFT":
@@ -76,15 +75,12 @@ class State():
 
             if self.steering_angle >= self.max_steering_angle:
                 self.steering_angle = self.max_steering_angle
-
-            self.steering_control = "NEUTRAL"
         elif self.steering_control == "RIGHT":
             self.steering_angle -= timedelta * self.steering_speed
 
             if self.steering_angle <= -self.max_steering_angle:
                 self.steering_angle = -self.max_steering_angle
 
-            self.steering_control = "NEUTRAL"
         elif self.steering_control == "NEUTRAL":
             if self.steering_angle > 0.15:
                 self.steering_angle -= timedelta * self.steering_speed
@@ -95,7 +91,6 @@ class State():
 
         if self.traction_control == "FORWARD":
             self.engine_force = self.max_engine_force
-            self.traction_control = "NEUTRAL"
         elif self.traction_control == "BRAKE":
             self.engine_force = -self.max_brake_force
 
@@ -103,15 +98,17 @@ class State():
                 self.speed = 0.
                 self.engine_force = 0.
 
-            self.traction_control = "NEUTRAL"
         elif self.traction_control == "NEUTRAL":
             self.engine_force = 0.
+
+        self.steering_control = "NEUTRAL"
+        self.traction_control = "NEUTRAL"
 
 
     def load_map(self, map_filepath):
         with open(map_filepath, 'r') as f:
             self.map_dict = json.load(f)
-        
+
         ## MAP STATE
         self.yellow_cones = np.array(self.map_dict["yellow_cones"]).reshape(-1,2)
         self.blue_cones = np.array(self.map_dict["blue_cones"]).reshape(-1,2)

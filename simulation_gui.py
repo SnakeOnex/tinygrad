@@ -76,14 +76,22 @@ def render_path(path_list, path_entity):
 
 
 def render_cones(state):
-    [Cone(model='models/yellow_cone.obj', position=(c[0], 0.01, c[1]))
-     for c in state.yellow_cones]
+    yellow_cones = []
+    for c in state.yellow_cones:
+        cone = Cone(model='models/yellow_cone.obj', position=Vec3(c[0], 0, c[1]))
+        cone.collider = BoxCollider(cone, center=Vec3(3, 0, 10), size=Vec3(10000, 10000, 10000))
+        yellow_cones.append(cone)
+    # yellow_cones = [Cone(model='models/yellow_cone.obj', position=Vec3(c[0], 0, c[1]))
+    # yellow_cones = [Entity(model='cube', color=color.gray, scale=2, collider='box', position=(c[0], 0.01, c[1]),
+    #        origin_y=-.5)
+    #  for c in state.yellow_cones]
     [Cone(model='models/blue_cone.obj', position=(c[0], 0.01, c[1]))
      for c in state.blue_cones]
     [Cone(model='models/orange_cone.obj', position=(c[0], 0.01, c[1]))
      for c in state.orange_cones]
     [Cone(model='models/big_orange_cone.obj', position=(c[0], 0.01, c[1]))
      for c in state.big_cones]
+    return yellow_cones
 
 
 def render_car(state, formula, driver):
@@ -147,9 +155,11 @@ if __name__ == '__main__':
         data = visual_socket.recvfrom(16)
         app.visual_state = struct.unpack('<4f', data[0])
 
-    render_cones(state)
+    yellow_cones = render_cones(state)
     formula = Formula()
     driver = Entity(model='sphere', scale=0.2)
+    trigger_box = Entity(model='cube', color=color.gray, scale=2, collider='box', position=Vec3(1, 0, 2),
+                         origin_y=-.5)
     text_main = Text()
     Text.size = 0.05
     app.text_AS = Text(text="AS: OFF", origin=(3.5, -5.), color=color.red)
@@ -205,6 +215,7 @@ if __name__ == '__main__':
         if held_keys['a'] and held_keys['d']:
             pass
         elif held_keys['a']:
+            # print("a pressed")
             app.keyboard_state[2] = 1
             data = struct.pack('<4i', *app.keyboard_state)
             keyboard_socket.sendto(data, (HOST, KEYBOARDS_PORT))
@@ -214,6 +225,34 @@ if __name__ == '__main__':
             keyboard_socket.sendto(data, (HOST, KEYBOARDS_PORT))
 
         render_car(app.visual_state, formula, driver)
+        c = state.yellow_cones[0]
+        # print(c)
+        # trigger_box = Entity(model='cube', collider='box', color=color.gray, scale=2, collider='box', position=Vec3(1, 0, 2),
+        #                      origin_y=-.5)
+        # yellow = Cone(model='models/yellow_cone.obj', position=Vec3(3, 0, 10))
+        # yellow = Entity(model='models/yellow_cone.obj', scale = (0.001,0.001,0.001), collision=True, position=Vec3(3, 0, 10))
+        # yellow.collider = BoxCollider(yellow, center=Vec3(3, 0, 10), size=Vec3(4500, 4500, 4500))
+        # yellow = Cone(model='cube', collider='box', color=color.gray, position=Vec3(3, 0, 10))
+
+
+        # for cone in yellow_cones:
+        # if formula.intersects(trigger_box).hit:
+        #     print("yellow cone hit!")
+        #     trigger_box.color=color.lime
+        #     # else:
+
+        # else:
+        #     trigger_box.color = color.gray
+        for yellow in yellow_cones:
+            if formula.intersects(yellow).hit:
+                yellow.rotation = (90, 90,90)
+                yellow.y += 0.005
+                # yellow.model = 'models/big_orange_cone.obj'
+                # else:
+
+            else:
+                yellow.color = color.gray
+            #     cone.color = color.red
         # state.update_state(time.dt)
         # text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
 
