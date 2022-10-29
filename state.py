@@ -40,10 +40,9 @@ class State():
         else:
             self.engine_force = 0.
 
-        # self.handle_controls(timedelta)
+        self.handle_controls(timedelta)
 
 
-        
         ## LONGITUDINAL
         F_traction = self.engine_force # tractive force
         F_drag = -self.drag_coef * self.speed**2 # air resistance
@@ -51,7 +50,7 @@ class State():
         F_long = F_traction + F_drag + F_rr # longitudinal force
         self.car_pos -= self.rotation_vector
         acc = F_long / self.mass # acceleration
-        self.speed += acc * timedelta 
+        self.speed += acc * timedelta
 
         ## LATERAL
         turn_radius = self.wheel_base / np.sin(np.deg2rad(self.steering_angle))
@@ -69,21 +68,19 @@ class State():
         self.car_pos += self.rotation_vector
         self.car_pos += timedelta * velocity
 
+
     def handle_controls(self, timedelta):
         if self.steering_control == "LEFT":
             self.steering_angle += timedelta * self.steering_speed
 
             if self.steering_angle >= self.max_steering_angle:
                 self.steering_angle = self.max_steering_angle
-
-            self.steering_control = "NEUTRAL"
         elif self.steering_control == "RIGHT":
             self.steering_angle -= timedelta * self.steering_speed
 
             if self.steering_angle <= -self.max_steering_angle:
                 self.steering_angle = -self.max_steering_angle
 
-            self.steering_control = "NEUTRAL"
         elif self.steering_control == "NEUTRAL":
             if self.steering_angle > 0.15:
                 self.steering_angle -= timedelta * self.steering_speed
@@ -94,7 +91,6 @@ class State():
 
         if self.traction_control == "FORWARD":
             self.engine_force = self.max_engine_force
-            self.traction_control = "NEUTRAL"
         elif self.traction_control == "BRAKE":
             self.engine_force = -self.max_brake_force
 
@@ -102,14 +98,17 @@ class State():
                 self.speed = 0.
                 self.engine_force = 0.
 
-            self.traction_control = "NEUTRAL"
         elif self.traction_control == "NEUTRAL":
             self.engine_force = 0.
+
+        self.steering_control = "NEUTRAL"
+        self.traction_control = "NEUTRAL"
+
 
     def load_map(self, map_filepath):
         with open(map_filepath, 'r') as f:
             self.map_dict = json.load(f)
-        
+
         ## MAP STATE
         self.yellow_cones = np.array(self.map_dict["yellow_cones"]).reshape(-1,2)
         self.blue_cones = np.array(self.map_dict["blue_cones"]).reshape(-1,2)
@@ -127,7 +126,7 @@ class State():
 
         ## CAR STATE
         self.reset_state()
-        
+
     def get_detections(self):
         cones_local = global_to_local(np.array(self.cones_world[:, 0:2]), self.car_pos, self.heading)
         cones_local = np.hstack((cones_local, self.cones_world[:, 2:3]))
@@ -165,4 +164,3 @@ class State():
         self.engine_force = 0.
         self.steering_control = "NEUTRAL" # "LEFT", "RIGHT", "NEUTRAL"
         self.traction_control = "NEUTRAL" # "FORWARD", "BREAK", "NEUTRAL"
-
