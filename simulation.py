@@ -3,6 +3,7 @@ import time
 import socket
 import struct
 import os
+from pathlib import Path
 
 from state import State
 import multiprocessing.connection as connection
@@ -14,131 +15,151 @@ from network_helpers import connect_client, bind_udp_socket
 # from track_marshall import Track_marshall
 
 HOST = '127.0.0.1'
-VISUAL_PORT = 1337
+GUI_PORT = 1337
 CONTROLS_PORT = 1338
 
-def update_visual_state(visual_state, state):
+def update_gui_state(gui_state, state):
     car_x, car_y = state.car_pos
     car_heading = state.heading
     steering_angle = state.steering_angle
 
-    visual_state[0] = car_x
-    visual_state[1] = car_y
-    visual_state[2] = car_heading
-    visual_state[3] = steering_angle
+    gui_state[0] = car_x
+    gui_state[1] = car_y
+    gui_state[2] = car_heading
+    gui_state[3] = steering_angle
 
-if __name__ == '__main__':
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--map', type=str, default='maps/circle_map.json')
-    parser.add_argument('--comm', type=str, default='udp')
-    parser.add_argument('--gui', action='store_true')
-    parser.add_argument('--manual', action='store_true')
-    args = parser.parse_args()
+class Simulation():
+    def __init__(self, map_path, gui=False, manual=False):
+        self.map_path = Path(map_path)
+        self.gui = gui
+        self.manual = manual
 
-    if args.gui:
-        os.system(f"python simulation_gui.py --map {args.map}&")
+        # 1. setup physics state
+        self.state = State(self.map_path)
+        self.frequency = 100 # Hz
+        self.period = 1. / self.frequency
 
-    state = State(args.map)
+        # 2. setup communication objects
 
-    # vision simulation connection
-    remote_address = "localhost", 50000
-    if not args.manual:
-        listener = connection.Listener(remote_address)
-        vision_conn = listener.accept()
-    vision_freq = 30 # hz
-    vision_time = 0.
+        ## 2.A vision simulation address
+        if not self.manual:
+            vision_address = ("localhost", 50000)
+            listener = connection.Listener(vision_address)
+            self.vision_connection = listener.accept()
+            self.vision_freq = 30 # Hz
+            self.vision_time = 0. # var for keeping track of last time vision packat has been sent
 
-    ## visual state communication with graphical interface setup
-    visual_state = [0., 0., 0., 0.]
+        ## 2.B sending gui state to the graphical engine
+        if self.gui:
+            self.gui_address = (HOST, GUI_PORT)
+            self.gui_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.gui_state = [0., 0., 0., 0.]
 
-    update_visual_state(visual_state, state)
+        ## 2.C receiving controls commands from graphical engine
+        if self.gui:
+            self.controls_socket, self.controls_poller = bind_udp_socket(HOST, CONTROLS_PORT)
 
-    ## Visual state connection
-    visual_addr = (HOST, VISUAL_PORT)
-    visual_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        ## 2.D CAN interaface objects
+        self.CAN1 = CanInterface("data/D1.json", 0, True)
+        self.CAN2 = CanInterface("data/D1.json", 1, True)
 
-    controls_socket, controls_poller = bind_udp_socket(HOST, CONTROLS_PORT)
+        if self.gui:
+            os.system(f"python simulation_gui.py --map {self.map_path}&")
 
-    ## CAN interface setup
-    CAN1 = CanInterface("data/D1.json", 0, True)
-    CAN2 = CanInterface("data/D1.json", 1, True)
-
-    ## simulation frequency
-    freq = 100 # Hz
-    per = 1./freq
-
-    while True:
-        state.update_state(per)
-        # state.forward()
-        # state.steer_left()
-
+    def step(self):
         curr_time = time.perf_counter()
 
-        # receive controls
-        while True:
-            evts = controls_poller.poll(0.)
-            if len(evts) == 0:
-                break
-            sock, evt = evts[0]
-            if evt:
-                data = controls_socket.recvfrom(16)
-                controls_state = struct.unpack('<4i', data[0])
+        # 1. update physical state of the world
+        self.state.update_state(self.period)
 
-                if controls_state[0]:
-                    print("SENDING GO SIGNAL")
-                    state.go_signal = 1
 
-                # lateral control
-                if args.manual:
-                    if controls_state[1] == -1:
-                        state.steer_left()
-                    elif controls_state[1] == 1:
-                        state.steer_right()
+        # 2. handle controls from 3D engine
+        if self.gui:
+            self.handle_controls()
 
-                    # long control
-                    if controls_state[2] == -1:
-                        state.brake()
-                    elif controls_state[2] == 1:
-                        state.forward()
+        # 3. handle sending car's vision information to the autonomous system
+        if not self.manual and (curr_time - self.vision_time) >= 1. / self.vision_freq:
+            self.vision_connection.send(self.state.get_detections())
+            self.vision_time = curr_time
 
-        # send vision simulation
-        if not args.manual and (curr_time - vision_time) >= 1. / vision_freq:
-            print("sending detecitons")
-            vision_conn.send(state.get_detections())
-            vision_time = curr_time
-        # send CAN1 messages
+        # 4. send CAN1 & CAN2 messages
+        ## CAN1 messages
         for msg_name, callback_fn in can1_send_callbacks.items():
-            values = callback_fn(state)
-            CAN1.send_can_msg(values, CAN1.name2id[msg_name])
+            values = callback_fn(self.state)
+            self.CAN1.send_can_msg(values, self.CAN1.name2id[msg_name])
 
-        # # send CAN2 messages
+        ## CAN2 messages
         for msg_name, callback_fn in can2_send_callbacks.items():
-            values = callback_fn(state)
+            values = callback_fn(self.state)
+            self.CAN2.send_can_msg(values, self.CAN2.name2id[msg_name])
 
-            # print(f"sending {msg_name} message, values: {values}")
-            CAN2.send_can_msg(values, CAN2.name2id[msg_name])
-
-        # # receive CAN1 messages
+        # 5. receive CAN1 messages
         while True:
-            can_msg = CAN1.recv_can_msg(0.)
+            can_msg = self.CAN1.recv_can_msg(0.)
 
             if can_msg is None:
                 break
 
-            if CAN1.id2name[can_msg.arbitration_id] not in can1_recv_callbacks:
+            if self.CAN1.id2name[can_msg.arbitration_id] not in can1_recv_callbacks:
                 continue
 
             # update state
-            values = CAN1.read_can_msg(can_msg)
-            can1_recv_callbacks[CAN1.id2name[can_msg.arbitration_id]](state, values)
+            values = self.CAN1.read_can_msg(can_msg)
+            can1_recv_callbacks[self.CAN1.id2name[can_msg.arbitration_id]](self.state, values)
 
-        # update visual state and send to simulation graphical visualizer
-        print("state_speed: ", state.speed)
-        print("state_setpoint: ", state.speed_set_point)
-        update_visual_state(visual_state, state)
-        if args.comm == "udp":
-            data = struct.pack('<4f', *visual_state)
-            visual_socket.sendto(data, visual_addr)
-            print("sending visual_state: ", visual_state)
+        # 6. update gui state and send it to the 3D engine
+        self.update_gui_state()
+        data = struct.pack('<4f', *self.gui_state)
+        self.gui_socket.sendto(data, self.gui_address)
 
-        time.sleep(per)
+    def sleep(self):
+        time.sleep(self.period)
+
+    def handle_controls(self):
+        while True:
+            evts = self.controls_poller.poll(0.)
+            if len(evts) == 0:
+                break
+            sock, evt = evts[0]
+            if evt:
+                data = self.controls_socket.recvfrom(16)
+                controls_state = struct.unpack('<4i', data[0])
+
+                if controls_state[0]:
+                    self.state.go_signal = 1
+
+                if self.manual:
+                    # lateral control
+                    if controls_state[1] == -1:
+                        self.state.steer_left()
+                    elif controls_state[1] == 1:
+                        self.state.steer_right()
+
+                    # long control
+                    if controls_state[2] == -1:
+                        self.state.brake()
+                    elif controls_state[2] == 1:
+                        self.state.forward()
+
+    def update_gui_state(self):
+        car_x, car_y = self.state.car_pos
+        car_heading = self.state.heading
+        steering_angle = self.state.steering_angle
+
+        self.gui_state[0] = car_x
+        self.gui_state[1] = car_y
+        self.gui_state[2] = car_heading
+        self.gui_state[3] = steering_angle
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--map', type=str, default='maps/circle_map.json')
+    parser.add_argument('--gui', action='store_true')
+    parser.add_argument('--manual', action='store_true')
+    args = parser.parse_args()
+
+    sim = Simulation(map_path=args.map, gui=args.gui, manual=args.manual)
+
+    while True:
+        sim.step()
+        sim.sleep()

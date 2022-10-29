@@ -198,7 +198,7 @@ if __name__ == '__main__':
 
         # app.controls_state = [0, 0, 0, 0]
 
-        print("sending controls: ", app.controls_state)
+        # print("sending controls: ", app.controls_state)
         data = struct.pack('<4i', *app.controls_state)
         controls_socket.sendto(data, (HOST, CONTROLS_PORT))
 
