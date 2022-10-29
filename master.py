@@ -19,7 +19,7 @@ from nodes.can2_node import Can2Node, Can2RecvItems, Can2SendItems
 from nodes.mission_node import MissionNode
 
 def main(brosbag_folder=None):
-    multiprocessing.set_start_method('spawn')
+    # multiprocessing.set_start_method('spawn')
 
     # 0. create a log folder for the run
     main_log_folder = config["main_log_folder"]
