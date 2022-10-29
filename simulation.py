@@ -36,7 +36,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.gui:
-        os.system("python simulation_gui.py&")
+        os.system(f"python simulation_gui.py --map {args.map}&")
 
     state = State(args.map)
 
