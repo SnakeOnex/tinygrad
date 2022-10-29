@@ -1,5 +1,3 @@
-from simulation import KEYBOARDS_PORT
-from track_marshall import Track_marshall
 from ursina import *
 from ursina.shaders import lit_with_shadows_shader
 
@@ -27,8 +25,6 @@ from math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, local_
 HOST = '127.0.0.1'
 VISUAL_PORT = 1337
 CONTROLS_PORT = 1338
-KEYBOARDS_PORT = 1339
-
 
 class CameraMode(Enum):
     WORLD = 0
@@ -148,16 +144,11 @@ if __name__ == '__main__':
     state = State(args.map)
 
     # 3rd SETUP Track Marshall
-    marshall = Track_marshall()
+    # marshall = Track_marshall()
 
     controls_addr = (HOST, CONTROLS_PORT)
     controls_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    app.controls_state = [0, 0, 0, 0]  # go_signal
-
-    # keyboard
-    keyboard_addr = (HOST, KEYBOARDS_PORT)
-    keyboard_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    app.keyboard_state = [0, 0, 0, 0]
+    app.controls_state = [0, 0, 0, 0]  # go_signal, lateral, longitudinal
 
     if communication == "udp":
         visual_socket, visual_poller = bind_udp_socket(HOST, VISUAL_PORT)
@@ -171,7 +162,7 @@ if __name__ == '__main__':
     text_main = Text()
     Text.size = 0.05
     app.text_AS = Text(text="AS: OFF", origin=(3.5, -5.), color=color.red)
-    app.text_hit_cones = Text(text="Hit cones: {0}".format(marshall.num_of_hit_cones), origin=(-2, -9.), color=color.red)
+    # app.text_hit_cones = Text(text="Hit cones: {0}".format(marshall.num_of_hit_cones), origin=(-2, -9.), color=color.red)
     app.cam_mode = CameraMode.WORLD
 
     app.update_count = 0
@@ -193,8 +184,6 @@ if __name__ == '__main__':
 
         if key == 'g':
             app.controls_state[0] = 1
-            data = struct.pack('<4i', *app.controls_state)
-            controls_socket.sendto(data, (HOST, CONTROLS_PORT))
 
     def update():
         while True and communication == "udp":
@@ -207,66 +196,35 @@ if __name__ == '__main__':
                 app.visual_state = struct.unpack('<4f', data[0])
                 app.update_count += 1
 
-        app.keyboard_state = [0, 0, 0, 0]
-        # key handling
-        if held_keys['w'] and held_keys['space']:
-            pass
-        elif held_keys['w']:
-            # print("w is pressed")
-            app.keyboard_state[0] = 1
-            data = struct.pack('<4i', *app.keyboard_state)
-            keyboard_socket.sendto(data, (HOST, KEYBOARDS_PORT))
+        # app.controls_state = [0, 0, 0, 0]
 
+        print("sending controls: ", app.controls_state)
+        data = struct.pack('<4i', *app.controls_state)
+        controls_socket.sendto(data, (HOST, CONTROLS_PORT))
+
+
+        # key handling
+
+        ## longitudinal controls
+        if held_keys['w']:
+            app.controls_state[2] = 1
         elif held_keys['space']:
-            app.keyboard_state[1] = 1
-            data = struct.pack('<4i', *app.keyboard_state)
-            keyboard_socket.sendto(data, (HOST, KEYBOARDS_PORT))
-        if held_keys['a'] and held_keys['d']:
-            pass
-        elif held_keys['a']:
-            # print("a pressed")
-            app.keyboard_state[2] = 1
-            data = struct.pack('<4i', *app.keyboard_state)
-            keyboard_socket.sendto(data, (HOST, KEYBOARDS_PORT))
+            app.controls_state[2] = -1
+        else:
+            app.controls_state[2] = 0
+
+        ## lateral controls
+        if held_keys['a']:
+            app.controls_state[1] = -1;
         elif held_keys['d']:
-            app.keyboard_state[3] = 1
-            data = struct.pack('<4i', *app.keyboard_state)
-            keyboard_socket.sendto(data, (HOST, KEYBOARDS_PORT))
+            app.controls_state[1] = 1
+        else:
+            app.controls_state[1] = 0
 
         render_car(app.visual_state, formula, driver)
-        # print(c)
-        # trigger_box = Entity(model='cube', collider='box', color=color.gray, scale=2, collider='box', position=Vec3(1, 0, 2),
-        #                      origin_y=-.5)
-        # yellow = Cone(model='models/yellow_cone.obj', position=Vec3(3, 0, 10))
-        # yellow = Entity(model='models/yellow_cone.obj', scale = (0.001,0.001,0.001), collision=True, position=Vec3(3, 0, 10))
-        # yellow.collider = BoxCollider(yellow, center=Vec3(3, 0, 10), size=Vec3(4500, 4500, 4500))
-        # yellow = Cone(model='cube', collider='box', color=color.gray, position=Vec3(3, 0, 10))
 
-
-        # for cone in yellow_cones:
-        # if formula.intersects(trigger_box).hit:
-        #     print("yellow cone hit!")
-        #     trigger_box.color=color.lime
-        #     # else:
-
-        # else:
-        #     trigger_box.color = color.gray
-        # np_cones = np.array(cones)
-        # collided_cones = np_cones[formula.intersects(np_cones).hit]
-        for cone in cones:
-            if formula.intersects(cone).hit:
-                if not cone.hit_by_formula:
-                    cone.hit_by_formula = True
-                    marshall.num_of_hit_cones += 1
-                    app.text_hit_cones.text = "Hit cones: {0}".format(marshall.num_of_hit_cones)
-                cone.rotation = (90, 90,90)
-                cone.y += 0.005
-
-            #     cone.color = color.red
-        # state.update_state(time.dt)
         # text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
-
-        # text_main.text = text
+        text_main.text = text
 
         # update camera
         if app.cam_mode == CameraMode.WORLD:
