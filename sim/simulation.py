@@ -5,13 +5,13 @@ import struct
 import os
 from pathlib import Path
 
-from state import State
+from .state import State
 import multiprocessing.connection as connection
 from multiprocessing.resource_tracker import unregister
 from pycandb.can_interface import CanInterface
-from state_to_can import can1_send_callbacks, can2_send_callbacks, can1_recv_callbacks
+from .state_to_can import can1_send_callbacks, can2_send_callbacks, can1_recv_callbacks
 
-from network_helpers import connect_client, bind_udp_socket
+from .network_helpers import connect_client, bind_udp_socket
 # from track_marshall import Track_marshall
 
 HOST = '127.0.0.1'
@@ -64,6 +64,8 @@ class Simulation():
         self.CAN2 = CanInterface("data/D1.json", 1, True)
 
         if self.gui:
+            sim_gui_path = Path(__file__).parent
+            print("gui path: ", sim_gui_path)
             os.system(f"python simulation_gui.py --map {self.map_path}&")
 
     def step(self):

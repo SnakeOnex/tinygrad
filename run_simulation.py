@@ -1,5 +1,5 @@
 import argparse
-from simulation import Simulation
+from sim.simulation import Simulation
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
