@@ -44,10 +44,12 @@ class Simulation():
         ## 2.A vision simulation address
         if not self.manual:
             vision_address = ("localhost", 50000)
+            # listener = connection.Listener(vision_address)
             listener = connection.Listener(vision_address)
             self.vision_connection = listener.accept()
             self.vision_freq = 30 # Hz
             self.vision_time = 0. # var for keeping track of last time vision packat has been sent
+
 
         ## 2.B sending gui state to the graphical engine
         if self.gui:
@@ -63,10 +65,13 @@ class Simulation():
         self.CAN1 = CanInterface("data/D1.json", 0, True)
         self.CAN2 = CanInterface("data/D1.json", 1, True)
 
+        print(self.gui)
         if self.gui:
-            sim_gui_path = Path(__file__).parent
+            sim_gui_path = Path(__file__).parent.parent
             print("gui path: ", sim_gui_path)
-            os.system(f"python simulation_gui.py --map {self.map_path}&")
+            cmd = f"cd {sim_gui_path} && python simulation_gui.py --map {self.map_path}&"
+            print("cmd: ", cmd)
+            os.system(cmd)
 
     def step(self):
         curr_time = time.perf_counter()
@@ -113,6 +118,7 @@ class Simulation():
         self.update_gui_state()
         data = struct.pack('<4f', *self.gui_state)
         self.gui_socket.sendto(data, self.gui_address)
+        print("sim init")
 
     def sleep(self):
         time.sleep(self.period)

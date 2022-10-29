@@ -17,10 +17,10 @@ import argparse
 
 from objects.formula import Formula
 from objects.cone import Cone
-from state import State
+from sim.state import State
 
-from network_helpers import connect_client, bind_udp_socket
-from math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, local_to_global
+from sim.network_helpers import connect_client, bind_udp_socket
+from sim.math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, local_to_global
 
 HOST = '127.0.0.1'
 VISUAL_PORT = 1337
@@ -34,7 +34,6 @@ class CameraMode(Enum):
     def next(self):
         v = self.value
         return CameraMode((v + 1) % 3)
-
 
 def world_setup():
     ground = Entity(
