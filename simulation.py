@@ -126,7 +126,8 @@ class Simulation():
                 controls_state = struct.unpack('<4i', data[0])
 
                 if controls_state[0]:
-                    self.state.go_signal = 1
+                    self.go_signal()
+                 
 
                 if self.manual:
                     # lateral control
@@ -150,6 +151,12 @@ class Simulation():
         self.gui_state[1] = car_y
         self.gui_state[2] = car_heading
         self.gui_state[3] = steering_angle
+
+    def go_signal(self):
+        self.state.go_signal = 1
+
+    def emergency_brake(self):
+        raise NotImplementedErorr()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
