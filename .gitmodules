@@ -1,0 +1,3 @@
+[submodule "pycandb"]
+	path = pycandb
+	url = git@eforce1.feld.cvut.cz:eforce-driveless/pycandb.git
