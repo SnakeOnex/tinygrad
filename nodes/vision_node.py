@@ -32,6 +32,8 @@ class VisionNode(mp.Process):
             init_params.camera_fps = 60
             self.zed_image = sl.Mat()
             self.runtime_parameters = sl.RuntimeParameters()
+            self.detector = ConeDetector(config["cone_detector_opt"])
+            self.localizer = ConeLocalizer(config["cone_localizer_opt"])
         elif self.mode == "BROSBAG":
             self.brosbag_gen = LogReader(name_to_log(self.log_opt["log_name"],self.brosbag_path)) if self.brosbag_path is not None else None
         elif self.mode == "SIMULATION":
@@ -40,8 +42,7 @@ class VisionNode(mp.Process):
             pass
 
 
-        self.detector = ConeDetector(config["cone_detector_opt"])
-        self.localizer = ConeLocalizer(config["cone_localizer_opt"])
+
         self.path_planner = PathPlanner(config["path_planner_opt"])
         self.logger = Logger(log_name=self.log_opt["log_name"], log_folder_name=self.log_opt["log_folder_name"], main_folder_path=self.main_log_folder)
         self.logger.log("CONE_DETECTOR_CONFIGURATION", config) # log config
