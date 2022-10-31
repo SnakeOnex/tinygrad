@@ -13,9 +13,10 @@ def test_acceleration():
         print("map_path: ", map_path)
         sim = Simulation(
                 map_path=map_path,
-                gui=True,
                 manual=False
         )
+
+        sim.launch_gui()
         print("started simulation")
 
         start_time = time.perf_counter()
@@ -26,15 +27,17 @@ def test_acceleration():
             time_since_start = time.perf_counter() - start_time
 
             # after 10 seconds send go signal
-            if time_since_start >= 10.:
+            if time_since_start >= 5.:
                 sim.go_signal()
 
             # after 20 seconds end and return TRUE
-            if time_since_start >= 30.:
+            if time_since_start >= 20.:
                 ret.value = True
                 break
 
             sim.sleep()
+
+        sim.terminate_gui()
 
     ret = multiprocessing.Value('b', False)
     sim_process = Process(target=run_sim, args=(ret,))
@@ -44,8 +47,10 @@ def test_acceleration():
     bros_process.start()
 
     sim_process.join()
+    bros_process.terminate()
 
     assert ret.value
+    print("end")
 
 if __name__ == '__main__':
     test_acceleration()
