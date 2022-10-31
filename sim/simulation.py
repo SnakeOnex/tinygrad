@@ -2,6 +2,7 @@ import argparse
 import time
 import socket
 import struct
+import subprocess
 import os
 from pathlib import Path
 
@@ -31,7 +32,6 @@ def update_gui_state(gui_state, state):
 class Simulation():
     def __init__(self, map_path, gui=False, manual=False):
         self.map_path = Path(map_path)
-        self.gui = gui
         self.manual = manual
 
         # 1. setup physics state
@@ -52,26 +52,28 @@ class Simulation():
 
 
         ## 2.B sending gui state to the graphical engine
-        if self.gui:
-            self.gui_address = (HOST, GUI_PORT)
-            self.gui_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            self.gui_state = [0., 0., 0., 0.]
+        self.gui_address = (HOST, GUI_PORT)
+        self.gui_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.gui_state = [0., 0., 0., 0.]
 
         ## 2.C receiving controls commands from graphical engine
-        if self.gui:
-            self.controls_socket, self.controls_poller = bind_udp_socket(HOST, CONTROLS_PORT)
+        self.controls_socket, self.controls_poller = bind_udp_socket(HOST, CONTROLS_PORT)
 
         ## 2.D CAN interaface objects
         self.CAN1 = CanInterface("data/D1.json", 0, True)
         self.CAN2 = CanInterface("data/D1.json", 1, True)
 
-        print(self.gui)
-        if self.gui:
-            sim_gui_path = Path(__file__).parent.parent
-            print("gui path: ", sim_gui_path)
-            cmd = f"cd {sim_gui_path} && python simulation_gui.py --map {self.map_path}&"
-            print("cmd: ", cmd)
-            os.system(cmd)
+        # if self.gui:
+            # sim_gui_path = Path(__file__).parent.parent
+            # print("gui path: ", sim_gui_path)
+            # cmd = f"cd {sim_gui_path} && python simulation_gui.py --map {self.map_path}&"
+            # import subprocess
+            # import os
+            # # p = subprocess.Popen(cmd.split(' '), stdout=subprocess.PIPE)
+            # os.chdir(sim_gui_path)
+            # self.p = subprocess.Popen(["python", "simulation_gui.py", "--map", self.map_path])
+            # # print("cmd: ", cmd)
+            # # os.system(cmd)
 
     def step(self):
         curr_time = time.perf_counter()
@@ -81,8 +83,7 @@ class Simulation():
 
 
         # 2. handle controls from 3D engine
-        if self.gui:
-            self.handle_controls()
+        self.handle_controls()
 
         # 3. handle sending car's vision information to the autonomous system
         if not self.manual and (curr_time - self.vision_time) >= 1. / self.vision_freq:
@@ -136,7 +137,6 @@ class Simulation():
                 if controls_state[0]:
                     self.go_signal()
                  
-
                 if self.manual:
                     # lateral control
                     if controls_state[1] == -1:
@@ -165,6 +165,16 @@ class Simulation():
 
     def emergency_brake(self):
         raise NotImplementedErorr()
+
+    def launch_gui(self):
+        sim_gui_path = Path(__file__).parent.parent
+        # print("gui path: ", sim_gui_path)
+        cmd = f"cd {sim_gui_path} && python simulation_gui.py --map {self.map_path}&"
+        os.chdir(sim_gui_path)
+        self.p = subprocess.Popen(["python", "simulation_gui.py", "--map", self.map_path])
+
+    def terminate_gui(self):
+        self.p.terminate()
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

@@ -1,5 +1,6 @@
 import argparse
 from sim.simulation import Simulation
+import time
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -8,8 +9,19 @@ if __name__ == '__main__':
     parser.add_argument('--manual', action='store_true')
     args = parser.parse_args()
 
-    sim = Simulation(map_path=args.map, gui=args.gui, manual=args.manual)
+    sim = Simulation(map_path=args.map, manual=args.manual)
 
+    if args.gui:
+        sim.launch_gui()
+
+    start_time = time.perf_counter()
     while True:
         sim.step()
         sim.sleep()
+
+        # if time.perf_counter() - start_time > 5:
+            # print("5 secs passed")
+            # sim.terminate_gui()
+            # break
+
+    # print("ended")
