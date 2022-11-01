@@ -5,6 +5,9 @@ import struct
 import subprocess
 import os
 from pathlib import Path
+from enum import IntEnum
+import zmq
+import pickle
 
 from .state import State
 import multiprocessing.connection as connection
@@ -19,15 +22,17 @@ HOST = '127.0.0.1'
 GUI_PORT = 1337
 CONTROLS_PORT = 1338
 
-def update_gui_state(gui_state, state):
-    car_x, car_y = state.car_pos
-    car_heading = state.heading
-    steering_angle = state.steering_angle
+class GUIValues(IntEnum):
+    car_x = 0,
+    car_y = 1,
+    car_heading = 2
+    steering_angle = 3
 
-    gui_state[0] = car_x
-    gui_state[1] = car_y
-    gui_state[2] = car_heading
-    gui_state[3] = steering_angle
+class ControlsValues(IntEnum):
+    car_x = 0,
+    car_y = 1,
+    car_heading = 2
+    steering_angle = 3
 
 class Simulation():
     def __init__(self, map_path, gui=False, manual=False):
@@ -44,17 +49,16 @@ class Simulation():
         ## 2.A vision simulation address
         if not self.manual:
             vision_address = ("localhost", 50000)
-            # listener = connection.Listener(vision_address)
-            listener = connection.Listener(vision_address)
-            self.vision_connection = listener.accept()
+            self.context = zmq.Context()
+            self.vision_socket = self.context.socket(zmq.PUB)
+            self.vision_socket.bind("tcp://127.0.0.1:50000")
             self.vision_freq = 30 # Hz
             self.vision_time = 0. # var for keeping track of last time vision packat has been sent
-
 
         ## 2.B sending gui state to the graphical engine
         self.gui_address = (HOST, GUI_PORT)
         self.gui_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self.gui_state = [0., 0., 0., 0.]
+        self.gui_state = [0. for _ in range(len(GUIValues))]
 
         ## 2.C receiving controls commands from graphical engine
         self.controls_socket, self.controls_poller = bind_udp_socket(HOST, CONTROLS_PORT)
@@ -63,31 +67,18 @@ class Simulation():
         self.CAN1 = CanInterface("data/D1.json", 0, True)
         self.CAN2 = CanInterface("data/D1.json", 1, True)
 
-        # if self.gui:
-            # sim_gui_path = Path(__file__).parent.parent
-            # print("gui path: ", sim_gui_path)
-            # cmd = f"cd {sim_gui_path} && python simulation_gui.py --map {self.map_path}&"
-            # import subprocess
-            # import os
-            # # p = subprocess.Popen(cmd.split(' '), stdout=subprocess.PIPE)
-            # os.chdir(sim_gui_path)
-            # self.p = subprocess.Popen(["python", "simulation_gui.py", "--map", self.map_path])
-            # # print("cmd: ", cmd)
-            # # os.system(cmd)
-
     def step(self):
         curr_time = time.perf_counter()
 
         # 1. update physical state of the world
         self.state.update_state(self.period)
 
-
         # 2. handle controls from 3D engine
         self.handle_controls()
 
         # 3. handle sending car's vision information to the autonomous system
         if not self.manual and (curr_time - self.vision_time) >= 1. / self.vision_freq:
-            self.vision_connection.send(self.state.get_detections())
+            self.vision_socket.send(pickle.dumps(self.state.get_detections()))
             self.vision_time = curr_time
 
         # 4. send CAN1 & CAN2 messages
@@ -119,7 +110,6 @@ class Simulation():
         self.update_gui_state()
         data = struct.pack('<4f', *self.gui_state)
         self.gui_socket.sendto(data, self.gui_address)
-        print("sim init")
 
     def sleep(self):
         time.sleep(self.period)
@@ -155,10 +145,10 @@ class Simulation():
         car_heading = self.state.heading
         steering_angle = self.state.steering_angle
 
-        self.gui_state[0] = car_x
-        self.gui_state[1] = car_y
-        self.gui_state[2] = car_heading
-        self.gui_state[3] = steering_angle
+        self.gui_state[GUIValues.car_x] = car_x
+        self.gui_state[GUIValues.car_y] = car_y
+        self.gui_state[GUIValues.car_heading] = car_heading
+        self.gui_state[GUIValues.steering_angle] = steering_angle
 
     def go_signal(self):
         self.state.go_signal = 1
@@ -170,8 +160,12 @@ class Simulation():
         sim_gui_path = Path(__file__).parent.parent
         # print("gui path: ", sim_gui_path)
         cmd = f"cd {sim_gui_path} && python simulation_gui.py --map {self.map_path}&"
+
+        cwd = os.getcwd()
         os.chdir(sim_gui_path)
         self.p = subprocess.Popen(["python", "simulation_gui.py", "--map", self.map_path])
+        os.chdir(cwd)
+
 
     def terminate_gui(self):
         self.p.terminate()
