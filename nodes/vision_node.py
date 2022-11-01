@@ -3,6 +3,8 @@ import multiprocessing.connection as connection
 from multiprocessing import shared_memory
 import time
 import sys
+import zmq
+import pickle
 
 from cones.cone_detector import ConeDetector
 from cones.cone_localizer import ConeLocalizer
@@ -77,28 +79,28 @@ class VisionNode(mp.Process):
             self.logger.log("CONE_DETECTOR_FRAME", data)
 
     def run_simulation(self):
-        listen_address = "localhost", 50000
-        print("connecting vision...")
-        with connection.Client(listen_address) as conn:
-            print("vision connected!")
-            try:
-                while True:
-                    world_preds = conn.recv()
-                    path = self.path_planner.find_path(world_preds)
+        context = zmq.Context()
+        socket = context.socket(zmq.SUB)
+        socket.connect("tcp://127.0.0.1:50000")
+        socket.setsockopt(zmq.SUBSCRIBE, b"")
 
-                    data = {
-                        "world_preds": world_preds,
-                        "path": path
-                    }
+        while True:
+            data = socket.recv()
+            world_preds = pickle.loads(data)
+            path = self.path_planner.find_path(world_preds)
 
-                    # for i in range(min(path.shape[0], 5)):
-                    #     self.path_sharemem[i] = float(path[i,0])
-                    #     self.path_sharemem[i+path.shape[0]-1] = float(path[i,1])
+            data = {
+                "world_preds": world_preds,
+                "path": path
+            }
 
-                    self.output_queue.put(data)
-                    self.logger.log("CONE_DETECTOR_FRAME", data)
-            except EOFError:
-                pass
+            # for i in range(min(path.shape[0], 5)):
+            #     self.path_sharemem[i] = float(path[i,0])
+            #     self.path_sharemem[i+path.shape[0]-1] = float(path[i,1])
+
+            self.output_queue.put(data)
+            self.logger.log("CONE_DETECTOR_FRAME", data)
+
 
     def read_zed_image(self):
         if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:

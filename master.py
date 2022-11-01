@@ -6,6 +6,8 @@ import time
 import os
 import multiprocessing
 from multiprocessing import shared_memory
+from signal import signal
+from signal import SIGTERM
 
 from pathlib import Path
 import argparse
@@ -17,6 +19,7 @@ from nodes.vision_node import VisionNode
 from nodes.can1_node import Can1Node, Can1RecvItems, Can1SendItems
 from nodes.can2_node import Can2Node, Can2RecvItems, Can2SendItems
 from nodes.mission_node import MissionNode
+
 
 def main(brosbag_folder=None):
     # multiprocessing.set_start_method('spawn')
@@ -59,6 +62,16 @@ def main(brosbag_folder=None):
     print("CAN2 NODE STARTED")
     mission_node.start()
     print("MISSION NODE STARTED")
+
+    def handler(sig, frame):
+        vision_node.terminate()
+        can1_node.terminate()
+        can2_node.terminate()
+        mission_node.terminate()
+        print("BROS: TERMINATED ALL CHILD PROCESSES")
+        sys.exit(0)
+
+    signal(SIGTERM, handler)
 
     vision_node.join()
 
