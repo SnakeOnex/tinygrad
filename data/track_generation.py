@@ -44,8 +44,10 @@ def generate_skidpad_track():
     track_width = 3.
     inner_diam = 15.25
 
-    car_pos = [0., 0.]
+    # car_pos = [0., 0.]
+    car_pos = [0., -car_size/2]
     car_heading = 0.
+
 
     # 1. big orange cones
     left_x = -track_width/2
@@ -53,6 +55,9 @@ def generate_skidpad_track():
 
     big_cones = [[left_x, 9.5], [right_x, 9.5],
                  [left_x, 10.5], [right_x, 10.5]]
+
+    start_line = [(left_x-1, 10.), (right_x+1, 10.)]
+    finish_line = [(left_x-1, 10.), (right_x+1, 10.)]
 
     # 2. inner and outer cirles
     left_center = np.array([left_x - inner_diam/2,10.])
@@ -107,20 +112,25 @@ def generate_skidpad_track():
         "blue_cones"   : blue_cones,
         "orange_cones" : orange_cones,
         "big_cones"    : big_cones,
+        "start_line"   : start_line,
+        "finish_line"  : finish_line
     }
     return track_dict
 
-def generate_acceleration_track(width):
+def generate_acceleration_track(width=3., car_size=2.):
 
     left_x = -width/2
     right_x = width/2
 
     # 1. start position
-    car_pos = [0., 0.]
+    car_pos = [0., -car_size/2]
     car_heading = 0.
 
     big_cones = [[left_x, 0.], [right_x, 0.], [left_x, 1.], [right_x, 1.],
                  [left_x, 74.], [right_x, 74.], [left_x, 75.], [right_x, 75.]]
+
+    start_line = [(left_x-1, 0.5), (right_x+1, 0.5)]
+    finish_line = [(left_x-1, 74.5), (right_x+1, 74.5)]
 
     blue_cones = []
     yellow_cones = []
@@ -135,6 +145,9 @@ def generate_acceleration_track(width):
         orange_cones.append([left_x, float(i)])
         orange_cones.append([right_x, float(i)])
 
+    orange_cones.append([left_x + width/3, 175])
+    orange_cones.append([left_x + 2*width/3, 175])
+
     track_dict = {
         "car_position" : car_pos,
         "car_heading"  : car_heading,
@@ -142,6 +155,8 @@ def generate_acceleration_track(width):
         "blue_cones"   : blue_cones,
         "orange_cones" : orange_cones,
         "big_cones"    : big_cones,
+        "start_line"   : start_line,
+        "finish_line"  : finish_line
     }
     return track_dict
 
@@ -161,27 +176,32 @@ def plot_map(map_dict):
     plt.plot(orange_cones[:,0], orange_cones[:,1], '.', color='orange', label="orange_cones")
     plt.plot(big_cones[:,0], big_cones[:,1], '.', color='red', label="big_orange_cones")
 
+    # 3. start & finish line
+    start_line = np.array(map_dict["start_line"]).reshape(-1, 2)
+    finish_line = np.array(map_dict["finish_line"]).reshape(-1, 2)
+
+    plt.plot(start_line[:,0], start_line[:,1], color='red')
+    plt.plot(finish_line[:,0], finish_line[:,1], color='red')
+
     plt.axis('equal')
     plt.legend()
 
     plt.show()
 
-
 if __name__ == '__main__':
-    acc_dict = generate_acceleration_track(3.)
+    car_size = 2.5
+    width = 3.
+    acc_dict = generate_acceleration_track(width, car_size)
     skidpad_dict = generate_skidpad_track()
 
+    plot_map(acc_dict)
     plot_map(skidpad_dict)
-
-    print(skidpad_dict)
 
     with open("skidpad_map.json", 'w') as f:
         json.dump(skidpad_dict, f, indent=4)
 
-
-
-
-
+    with open("acceleration_map.json", 'w') as f:
+        json.dump(acc_dict, f, indent=4)
 
 
 

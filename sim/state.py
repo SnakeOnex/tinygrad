@@ -109,6 +109,8 @@ class State():
         self.blue_cones = np.array(self.map_dict["blue_cones"]).reshape(-1,2)
         self.orange_cones = np.array(self.map_dict["orange_cones"]).reshape(-1,2)
         self.big_cones = np.array(self.map_dict["big_cones"]).reshape(-1,2)
+        self.start_line = np.array(self.map_dict["start_line"]).reshape(-1,2)
+        self.finish_line = np.array(self.map_dict["finish_line"]).reshape(-1,2)
 
         yc = np.hstack((self.yellow_cones, np.full((self.yellow_cones.shape[0], 1), 0)))
         bc = np.hstack((self.blue_cones, np.full((self.blue_cones.shape[0], 1), 1)))

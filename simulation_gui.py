@@ -76,22 +76,27 @@ def render_cones(state):
     # 0.01
     for c in state.yellow_cones:
         cone = Cone(model='models/yellow_cone.obj', position=Vec3(c[0], 0.01, c[1]))
-        cone.collider = BoxCollider(cone, center=Vec3(3, 0, 10), size=Vec3(10000, 10000, 10000))
         cones.append(cone)
 
     for c in state.blue_cones:
         cone = Cone(model='models/blue_cone.obj', position=Vec3(c[0], 0.01, c[1]))
-        cone.collider = BoxCollider(cone, center=Vec3(3, 0, 10), size=Vec3(10000, 10000, 10000))
         cones.append(cone)
 
     for c in state.orange_cones:
         cone = Cone(model='models/orange_cone.obj', position=(c[0], 0.01, c[1]))
-        cone.collider = BoxCollider(cone, center=Vec3(3, 0, 10), size=Vec3(10000, 10000, 10000))
         cones.append(cone)
+
     for c in state.big_cones:
         cone = Cone(model='models/big_orange_cone.obj', position=(c[0], 0.01, c[1]))
-        cone.collider = BoxCollider(cone, center=Vec3(3, 0, 10), size=Vec3(10000, 10000, 10000))
         cones.append(cone)
+
+    start_points = [Vec3(x,0,y) for x, y in state.start_line]
+    start_line = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(vertices=start_points, mode='line', thickness=2))
+
+    finish_points = [Vec3(x,0,y) for x, y in state.finish_line]
+    finish_line = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(vertices=finish_points, mode='line', thickness=2))
+
+    car_pos = Entity(model='sphere', position=(state.car_pos[0], 0, state.car_pos[1]), scale=(0.1))
 
     return cones
 
