@@ -17,6 +17,13 @@ class Trackdrive():
         self.nonlinear_gain = 1.5
 
     def loop(self):
+        """
+        args:
+          vision output (path, cone positions)
+        ret:
+          steering_angle
+          wheelspeed_setpoint
+        """
         # 1. receive perception data
 
         percep_data = self.perception_out.get()
