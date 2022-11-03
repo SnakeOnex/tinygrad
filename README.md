@@ -14,10 +14,28 @@ Better Robot Operating System. This repository contains the autonomous system, w
 - **master.py** - launch file for the whole system, responsible for selecting a mission and starting all necessary sub-processes
 
 ## Setup
+
+**Clone and install submodules:**
 ``` 
 git clone git@eforce1.feld.cvut.cz:eforce-driveless/bros.git &&
 cd bros &&
 git submodule update --init --recursive
+```
+
+
+**Run the BROS autonomous system:**
+```
+python master.py
+```
+
+**Launch simulation + 3D engine for visualization, in another terminal do:**
+```
+cd dv_sim && python run_simulation.py --gui --manual --map maps/skidpad_map.json
+```
+
+**Run tests:**
+```
+python -m pytest
 ```
 
 ## Links & Resources
