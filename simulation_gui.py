@@ -6,6 +6,7 @@ from multiprocessing import shared_memory
 import socket
 import struct
 import select
+import zmq
 
 from enum import Enum
 import sys
@@ -130,7 +131,6 @@ if __name__ == '__main__':
     app = Ursina()
 
     # config
-    communication = "udp"  # "udp", "shared_mem"
     camera.fov = 78
     window.title = "VirtualMilovice"
     window.size = (1280, 720)
@@ -147,18 +147,23 @@ if __name__ == '__main__':
     # 2. SETUP STATE
     state = State(args.map)
 
-    # 3rd SETUP Track Marshall
-    # marshall = Track_marshall()
-
     controls_addr = (HOST, CONTROLS_PORT)
     controls_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     app.controls_state = [0, 0, 0, 0]  # go_signal, lateral, longitudinal
 
-    if communication == "udp":
-        visual_socket, visual_poller = bind_udp_socket(HOST, VISUAL_PORT)
+    # gui input
+    visual_socket, visual_poller = bind_udp_socket(HOST, VISUAL_PORT)
+    context = zmq.Context()
+    gui_socket = context.socket(zmq.SUB)
+    gui_socket.connect("tcp://127.0.0.1:50001")
+    gui_socket.setsockopt(zmq.SUBSCRIBE, b"")
+    gui_poller = zmq.Poller()
+    gui_poller.register(gui_socket, zmq.POLLIN)
 
-        data = visual_socket.recvfrom(16)
-        app.visual_state = struct.unpack('<4f', data[0])
+    data = gui_socket.recv()
+    app.visual_state = pickle.loads(data)
+
+    # exit(0)
 
     cones = render_cones(state)
     formula = Formula()
@@ -190,19 +195,11 @@ if __name__ == '__main__':
             app.controls_state[0] = 1
 
     def update():
-        while True and communication == "udp":
-            app.evts = visual_poller.poll(0.)
-            if len(app.evts) == 0:
-                break
-            sock, evt = app.evts[0]
-            if evt:
-                data = visual_socket.recvfrom(16)
-                app.visual_state = struct.unpack('<4f', data[0])
-                app.update_count += 1
 
-        # app.controls_state = [0, 0, 0, 0]
+        while gui_poller.poll(0.):
+            data = gui_socket.recv()
+            app.visual_state = pickle.loads(data)
 
-        # print("sending controls: ", app.controls_state)
         data = struct.pack('<4i', *app.controls_state)
         controls_socket.sendto(data, (HOST, CONTROLS_PORT))
 

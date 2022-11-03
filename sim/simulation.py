@@ -4,6 +4,7 @@ import socket
 import struct
 import subprocess
 import os
+import json
 from pathlib import Path
 from enum import IntEnum
 import zmq
@@ -56,9 +57,10 @@ class Simulation():
             self.vision_time = 0. # var for keeping track of last time vision packat has been sent
 
         ## 2.B sending gui state to the graphical engine
-        self.gui_address = (HOST, GUI_PORT)
-        self.gui_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.gui_state = [0. for _ in range(len(GUIValues))]
+        self.context = zmq.Context()
+        self.gui_socket = self.context.socket(zmq.PUB)
+        self.gui_socket.bind("tcp://127.0.0.1:50001")
 
         ## 2.C receiving controls commands from graphical engine
         self.controls_socket, self.controls_poller = bind_udp_socket(HOST, CONTROLS_PORT)
@@ -108,8 +110,7 @@ class Simulation():
 
         # 6. update gui state and send it to the 3D engine
         self.update_gui_state()
-        data = struct.pack('<4f', *self.gui_state)
-        self.gui_socket.sendto(data, self.gui_address)
+        self.gui_socket.send(pickle.dumps(self.gui_state))
 
     def sleep(self):
         time.sleep(self.period)
