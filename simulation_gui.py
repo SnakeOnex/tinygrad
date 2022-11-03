@@ -147,13 +147,14 @@ if __name__ == '__main__':
     # 2. SETUP STATE
     state = State(args.map)
 
-    controls_addr = (HOST, CONTROLS_PORT)
-    controls_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # 3. setup communication interfaces
+
+    context = zmq.Context()
+    controls_socket = context.socket(zmq.PUB)
+    controls_socket.bind("tcp://127.0.0.1:50002")
     app.controls_state = [0, 0, 0, 0]  # go_signal, lateral, longitudinal
 
     # gui input
-    visual_socket, visual_poller = bind_udp_socket(HOST, VISUAL_PORT)
-    context = zmq.Context()
     gui_socket = context.socket(zmq.SUB)
     gui_socket.connect("tcp://127.0.0.1:50001")
     gui_socket.setsockopt(zmq.SUBSCRIBE, b"")
@@ -162,8 +163,6 @@ if __name__ == '__main__':
 
     data = gui_socket.recv()
     app.visual_state = pickle.loads(data)
-
-    # exit(0)
 
     cones = render_cones(state)
     formula = Formula()
@@ -200,8 +199,7 @@ if __name__ == '__main__':
             data = gui_socket.recv()
             app.visual_state = pickle.loads(data)
 
-        data = struct.pack('<4i', *app.controls_state)
-        controls_socket.sendto(data, (HOST, CONTROLS_PORT))
+        controls_socket.send(pickle.dumps(app.controls_state))
 
 
         # key handling

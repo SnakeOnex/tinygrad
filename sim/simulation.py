@@ -63,7 +63,12 @@ class Simulation():
         self.gui_socket.bind("tcp://127.0.0.1:50001")
 
         ## 2.C receiving controls commands from graphical engine
-        self.controls_socket, self.controls_poller = bind_udp_socket(HOST, CONTROLS_PORT)
+        context = zmq.Context()
+        self.controls_socket = context.socket(zmq.SUB)
+        self.controls_socket.connect("tcp://127.0.0.1:50002")
+        self.controls_socket.setsockopt(zmq.SUBSCRIBE, b"")
+        self.controls_poller = zmq.Poller()
+        self.controls_poller.register(self.controls_socket, zmq.POLLIN)
 
         ## 2.D CAN interaface objects
         self.CAN1 = CanInterface("data/D1.json", 0, True)
@@ -116,30 +121,24 @@ class Simulation():
         time.sleep(self.period)
 
     def handle_controls(self):
-        while True:
-            evts = self.controls_poller.poll(0.)
-            if len(evts) == 0:
-                break
-            sock, evt = evts[0]
-            if evt:
-                data = self.controls_socket.recvfrom(16)
-                controls_state = struct.unpack('<4i', data[0])
+        while self.controls_poller.poll(0.):
+            controls_state = pickle.loads(self.controls_socket.recv())
+    
+            if controls_state[0]:
+                self.go_signal()
+             
+            if self.manual:
+                # lateral control
+                if controls_state[1] == -1:
+                    self.state.steer_left()
+                elif controls_state[1] == 1:
+                    self.state.steer_right()
 
-                if controls_state[0]:
-                    self.go_signal()
-                 
-                if self.manual:
-                    # lateral control
-                    if controls_state[1] == -1:
-                        self.state.steer_left()
-                    elif controls_state[1] == 1:
-                        self.state.steer_right()
-
-                    # long control
-                    if controls_state[2] == -1:
-                        self.state.brake()
-                    elif controls_state[2] == 1:
-                        self.state.forward()
+                # long control
+                if controls_state[2] == -1:
+                    self.state.brake()
+                elif controls_state[2] == 1:
+                    self.state.forward()
 
     def update_gui_state(self):
         car_x, car_y = self.state.car_pos
