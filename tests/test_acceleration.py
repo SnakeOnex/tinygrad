@@ -30,11 +30,11 @@ def test_acceleration():
         time_since_start = time.perf_counter() - start_time
 
         # after 10 seconds send go signal
-        if time_since_start >= 8.:
+        if time_since_start >= 5.:
             sim.go_signal()
 
         # after 20 seconds end and return TRUE
-        if time_since_start >= 20.:
+        if time_since_start >= 15.:
             test_outcome = True
             break
 
@@ -75,7 +75,7 @@ def test_skidpad():
         time_since_start = time.perf_counter() - start_time
 
         # after 10 seconds send go signal
-        if time_since_start >= 8.:
+        if time_since_start >= 5.:
             sim.go_signal()
 
         # after 20 seconds end and return TRUE
