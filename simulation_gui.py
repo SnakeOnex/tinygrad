@@ -169,7 +169,7 @@ if __name__ == '__main__':
     driver = Entity(model='sphere', scale=0.2)
     text_main = Text()
     Text.size = 0.05
-    app.text_AS = Text(text="AS: OFF", origin=(3.5, -5.), color=color.red)
+    app.text_AS = Text(text="", origin=(3.5, -5.), color=color.red)
     # app.text_hit_cones = Text(text="Hit cones: {0}".format(marshall.num_of_hit_cones), origin=(-2, -9.), color=color.red)
     app.cam_mode = CameraMode.WORLD
 
@@ -188,7 +188,7 @@ if __name__ == '__main__':
         if key == 'e':
             app.AS = True
             app.text_AS.color = color.lime
-            app.text_AS.text = "AS: ON"
+            # app.text_AS.text = "AS: ON"
 
         if key == 'g':
             app.controls_state[0] = 1
