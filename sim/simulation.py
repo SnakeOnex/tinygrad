@@ -24,16 +24,16 @@ GUI_PORT = 1337
 CONTROLS_PORT = 1338
 
 class GUIValues(IntEnum):
-    car_x = 0,
-    car_y = 1,
-    car_heading = 2
-    steering_angle = 3
+    car_pos = 0,
+    car_heading = 1,
+    steering_angle = 2,
+    in_start = 3,
+    in_finish = 4
 
 class ControlsValues(IntEnum):
-    car_x = 0,
-    car_y = 1,
-    car_heading = 2
-    steering_angle = 3
+    go_signal = 0,
+    lat_control = 1,
+    long_control = 2
 
 class Simulation():
     def __init__(self, map_path, gui=False, manual=False):
@@ -80,6 +80,9 @@ class Simulation():
         # 1. update physical state of the world
         self.state.update_state(self.period)
 
+        # 1.1 trackmarshall update
+        # self.track_marshall
+
         # 2. handle controls from 3D engine
         self.handle_controls()
 
@@ -124,20 +127,20 @@ class Simulation():
         while self.controls_poller.poll(0.):
             controls_state = pickle.loads(self.controls_socket.recv())
     
-            if controls_state[0]:
+            if controls_state[ControlsValues.go_signal]:
                 self.go_signal()
              
             if self.manual:
                 # lateral control
-                if controls_state[1] == -1:
+                if controls_state[ControlsValues.lat_control] == -1:
                     self.state.steer_left()
-                elif controls_state[1] == 1:
+                elif controls_state[ControlsValues.lat_control] == 1:
                     self.state.steer_right()
 
                 # long control
-                if controls_state[2] == -1:
+                if controls_state[ControlsValues.long_control] == -1:
                     self.state.brake()
-                elif controls_state[2] == 1:
+                elif controls_state[ControlsValues.long_control] == 1:
                     self.state.forward()
 
     def update_gui_state(self):
@@ -145,8 +148,7 @@ class Simulation():
         car_heading = self.state.heading
         steering_angle = self.state.steering_angle
 
-        self.gui_state[GUIValues.car_x] = car_x
-        self.gui_state[GUIValues.car_y] = car_y
+        self.gui_state[GUIValues.car_pos] = (car_x, car_y)
         self.gui_state[GUIValues.car_heading] = car_heading
         self.gui_state[GUIValues.steering_angle] = steering_angle
 

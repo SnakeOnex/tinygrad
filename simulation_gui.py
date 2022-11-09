@@ -22,6 +22,7 @@ from sim.state import State
 
 from sim.network_helpers import connect_client, bind_udp_socket
 from sim.math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, local_to_global
+from sim.simulation import GUIValues, ControlsValues
 
 HOST = '127.0.0.1'
 VISUAL_PORT = 1337
@@ -104,10 +105,9 @@ def render_cones(state):
 
 def render_car(state, formula, driver):
 
-    car_x = state[0]
-    car_y = state[1]
-    heading = state[2]
-    steering_angle = state[3]
+    car_x, car_y = state[GUIValues.car_pos]
+    heading = state[GUIValues.car_heading]
+    steering_angle = state[GUIValues.steering_angle]
 
     heading_vec = angle_to_vector(heading)
 
@@ -148,7 +148,6 @@ if __name__ == '__main__':
     state = State(args.map)
 
     # 3. setup communication interfaces
-
     context = zmq.Context()
     controls_socket = context.socket(zmq.PUB)
     controls_socket.bind("tcp://127.0.0.1:50002")
@@ -170,7 +169,7 @@ if __name__ == '__main__':
     text_main = Text()
     Text.size = 0.05
     app.text_AS = Text(text="", origin=(3.5, -5.), color=color.red)
-    # app.text_hit_cones = Text(text="Hit cones: {0}".format(marshall.num_of_hit_cones), origin=(-2, -9.), color=color.red)
+    app.track_marshall_text = Text(text="not loaded")
     app.cam_mode = CameraMode.WORLD
 
     app.update_count = 0
@@ -191,13 +190,15 @@ if __name__ == '__main__':
             # app.text_AS.text = "AS: ON"
 
         if key == 'g':
-            app.controls_state[0] = 1
+            app.controls_state[ControlsValues.go_signal] = 1
 
     def update():
 
         while gui_poller.poll(0.):
             data = gui_socket.recv()
             app.visual_state = pickle.loads(data)
+            app.track_marshall_text.text = f"ksicht"
+
 
         controls_socket.send(pickle.dumps(app.controls_state))
 
@@ -206,19 +207,19 @@ if __name__ == '__main__':
 
         ## longitudinal controls
         if held_keys['w']:
-            app.controls_state[2] = 1
+            app.controls_state[ControlsValues.long_control] = 1
         elif held_keys['space']:
-            app.controls_state[2] = -1
+            app.controls_state[ControlsValues.long_control] = -1
         else:
-            app.controls_state[2] = 0
+            app.controls_state[ControlsValues.long_control] = 0
 
         ## lateral controls
         if held_keys['a']:
-            app.controls_state[1] = -1;
+            app.controls_state[ControlsValues.lat_control] = -1;
         elif held_keys['d']:
-            app.controls_state[1] = 1
+            app.controls_state[ControlsValues.lat_control] = 1
         else:
-            app.controls_state[1] = 0
+            app.controls_state[ControlsValues.lat_control] = 0
 
         render_car(app.visual_state, formula, driver)
 
@@ -232,11 +233,11 @@ if __name__ == '__main__':
         elif app.cam_mode == CameraMode.FIRST_PERSON:
             camera.position = driver.position
             # camera.rotation = (0.,-state.heading,0.)
-            camera.rotation = (0., -app.visual_state[2], 0.)
+            camera.rotation = (0., -app.visual_state[GUIValues.car_heading], 0.)
         elif app.cam_mode == CameraMode.THIRD_PERSON:
             rot_x, rot_y = rotate_around_point(
-                -app.visual_state[2], (0, 0), (10, 0))
+                -app.visual_state[GUIValues.car_heading], (0, 0), (10, 0))
             camera.position = driver.position + Vec3(-rot_x, 2, rot_y)
-            camera.rotation = (0., -app.visual_state[2], 0.)
+            camera.rotation = (0., -app.visual_state[GUIValues.car_heading], 0.)
 
     app.run()
