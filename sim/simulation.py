@@ -15,6 +15,7 @@ import multiprocessing.connection as connection
 from multiprocessing.resource_tracker import unregister
 from pycandb.can_interface import CanInterface
 from .state_to_can import can1_send_callbacks, can2_send_callbacks, can1_recv_callbacks
+from .track_marshall import TrackMarshall
 
 from .network_helpers import connect_client, bind_udp_socket
 # from track_marshall import Track_marshall
@@ -44,6 +45,9 @@ class Simulation():
         self.state = State(self.map_path)
         self.frequency = 100 # Hz
         self.period = 1. / self.frequency
+
+        ## 1.B setup trackmarshall
+        self.track_marshall = TrackMarshall(self.state)
 
         # 2. setup communication objects
 
