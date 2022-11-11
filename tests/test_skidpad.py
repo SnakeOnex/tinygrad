@@ -6,11 +6,11 @@ from multiprocessing import Process
 from dv_sim.sim.simulation import Simulation
 from master import main
 
-def test_acceleration():
+def test_skidpad():
     # 1. SETUP SIMULATION && BROS
 
     ## 1.A SIMULATION SETUP
-    map_path = Path("dv_sim/maps/acceleration_map.json").resolve()
+    map_path = Path("dv_sim/maps/skidpad_map.json").resolve()
     sim = Simulation(
             map_path=map_path,
             manual=False
@@ -50,8 +50,3 @@ def test_acceleration():
     # sim.context.term()
     print("closed socket")
     time.sleep(0.1)
-
-
-
-if __name__ == "__main__":
-    test_acceleration()
