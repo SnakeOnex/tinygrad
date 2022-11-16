@@ -1,5 +1,6 @@
 from pathlib import Path
 import numpy as np
+import os
 
 ##################
 # GENERAL CONFIG #
@@ -8,7 +9,7 @@ import numpy as np
 file_path = Path(__file__).parent
 
 config = {
-    "main_log_folder": Path.home() / Path("data/bros_logs")
+    "main_log_folder": Path.cwd() / Path("data/bros_logs")
 }
 
 ######################
@@ -27,7 +28,7 @@ cone_detector_opt = {
     "conf_thresh": 0.5,
     "iou_thresh": 0.15,
     "min_wh_ratio": 0.45,
-    "zoom_profile": [(0.725, 0.2625, 0.55, 0.525), (0.725, 0.7375, 0.55, 0.525)] 
+    "zoom_profile": [(0.725, 0.2625, 0.55, 0.525), (0.725, 0.7375, 0.55, 0.525)]
 }
 
 cone_localizer_opt = {
@@ -49,6 +50,3 @@ vision_node_config = {
 ##########################
 # TRACKDRIVE NODE CONFIG #
 ##########################
-
-
-

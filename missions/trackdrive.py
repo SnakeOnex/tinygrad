@@ -6,13 +6,14 @@ import math
 
 from nodes.can1_node import Can1RecvItems, Can1SendItems
 
+
 class Trackdrive():
     def __init__(self, perception_out, can1_recv_state):
         mp.Process.__init__(self)
         self.perception_out = perception_out
         self.can1_recv_state = can1_recv_state
 
-        ## CONTROLLER CONFIGURATION
+        # CONTROLLER CONFIGURATION
         self.linear_gain = 2.05
         self.nonlinear_gain = 1.5
 
@@ -34,11 +35,11 @@ class Trackdrive():
         wheel_speed = self.can1_recv_state[Can1RecvItems.wheel_speed.value]
         path = percep_data["path"]
 
-        delta, _, log = self.stanley_steering(path, wheel_speed, self.linear_gain, self.nonlinear_gain)
+        delta, _, log = self.stanley_steering(
+            path, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
         return delta, 5.
 
-            
     def stanley_steering(self, path, speed, gain, lateralGain, max_range=22.5):
         index = len(path)-1
         if index > 10:
@@ -59,16 +60,16 @@ class Trackdrive():
         else:
             nonLinear = 0
             print("Not using non-linear")
-        
+
         linear = gain * direction
         delta = linear + nonLinear
         delta *= 180/np.pi
         delta = np.clip(delta, -max_range, max_range)
 
-        log_message = { "linear" : linear,
-                        "nonlinear" : nonLinear,
-                        "lateral_offset": latOffset,
-                        "direction" : direction,
-                        "delta" : delta
-                        }
+        log_message = {"linear": linear,
+                       "nonlinear": nonLinear,
+                       "lateral_offset": latOffset,
+                       "direction": direction,
+                       "delta": delta
+                       }
         return delta, index, log_message
