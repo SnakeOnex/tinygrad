@@ -92,27 +92,31 @@ def render_cones(state):
         cone = Cone(model='models/big_orange_cone.obj', position=(c[0], 0.01, c[1]))
         cones.append(cone)
 
+    cone_mask = np.zeros((len(cones),))
+
     start_points = [Vec3(x,0,y) for x, y in state.start_line]
     start_line = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(vertices=start_points, mode='line', thickness=2))
 
     finish_points = [Vec3(x,0,y) for x, y in state.finish_line]
     finish_line = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(vertices=finish_points, mode='line', thickness=2))
 
-    car_pos = Entity(model='sphere', position=(state.car_pos[0], 0, state.car_pos[1]), scale=(0.1))
+    car_pos = Entity(model='sphere', position=(state.car_pos[0], 2.0, state.car_pos[1]), scale=(0.1))
 
-    return cones
+    return cones, cone_mask
 
 
-def render_car(state, formula, driver):
+def render_car(state, formula, driver, car_rect):
 
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
     steering_angle = state[GUIValues.steering_angle]
 
+
     heading_vec = angle_to_vector(heading)
 
-    driver.position = Vec3(car_x, 0., car_y) - 1. * \
-        vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
+    driver.position = Vec3(car_x, 0., car_y) - 1. * vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
+    # driver.position = Vec3(car_x, 0., car_y) - 0. * vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
+    # driver.position = Vec3(car_x, 1., car_y)
     driver.rotation = formula.offset_rot + Vec3(0., 0., heading)
 
     formula.position = Vec3(car_x, 0., car_y)
@@ -120,6 +124,11 @@ def render_car(state, formula, driver):
 
     formula.fl_wheel.rotation = (0., 0., steering_angle)
     formula.fr_wheel.rotation = (0., 0., steering_angle)
+
+    # draw rectangle around car
+    car_rect.position = Vec3(car_x, 0., car_y) - 0.5 * vec_to_3d(heading_vec)
+    car_rect.rotation = formula.offset_rot + Vec3(0., 0., heading)
+    # car_rect = Entity(model='quad', color=color.black, position=Vec3(car_x, 0., car_y))
 
 
 if __name__ == '__main__':
@@ -163,9 +172,12 @@ if __name__ == '__main__':
     data = gui_socket.recv()
     app.visual_state = pickle.loads(data)
 
-    cones = render_cones(state)
+    app.cones, app.cones_mask = render_cones(state)
     formula = Formula()
     driver = Entity(model='sphere', scale=0.2)
+    car_rect = Entity(model='cube', color=color.black, position=Vec3(state.car_pos[0], 0., state.car_pos[1]), scale=Vec3(3,1.5,0.3))
+    car_rect.enabled = False
+
     text_main = Text()
     Text.size = 0.05
     app.text_AS = Text(text="", origin=(3.5, -5.), color=color.red)
@@ -221,9 +233,26 @@ if __name__ == '__main__':
         else:
             app.controls_state[ControlsValues.lat_control] = 0
 
-        render_car(app.visual_state, formula, driver)
+        render_car(app.visual_state, formula, driver, car_rect)
 
         # text = f"Speed: {state.speed:.2f}\nSteering angle: {state.steering_angle:.2f}\nHeading: {state.heading:.2f}\n"
+        # update text
+        received_cones_mask = app.visual_state[GUIValues.cones_mask]
+        diff = np.where(received_cones_mask != app.cones_mask)[0]
+
+        for cone_idx in diff:
+            # cones[cone_idx].enabled = False
+            app.cones[cone_idx].rotation = Vec3(90.,0.,0)
+
+        app.cones_mask = received_cones_mask
+
+        trackmarshall_text = ""
+        trackmarshall_text += f"cones hit: {int(sum(app.visual_state[GUIValues.cones_mask]))}\n"
+        trackmarshall_text += f"go_signal: {int(app.visual_state[GUIValues.go_signal])}\n"
+        trackmarshall_text += f"time: {app.visual_state[GUIValues.race_time]:.2f}\n"
+        # trackmarshall_text += f"debug: {str(app.visual_state[GUIValues.debug])}\n"
+        app.track_marshall_text.text = trackmarshall_text
+
         text_main.text = text
 
         # update camera

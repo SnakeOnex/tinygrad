@@ -29,7 +29,11 @@ class GUIValues(IntEnum):
     car_heading = 1,
     steering_angle = 2,
     in_start = 3,
-    in_finish = 4
+    in_finish = 4,
+    cones_mask = 5,
+    go_signal = 6,
+    race_time = 7,
+    debug = 8
 
 class ControlsValues(IntEnum):
     go_signal = 0,
@@ -85,7 +89,7 @@ class Simulation():
         self.state.update_state(self.period)
 
         # 1.1 trackmarshall update
-        # self.track_marshall
+        self.track_marshall.update()
 
         # 2. handle controls from 3D engine
         self.handle_controls()
@@ -151,10 +155,15 @@ class Simulation():
         car_x, car_y = self.state.car_pos
         car_heading = self.state.heading
         steering_angle = self.state.steering_angle
+        cones_mask = self.track_marshall.cones_mask
 
         self.gui_state[GUIValues.car_pos] = (car_x, car_y)
         self.gui_state[GUIValues.car_heading] = car_heading
         self.gui_state[GUIValues.steering_angle] = steering_angle
+        self.gui_state[GUIValues.cones_mask] = self.track_marshall.cones_mask
+        self.gui_state[GUIValues.go_signal] = self.state.go_signal
+        self.gui_state[GUIValues.race_time] = self.track_marshall.race_time
+        self.gui_state[GUIValues.debug] = self.track_marshall.debug
 
     def go_signal(self):
         self.state.go_signal = 1

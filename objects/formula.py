@@ -7,8 +7,6 @@ from .tire import Tire
 class Formula(Entity):
     def __init__(self, **kwargs):
         super().__init__()
-        self.model = 'cube'
-        self.collider = 'box'
         self.model = 'models/whole_car.stl'
         self.scale = (0.001,0.001,0.001)
         self.color = color.orange

@@ -19,6 +19,9 @@ class State():
         self.mass = 200. # kg
         self.rotation_vector = np.array((0,0))
 
+        self.car_width = 1.3
+        self.car_length = 3.
+
         ## CAR STATE
         self.tson = True
         self.go_signal = 0
