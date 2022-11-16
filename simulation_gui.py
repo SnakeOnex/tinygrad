@@ -46,7 +46,7 @@ def world_setup():
         position=(0, 0, 0),
         scale=(200, 0, 500),
         collider='box',
-        shader=lit_with_shadows_shader
+        # shader=lit_with_shadows_shader
     )
     skybox = load_texture('models/sky.jpg')
     sky = Sky(
@@ -55,8 +55,9 @@ def world_setup():
     )
 
     pivot = Entity()
-    DirectionalLight(parent=pivot, position=(2., 10., 2.),
+    dl = DirectionalLight(parent=pivot, position=(2., 10., 2.),
                      shadows=True, rotation=(90., 0., 0.))
+    dl.disable()
 
 
 def render_path(path_list, path_entity):
@@ -250,7 +251,7 @@ if __name__ == '__main__':
         trackmarshall_text += f"cones hit: {int(sum(app.visual_state[GUIValues.cones_mask]))}\n"
         trackmarshall_text += f"go_signal: {int(app.visual_state[GUIValues.go_signal])}\n"
         trackmarshall_text += f"time: {app.visual_state[GUIValues.race_time]:.2f}\n"
-        # trackmarshall_text += f"debug: {str(app.visual_state[GUIValues.debug])}\n"
+        trackmarshall_text += f"debug: {str(app.visual_state[GUIValues.debug])}\n"
         app.track_marshall_text.text = trackmarshall_text
 
         text_main.text = text
