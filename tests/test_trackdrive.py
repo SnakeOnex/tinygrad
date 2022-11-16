@@ -34,7 +34,7 @@ def test_trackdrive():
             sim.go_signal()
 
         # after 20 seconds end and return TRUE
-        if time_since_start >= 25.:
+        if time_since_start >= 50.:
             test_outcome = True
             break
 
