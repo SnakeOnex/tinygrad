@@ -30,11 +30,11 @@ def test_trackdrive():
         time_since_start = time.perf_counter() - start_time
 
         # after 10 seconds send go signal
-        if time_since_start >= 5.:
+        if time_since_start >= 10.:
             sim.go_signal()
 
         # after 20 seconds end and return TRUE
-        if time_since_start >= 50.:
+        if time_since_start >= 55.:
             test_outcome = True
             break
 
