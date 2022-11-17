@@ -1,5 +1,6 @@
 import argparse
 from sim.simulation import Simulation
+from pathlib import Path
 import time
 
 if __name__ == '__main__':
@@ -11,7 +12,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     sim = Simulation(map_path=args.map, manual=args.manual,
-                     config_json=args.config_json)
+                     config_json=Path('sim_config.json').resolve())
 
     if args.gui:
         sim.launch_gui()

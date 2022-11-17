@@ -53,7 +53,7 @@ class Simulation():
         self.track_marshall = TrackMarshall(self.state)
 
         # 1.C load config json file
-        with open(Path(config_json).resolve(), 'r') as f:
+        with open(config_json, 'r') as f:
             config = json.loads(f.read())
 
         # 2. setup communication objects
