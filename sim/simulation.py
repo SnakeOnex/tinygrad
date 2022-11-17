@@ -20,9 +20,6 @@ from .track_marshall import TrackMarshall
 from .network_helpers import connect_client, bind_udp_socket
 # from track_marshall import Track_marshall
 
-HOST = '127.0.0.1'
-GUI_PORT = 1337
-CONTROLS_PORT = 1338
 
 class GUIValues(IntEnum):
     car_pos = 0,
@@ -35,52 +32,60 @@ class GUIValues(IntEnum):
     race_time = 7,
     debug = 8
 
+
 class ControlsValues(IntEnum):
     go_signal = 0,
     lat_control = 1,
     long_control = 2
 
+
 class Simulation():
-    def __init__(self, map_path, gui=False, manual=False):
+    def __init__(self, map_path, gui=False, manual=False, tcp_config=None, can_config=None):
         self.map_path = Path(map_path)
         self.manual = manual
+        self.tcp_config = tcp_config
+        self.can_config = can_config
 
         # 1. setup physics state
         self.state = State(self.map_path)
-        self.frequency = 100 # Hz
+        self.frequency = 100  # Hz
         self.period = 1. / self.frequency
 
-        ## 1.B setup trackmarshall
+        # 1.B setup trackmarshall
         self.track_marshall = TrackMarshall(self.state)
 
         # 2. setup communication objects
 
-        ## 2.A vision simulation address
+        # 2.A vision simulation address
         if not self.manual:
-            vision_address = ("localhost", 50000)
             self.context = zmq.Context()
             self.vision_socket = self.context.socket(zmq.PUB)
-            self.vision_socket.bind("tcp://127.0.0.1:50000")
-            self.vision_freq = 30 # Hz
-            self.vision_time = 0. # var for keeping track of last time vision packat has been sent
+            self.vision_socket.bind(
+                tcp_config["TCP_HOST"]+":"+tcp_config["VISION_PORT"])
+            self.vision_freq = 30  # Hz
+            self.vision_time = 0.  # var for keeping track of last time vision packat has been sent
 
-        ## 2.B sending gui state to the graphical engine
+        # 2.B sending gui state to the graphical engine
         self.gui_state = [0. for _ in range(len(GUIValues))]
         self.context = zmq.Context()
         self.gui_socket = self.context.socket(zmq.PUB)
-        self.gui_socket.bind("tcp://127.0.0.1:50001")
+        self.gui_socket.bind(
+            tcp_config["TCP_HOST"]+":"+tcp_config["GUI_PORT"])
 
-        ## 2.C receiving controls commands from graphical engine
+        # 2.C receiving controls commands from graphical engine
         context = zmq.Context()
         self.controls_socket = context.socket(zmq.SUB)
-        self.controls_socket.connect("tcp://127.0.0.1:50002")
+        self.controls_socket.connect(
+            tcp_config["TCP_HOST"]+":"+tcp_config["CONTROLS_PORT"])
         self.controls_socket.setsockopt(zmq.SUBSCRIBE, b"")
         self.controls_poller = zmq.Poller()
         self.controls_poller.register(self.controls_socket, zmq.POLLIN)
 
-        ## 2.D CAN interaface objects
-        self.CAN1 = CanInterface("data/D1.json", 0, True)
-        self.CAN2 = CanInterface("data/D1.json", 1, True)
+        # 2.D CAN interaface objects
+        self.CAN1 = CanInterface(
+            can_config["CAN_JSON"], can_config["CAN1_ID"], True)
+        self.CAN2 = CanInterface(
+            can_config["CAN_JSON"], can_config["CAN2_ID"], True)
 
     def step(self):
         curr_time = time.perf_counter()
@@ -100,12 +105,12 @@ class Simulation():
             self.vision_time = curr_time
 
         # 4. send CAN1 & CAN2 messages
-        ## CAN1 messages
+        # CAN1 messages
         for msg_name, callback_fn in can1_send_callbacks.items():
             values = callback_fn(self.state)
             self.CAN1.send_can_msg(values, self.CAN1.name2id[msg_name])
 
-        ## CAN2 messages
+        # CAN2 messages
         for msg_name, callback_fn in can2_send_callbacks.items():
             values = callback_fn(self.state)
             self.CAN2.send_can_msg(values, self.CAN2.name2id[msg_name])
@@ -122,7 +127,8 @@ class Simulation():
 
             # update state
             values = self.CAN1.read_can_msg(can_msg)
-            can1_recv_callbacks[self.CAN1.id2name[can_msg.arbitration_id]](self.state, values)
+            can1_recv_callbacks[self.CAN1.id2name[can_msg.arbitration_id]](
+                self.state, values)
 
         # 6. update gui state and send it to the 3D engine
         self.update_gui_state()
@@ -134,10 +140,10 @@ class Simulation():
     def handle_controls(self):
         while self.controls_poller.poll(0.):
             controls_state = pickle.loads(self.controls_socket.recv())
-    
+
             if controls_state[ControlsValues.go_signal]:
                 self.go_signal()
-             
+
             if self.manual:
                 # lateral control
                 if controls_state[ControlsValues.lat_control] == -1:
@@ -169,7 +175,7 @@ class Simulation():
         self.state.go_signal = 1
 
     def emergency_brake(self):
-        raise NotImplementedErorr()
+        raise NotImplementedError
 
     def launch_gui(self):
         sim_gui_path = Path(__file__).parent.parent
@@ -178,12 +184,13 @@ class Simulation():
 
         cwd = os.getcwd()
         os.chdir(sim_gui_path)
-        self.p = subprocess.Popen(["python", "simulation_gui.py", "--map", self.map_path])
+        self.p = subprocess.Popen(
+            ["python", "simulation_gui.py", "--map", self.map_path])
         os.chdir(cwd)
-
 
     def terminate_gui(self):
         self.p.terminate()
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()

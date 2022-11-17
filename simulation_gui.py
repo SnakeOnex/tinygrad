@@ -1,5 +1,6 @@
 from ursina import *
 from ursina.shaders import lit_with_shadows_shader
+import sim_config
 
 import multiprocessing.connection as connection
 from multiprocessing import shared_memory
@@ -24,9 +25,6 @@ from sim.network_helpers import connect_client, bind_udp_socket
 from sim.math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, local_to_global
 from sim.simulation import GUIValues, ControlsValues
 
-HOST = '127.0.0.1'
-VISUAL_PORT = 1337
-CONTROLS_PORT = 1338
 
 class CameraMode(Enum):
     WORLD = 0
@@ -36,6 +34,7 @@ class CameraMode(Enum):
     def next(self):
         v = self.value
         return CameraMode((v + 1) % 3)
+
 
 def world_setup():
     ground = Entity(
@@ -56,7 +55,7 @@ def world_setup():
 
     pivot = Entity()
     dl = DirectionalLight(parent=pivot, position=(2., 10., 2.),
-                     shadows=True, rotation=(90., 0., 0.))
+                          shadows=True, rotation=(90., 0., 0.))
     dl.disable()
 
 
@@ -78,30 +77,37 @@ def render_cones(state):
     cones = []
     # 0.01
     for c in state.yellow_cones:
-        cone = Cone(model='models/yellow_cone.obj', position=Vec3(c[0], 0.01, c[1]))
+        cone = Cone(model='models/yellow_cone.obj',
+                    position=Vec3(c[0], 0.01, c[1]))
         cones.append(cone)
 
     for c in state.blue_cones:
-        cone = Cone(model='models/blue_cone.obj', position=Vec3(c[0], 0.01, c[1]))
+        cone = Cone(model='models/blue_cone.obj',
+                    position=Vec3(c[0], 0.01, c[1]))
         cones.append(cone)
 
     for c in state.orange_cones:
-        cone = Cone(model='models/orange_cone.obj', position=(c[0], 0.01, c[1]))
+        cone = Cone(model='models/orange_cone.obj',
+                    position=(c[0], 0.01, c[1]))
         cones.append(cone)
 
     for c in state.big_cones:
-        cone = Cone(model='models/big_orange_cone.obj', position=(c[0], 0.01, c[1]))
+        cone = Cone(model='models/big_orange_cone.obj',
+                    position=(c[0], 0.01, c[1]))
         cones.append(cone)
 
     cone_mask = np.zeros((len(cones),))
 
-    start_points = [Vec3(x,0,y) for x, y in state.start_line]
-    start_line = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(vertices=start_points, mode='line', thickness=2))
+    start_points = [Vec3(x, 0, y) for x, y in state.start_line]
+    start_line = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
+        vertices=start_points, mode='line', thickness=2))
 
-    finish_points = [Vec3(x,0,y) for x, y in state.finish_line]
-    finish_line = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(vertices=finish_points, mode='line', thickness=2))
+    finish_points = [Vec3(x, 0, y) for x, y in state.finish_line]
+    finish_line = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
+        vertices=finish_points, mode='line', thickness=2))
 
-    car_pos = Entity(model='sphere', position=(state.car_pos[0], 2.0, state.car_pos[1]), scale=(0.1))
+    car_pos = Entity(model='sphere', position=(
+        state.car_pos[0], 2.0, state.car_pos[1]), scale=(0.1))
 
     return cones, cone_mask
 
@@ -112,10 +118,10 @@ def render_car(state, formula, driver, car_rect):
     heading = state[GUIValues.car_heading]
     steering_angle = state[GUIValues.steering_angle]
 
-
     heading_vec = angle_to_vector(heading)
 
-    driver.position = Vec3(car_x, 0., car_y) - 1. * vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
+    driver.position = Vec3(car_x, 0., car_y) - 1. * \
+        vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
     # driver.position = Vec3(car_x, 0., car_y) - 0. * vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
     # driver.position = Vec3(car_x, 1., car_y)
     driver.rotation = formula.offset_rot + Vec3(0., 0., heading)
@@ -160,14 +166,19 @@ if __name__ == '__main__':
     state = State(args.map)
 
     # 3. setup communication interfaces
+
+    # controls
     context = zmq.Context()
     controls_socket = context.socket(zmq.PUB)
-    controls_socket.bind("tcp://127.0.0.1:50002")
-    app.controls_state = [0, 0, 0, 0]  # go_signal, lateral, longitudinal
+    controls_socket.bind(
+        sim_config.tcp_config["TCP_HOST"]+":"+sim_config.tcp_config["CONTROLS_PORT"])
+    # go_signal, lateral, longitudinal
+    app.controls_state = [0 for _ in range(len(ControlsValues))]
 
     # gui input
     gui_socket = context.socket(zmq.SUB)
-    gui_socket.connect("tcp://127.0.0.1:50001")
+    gui_socket.connect(
+        sim_config.tcp_config["TCP_HOST"]+":"+sim_config.tcp_config["GUI_PORT"])
     gui_socket.setsockopt(zmq.SUBSCRIBE, b"")
     gui_poller = zmq.Poller()
     gui_poller.register(gui_socket, zmq.POLLIN)
@@ -178,7 +189,8 @@ if __name__ == '__main__':
     app.cones, app.cones_mask = render_cones(state)
     formula = Formula()
     driver = Entity(model='sphere', scale=0.2)
-    car_rect = Entity(model='cube', color=color.black, position=Vec3(state.car_pos[0], 0., state.car_pos[1]), scale=Vec3(3,1.5,0.3))
+    car_rect = Entity(model='cube', color=color.black, position=Vec3(
+        state.car_pos[0], 0., state.car_pos[1]), scale=Vec3(3, 1.5, 0.3))
     car_rect.enabled = False
 
     text_main = Text()
@@ -214,13 +226,11 @@ if __name__ == '__main__':
             app.visual_state = pickle.loads(data)
             app.track_marshall_text.text = f"ksicht"
 
-
         controls_socket.send(pickle.dumps(app.controls_state))
-
 
         # key handling
 
-        ## longitudinal controls
+        # longitudinal controls
         if held_keys['w']:
             app.controls_state[ControlsValues.long_control] = 1
         elif held_keys['space']:
@@ -228,9 +238,9 @@ if __name__ == '__main__':
         else:
             app.controls_state[ControlsValues.long_control] = 0
 
-        ## lateral controls
+        # lateral controls
         if held_keys['a']:
-            app.controls_state[ControlsValues.lat_control] = -1;
+            app.controls_state[ControlsValues.lat_control] = -1
         elif held_keys['d']:
             app.controls_state[ControlsValues.lat_control] = 1
         else:
@@ -245,7 +255,7 @@ if __name__ == '__main__':
 
         for cone_idx in diff:
             # cones[cone_idx].enabled = False
-            app.cones[cone_idx].rotation = Vec3(90.,0.,0)
+            app.cones[cone_idx].rotation = Vec3(90., 0., 0)
 
         app.cones_mask = received_cones_mask
 
@@ -265,11 +275,13 @@ if __name__ == '__main__':
         elif app.cam_mode == CameraMode.FIRST_PERSON:
             camera.position = driver.position
             # camera.rotation = (0.,-state.heading,0.)
-            camera.rotation = (0., -app.visual_state[GUIValues.car_heading], 0.)
+            camera.rotation = (
+                0., -app.visual_state[GUIValues.car_heading], 0.)
         elif app.cam_mode == CameraMode.THIRD_PERSON:
             rot_x, rot_y = rotate_around_point(
                 -app.visual_state[GUIValues.car_heading], (0, 0), (10, 0))
             camera.position = driver.position + Vec3(-rot_x, 2, rot_y)
-            camera.rotation = (0., -app.visual_state[GUIValues.car_heading], 0.)
+            camera.rotation = (
+                0., -app.visual_state[GUIValues.car_heading], 0.)
 
     app.run()
