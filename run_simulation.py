@@ -1,17 +1,17 @@
 import argparse
 from sim.simulation import Simulation
 import time
-import sim_config
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--map', type=str, default='maps/circle_map.json')
     parser.add_argument('--gui', action='store_true')
     parser.add_argument('--manual', action='store_true')
+    parser.add_argument('--config_json', type=str, default='sim_config.json')
     args = parser.parse_args()
 
     sim = Simulation(map_path=args.map, manual=args.manual,
-                     tcp_config=sim_config.tcp_config, can_config=sim_config.can_config)
+                     config_json=args.config_json)
 
     if args.gui:
         sim.launch_gui()

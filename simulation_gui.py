@@ -1,6 +1,5 @@
 from ursina import *
 from ursina.shaders import lit_with_shadows_shader
-import sim_config
 
 import multiprocessing.connection as connection
 from multiprocessing import shared_memory
@@ -10,6 +9,7 @@ import select
 import zmq
 
 from enum import Enum
+import json
 import sys
 import numpy as np
 import random
@@ -143,7 +143,7 @@ def render_car(state, formula, driver, car_rect):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--map', type=str, default='maps/circle_map.json')
-    parser.add_argument('--tcp', action='store_true')
+    parser.add_argument('--config_json', type=str, default='sim_config.json')
     args = parser.parse_args()
 
     app = Ursina()
@@ -154,6 +154,8 @@ if __name__ == '__main__':
     window.size = (1280, 720)
     window.borderless = False
     window.fps_counter.enabled = True
+    with open(Path(args.config_json).resolve(), 'r') as f:
+        config = json.loads(f.read())
     app.AS = False
 
     if random.random() < 0.01:
@@ -171,14 +173,14 @@ if __name__ == '__main__':
     context = zmq.Context()
     controls_socket = context.socket(zmq.PUB)
     controls_socket.bind(
-        sim_config.tcp_config["TCP_HOST"]+":"+sim_config.tcp_config["CONTROLS_PORT"])
+        config["TCP_HOST"]+":"+config["CONTROLS_PORT"])
     # go_signal, lateral, longitudinal
     app.controls_state = [0 for _ in range(len(ControlsValues))]
 
     # gui input
     gui_socket = context.socket(zmq.SUB)
     gui_socket.connect(
-        sim_config.tcp_config["TCP_HOST"]+":"+sim_config.tcp_config["GUI_PORT"])
+        config["TCP_HOST"]+":"+config["GUI_PORT"])
     gui_socket.setsockopt(zmq.SUBSCRIBE, b"")
     gui_poller = zmq.Poller()
     gui_poller.register(gui_socket, zmq.POLLIN)
