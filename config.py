@@ -48,7 +48,7 @@ vision_node_config = {
 }
 
 tcp_config = {
-    "TCP_HOST": '127.0.0.1',
+    "TCP_HOST": 'tcp://127.0.0.1',
     "VISION_PORT": '50000',
     "GUI_PORT": '50001',
     "CONTROLS_PORT": '50002',

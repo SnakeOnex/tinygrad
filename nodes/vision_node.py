@@ -84,7 +84,7 @@ class VisionNode(mp.Process):
     def run_simulation(self):
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
-        socket.connect(tcp["TCP_HOST"]+":"+tcp["VISION_PORT"])
+        socket.connect(tcp["TCP_HOST"] + ":" + tcp["VISION_PORT"])
         socket.setsockopt(zmq.SUBSCRIBE, b"")
 
         while True:
