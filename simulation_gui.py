@@ -46,7 +46,7 @@ def world_setup():
         position=(0, 0, 0),
         scale=(200, 0, 500),
         collider='box',
-        # shader=lit_with_shadows_shader
+        shader=lit_with_shadows_shader
     )
     skybox = load_texture('models/sky.jpg')
     sky = Sky(
@@ -125,6 +125,8 @@ def render_car(state, formula, driver, car_rect):
 
     formula.fl_wheel.rotation = (0., 0., steering_angle)
     formula.fr_wheel.rotation = (0., 0., steering_angle)
+
+    formula.steering_wheel.rotation = (steering_angle, 0., 0.)
 
     # draw rectangle around car
     car_rect.position = Vec3(car_x, 0., car_y) - 0.5 * vec_to_3d(heading_vec)
