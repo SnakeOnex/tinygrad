@@ -32,22 +32,32 @@ class GUIValues(IntEnum):
     race_time = 7,
     debug = 8
 
-
 class ControlsValues(IntEnum):
     go_signal = 0,
     lat_control = 1,
     long_control = 2
 
+class MissionValue(IntEnum):
+    NoValue = 0,
+    Acceleration = 1,
+    Skidpad = 2,
+    Autocross = 3,
+    Trackdrive = 4,
+    EBS_Test = 5,
+    Inspection = 6,
+    Manual = 7,
+    Disco = 8,
+    Donuts = 9
 
 class Simulation():
-    def __init__(self, map_path, gui=False, manual=False, tcp_config=None, can_config=None):
+    def __init__(self, map_path, mission=MissionValue.Trackdrive, gui=False, manual=False, tcp_config=None, can_config=None):
         self.map_path = Path(map_path)
         self.manual = manual
         self.tcp_config = tcp_config
         self.can_config = can_config
 
         # 1. setup physics state
-        self.state = State(self.map_path)
+        self.state = State(mission, self.map_path)
         self.frequency = 100  # Hz
         self.period = 1. / self.frequency
 

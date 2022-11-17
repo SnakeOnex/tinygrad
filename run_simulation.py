@@ -1,16 +1,18 @@
 import argparse
-from sim.simulation import Simulation
+from sim.simulation import Simulation, MissionValue
 import time
 import sim_config
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--map', type=str, default='maps/circle_map.json')
     parser.add_argument('--gui', action='store_true')
     parser.add_argument('--manual', action='store_true')
+    parser.add_argument('--mission', type=str, default=MissionValue.Trackdrive)
     args = parser.parse_args()
 
-    sim = Simulation(map_path=args.map, manual=args.manual,
+    sim = Simulation(map_path=args.map, manual=args.manual, mission=args.mission,
                      tcp_config=sim_config.tcp_config, can_config=sim_config.can_config)
 
     if args.gui:

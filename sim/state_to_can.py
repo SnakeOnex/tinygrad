@@ -42,9 +42,27 @@ def state_to_RES_Status(state):
 
     return values
 
+def state_to_DSH_Status(state):
+    Voltage = 0
+    Current = 0
+    Brightness = 0
+    Missions_sel = state.mission # TODO: change to state.mission
+    TSON_INT = 0
+    START_INT = 1
+    SW1 = 0
+    SW2 = 0
+    SW3 = 0
+    SDC_in = 0
+    MCU_temperature = 0
+
+    values = [Voltage, Current, Brightness, Missions_sel, TSON_INT, START_INT, SW1, SW2, SW3, SDC_in, MCU_temperature]
+
+    return values
+
 
 can1_send_callbacks = {
     "MCR_ActualValues_A" : state_to_MCR_ActualValues_A,
+    "DSH_Status" : state_to_DSH_Status
 }
 
 can2_send_callbacks = {

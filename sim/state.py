@@ -5,7 +5,7 @@ from .math_helpers import angle_to_vector, global_to_local, rotate_around_point,
 # from cones.geometry_functions import filter_occluded_cones
 
 class State():
-    def __init__(self, map_filepath):
+    def __init__(self, mission, map_filepath):
 
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
@@ -31,6 +31,7 @@ class State():
         ### CAR SENSORS
         self.occlusion_profile = [-6., 6., 2.5, 15.]
 
+        self.mission = mission
         self.load_map(map_filepath)
 
     def update_state(self, timedelta):
@@ -101,7 +102,6 @@ class State():
 
         self.steering_control = "NEUTRAL"
         self.traction_control = "NEUTRAL"
-
 
     def load_map(self, map_filepath):
         with open(map_filepath, 'r') as f:

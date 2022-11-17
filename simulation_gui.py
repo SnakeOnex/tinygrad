@@ -35,7 +35,6 @@ class CameraMode(Enum):
         v = self.value
         return CameraMode((v + 1) % 3)
 
-
 def world_setup():
     ground = Entity(
         model='cube',
@@ -163,7 +162,7 @@ if __name__ == '__main__':
     world_setup()
 
     # 2. SETUP STATE
-    state = State(args.map)
+    state = State(0, args.map)
 
     # 3. setup communication interfaces
 
