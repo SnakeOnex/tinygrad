@@ -11,6 +11,8 @@ from cones.cone_localizer import ConeLocalizer
 from .path_planning import PathPlanner
 from tvojemama.logger import Logger, LogReader, name_to_log
 from config import vision_node_config as config
+from config import tcp_config as tcp
+
 
 class VisionNode(mp.Process):
     def __init__(self, output_queue, main_log_folder, brosbag_path=None):
@@ -21,7 +23,7 @@ class VisionNode(mp.Process):
         self.main_log_folder = main_log_folder
         self.log_opt = config["logging_opt"]
 
-        self.mode = "SIMULATION" # "BROSBAG", "CAMERA", "SIMULATION"
+        self.mode = "SIMULATION"  # "BROSBAG", "CAMERA", "SIMULATION"
 
     def initialize(self):
         print("INITTING")
@@ -37,17 +39,17 @@ class VisionNode(mp.Process):
             self.detector = ConeDetector(config["cone_detector_opt"])
             self.localizer = ConeLocalizer(config["cone_localizer_opt"])
         elif self.mode == "BROSBAG":
-            self.brosbag_gen = LogReader(name_to_log(self.log_opt["log_name"],self.brosbag_path)) if self.brosbag_path is not None else None
+            self.brosbag_gen = LogReader(name_to_log(
+                self.log_opt["log_name"], self.brosbag_path)) if self.brosbag_path is not None else None
         elif self.mode == "SIMULATION":
             # self.path_sharemem = shared_memory.ShareableList([0. for _ in range(2*5)], name="path")
             # self.path_sharemem = shared_memory.ShareableList(name="path")
             pass
 
-
-
         self.path_planner = PathPlanner(config["path_planner_opt"])
-        self.logger = Logger(log_name=self.log_opt["log_name"], log_folder_name=self.log_opt["log_folder_name"], main_folder_path=self.main_log_folder)
-        self.logger.log("CONE_DETECTOR_CONFIGURATION", config) # log config
+        self.logger = Logger(
+            log_name=self.log_opt["log_name"], log_folder_name=self.log_opt["log_folder_name"], main_folder_path=self.main_log_folder)
+        self.logger.log("CONE_DETECTOR_CONFIGURATION", config)  # log config
 
     def run(self):
         print("STARTING CONE DETECTION")
@@ -63,13 +65,14 @@ class VisionNode(mp.Process):
             elif self.mode == "CAMERA":
                 image = self.read_zed_image()
 
-            bbox_preds = self.detector.process_image(image).cpu().detach().numpy()
+            bbox_preds = self.detector.process_image(
+                image).cpu().detach().numpy()
             world_preds = self.localizer.project_bboxes(bbox_preds)
             path = self.path_planner.find_path(world_preds)
 
             self.output_queue.put(path)
 
-            cone_classes = bbox_preds[:,5].astype(int)
+            cone_classes = bbox_preds[:, 5].astype(int)
             data = {
                 "bboxes": bbox_preds,
                 "world_preds": world_preds,
@@ -81,7 +84,7 @@ class VisionNode(mp.Process):
     def run_simulation(self):
         context = zmq.Context()
         socket = context.socket(zmq.SUB)
-        socket.connect("tcp://127.0.0.1:50000")
+        socket.connect(tcp["TCP_HOST"]+":"+tcp["VISION_PORT"])
         socket.setsockopt(zmq.SUBSCRIBE, b"")
 
         while True:
@@ -100,7 +103,6 @@ class VisionNode(mp.Process):
 
             self.output_queue.put(data)
             self.logger.log("CONE_DETECTOR_FRAME", data)
-
 
     def read_zed_image(self):
         if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:
