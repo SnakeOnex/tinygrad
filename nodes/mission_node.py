@@ -15,6 +15,7 @@ from missions.skidpad import Skidpad
 from missions.autocross import Autocross
 
 from nodes.asm import ASM, AS
+from config import can_config
 
 from pycandb.can_interface import CanInterface
 
@@ -37,7 +38,7 @@ class MissionNode(mp.Process):
         self.can1_recv_name = can1_recv_name
         self.can2_recv_name = can2_recv_name
 
-        self.frequency = 10 # Hz
+        self.frequency = 10  # Hz
 
         # Autonomous State Machine
         self.ASM = ASM()
@@ -52,8 +53,10 @@ class MissionNode(mp.Process):
         self.skidpad = Skidpad(self.perception_out, self.can1_recv_state)
 
         self.missions = [None, self.acceleration, self.autocross, self.trackdrive, self.skidpad]
+        self.mission = self.missions[MissionValue.NoValue]
 
-        self.CAN1 = CanInterface("data/D1.json", 0, False)
+        self.CAN1 = CanInterface(
+            can_config["CAN_JSON"], can_config["CAN1_ID"], False)
 
     def run(self):
         self.initialize()
@@ -62,20 +65,25 @@ class MissionNode(mp.Process):
             start_time = time.perf_counter()
 
             # 1. update AS State
+
+            ## TODO: change start_button to tson_button
             self.ASM.update(start_button = self.can1_recv_state[Can1RecvItems.start_button.value], go_signal=self.can2_recv_state[Can2RecvItems.go_signal.value])
 
             if self.ASM.AS == AS.DRIVING:
                 steering_angle, speed = self.mission.loop()
-
                 self.CAN1.send_can_msg([steering_angle], self.CAN1.name2id["XVR_Control"])
                 self.CAN1.send_can_msg([0, 0, 0, 0, speed, 0], self.CAN1.name2id["XVR_SetpointsMotor_A"])
             else:
+
+                if self.mission is None and self.can1_recv_state[int(Can1RecvItems.start_button.value)] == 1:
+                    print(f"mission: {MissionValue(self.can1_recv_state[Can1RecvItems.mission.value]).name}")
+
+
                 self.mission = self.missions[int(self.can1_recv_state[Can1RecvItems.mission.value])]
-                print(f"mission: {self.mission}")
-            
+
             # 3. send XVR_STATUS
-            self.CAN1.send_can_msg([self.ASM.AS.value, 0, 0, 0, 0, 0, 0, 0], self.CAN1.name2id["XVR_Status"])
-            # print("sent XVR_STATUS")
+            self.CAN1.send_can_msg(
+                [self.ASM.AS.value, 0, 0, 0, 0, 0, 0, 0], self.CAN1.name2id["XVR_Status"])
 
             end_time = time.perf_counter()
             # print(f"loop_delta:  {(end_time - start_time)*1000}ms")

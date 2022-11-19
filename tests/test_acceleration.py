@@ -4,8 +4,9 @@ import multiprocessing
 from multiprocessing import Process
 
 from dv_sim.sim.simulation import Simulation
-from dv_sim import sim_config
+# from dv_sim import sim_config
 from master import main
+
 
 def test_acceleration():
     # 1. SETUP SIMULATION && BROS
@@ -15,17 +16,17 @@ def test_acceleration():
     map_path = Path("dv_sim/maps/acceleration_map.json").resolve()
     sim = Simulation(
             map_path=map_path,
+            mission=1,
             manual=False,
-            tcp_config=sim_config.tcp_config,
-            can_config=sim_config.can_config
+            config_json=Path("dv_sim/sim_config.json").resolve()
     )
     sim.launch_gui()
 
-    ## 1.B BROS SETUP
+    # 1.B BROS SETUP
     bros_process = Process(target=main)
     bros_process.start()
 
-    ## 2. TEST LOOP
+    # 2. TEST LOOP
     start_time = time.perf_counter()
 
     # simulation loop
@@ -46,15 +47,13 @@ def test_acceleration():
 
     assert test_outcome
 
-
-    ## 3. HOUSE KEEPING
+    # 3. HOUSE KEEPING
     bros_process.terminate()
     sim.terminate_gui()
     # sim.vision_socket.close()
     # sim.context.term()
     print("closed socket")
     time.sleep(0.1)
-
 
 
 if __name__ == "__main__":

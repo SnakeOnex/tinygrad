@@ -21,13 +21,13 @@ class ASM():
 
 			if start_button == 1:
 				self.AS = AS.READY
-				# print("ASM -> AS.READY")
+				print("ASM -> AS.READY")
 
 
 		elif self.AS == AS.READY:
 			if go_signal == 1:
 				self.AS = AS.DRIVING
-				# print("ASM -> AS.DRIVING")
+				print("ASM -> AS.DRIVING")
 
 		elif self.AS == AS.DRIVING:
 			pass
