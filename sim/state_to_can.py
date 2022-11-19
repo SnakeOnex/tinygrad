@@ -1,6 +1,8 @@
 import math
 
-## CAN1 SEND
+# CAN1 SEND
+
+
 def state_to_MCR_ActualValues_A(state):
     act_InverterStatus = 0
     act_InverterReady = 0
@@ -9,16 +11,18 @@ def state_to_MCR_ActualValues_A(state):
     # (1 / (60 * GEAR_RATIO)) * (2 * PI * 0.2)
     WHEEL_SPEED_TO_MS = 1 / (60 * 6.7) * 2 * 0.2 * math.pi
     act_Speed = int(state.speed / WHEEL_SPEED_TO_MS)
-    
+
     act_Torque = 0
     act_Power = 0
     act_MotorTemperature = 0
 
-    values = [act_InverterStatus, act_InverterReady, act_InverterErrorStatus, act_Speed, act_Torque, act_Power, act_MotorTemperature]
+    values = [act_InverterStatus, act_InverterReady, act_InverterErrorStatus,
+              act_Speed, act_Torque, act_Power, act_MotorTemperature]
     return values
 
+
 def state_to_RES_Status(state):
-    E_stop = 0 
+    E_stop = 0
     Switch = 0
 
     Go_Signal = state.go_signal
@@ -66,19 +70,22 @@ can1_send_callbacks = {
 }
 
 can2_send_callbacks = {
-    "RES_Status" : state_to_RES_Status
+    "RES_Status": state_to_RES_Status
 }
 
-## CAN1 RECV
+# CAN1 RECV
+
 
 def receive_XVR_Control(state, values):
     state.steering_angle = values[0]
 
+
 def receive_XVR_SetpointsMotor_A(state, values):
     state.speed_set_point = values[4]
-    print("received set point: ", state.speed_set_point)
+    #print("received set point: ", state.speed_set_point)
+
 
 can1_recv_callbacks = {
-    "XVR_Control" : receive_XVR_Control,
-    "XVR_SetpointsMotor_A" : receive_XVR_SetpointsMotor_A
+    "XVR_Control": receive_XVR_Control,
+    "XVR_SetpointsMotor_A": receive_XVR_SetpointsMotor_A
 }

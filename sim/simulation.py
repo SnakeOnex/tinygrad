@@ -9,7 +9,6 @@ from pathlib import Path
 from enum import IntEnum
 import zmq
 import pickle
-
 from .state import State
 import multiprocessing.connection as connection
 from multiprocessing.resource_tracker import unregister
@@ -50,11 +49,9 @@ class MissionValue(IntEnum):
     Donuts = 9
 
 class Simulation():
-    def __init__(self, map_path, mission=MissionValue.Trackdrive, gui=False, manual=False, tcp_config=None, can_config=None):
+    def __init__(self, map_path, mission=MissionValue.Trackdrive, gui=False, manual=False, config_json=None):
         self.map_path = Path(map_path)
         self.manual = manual
-        self.tcp_config = tcp_config
-        self.can_config = can_config
 
         # 1. setup physics state
         self.state = State(mission, self.map_path)
@@ -64,6 +61,10 @@ class Simulation():
         # 1.B setup trackmarshall
         self.track_marshall = TrackMarshall(self.state)
 
+        # 1.C load config json file
+        with open(config_json, 'r') as f:
+            config = json.loads(f.read())
+
         # 2. setup communication objects
 
         # 2.A vision simulation address
@@ -71,7 +72,7 @@ class Simulation():
             self.context = zmq.Context()
             self.vision_socket = self.context.socket(zmq.PUB)
             self.vision_socket.bind(
-                tcp_config["TCP_HOST"]+":"+tcp_config["VISION_PORT"])
+                config["TCP_HOST"]+":"+config["VISION_PORT"])
             self.vision_freq = 30  # Hz
             self.vision_time = 0.  # var for keeping track of last time vision packat has been sent
 
@@ -80,22 +81,22 @@ class Simulation():
         self.context = zmq.Context()
         self.gui_socket = self.context.socket(zmq.PUB)
         self.gui_socket.bind(
-            tcp_config["TCP_HOST"]+":"+tcp_config["GUI_PORT"])
+            config["TCP_HOST"]+":"+config["GUI_PORT"])
 
         # 2.C receiving controls commands from graphical engine
         context = zmq.Context()
         self.controls_socket = context.socket(zmq.SUB)
         self.controls_socket.connect(
-            tcp_config["TCP_HOST"]+":"+tcp_config["CONTROLS_PORT"])
+            config["TCP_HOST"]+":"+config["CONTROLS_PORT"])
         self.controls_socket.setsockopt(zmq.SUBSCRIBE, b"")
         self.controls_poller = zmq.Poller()
         self.controls_poller.register(self.controls_socket, zmq.POLLIN)
 
         # 2.D CAN interaface objects
         self.CAN1 = CanInterface(
-            can_config["CAN_JSON"], can_config["CAN1_ID"], True)
+            config["CAN_JSON"], config["CAN1_ID"], True)
         self.CAN2 = CanInterface(
-            can_config["CAN_JSON"], can_config["CAN2_ID"], True)
+            config["CAN_JSON"], config["CAN2_ID"], True)
 
     def step(self):
         curr_time = time.perf_counter()
@@ -195,7 +196,7 @@ class Simulation():
         cwd = os.getcwd()
         os.chdir(sim_gui_path)
         self.p = subprocess.Popen(
-            ["python", "simulation_gui.py", "--map", self.map_path])
+            ["python", "simulation_gui.py", "--map", self.map_path], stdout=subprocess.DEVNULL)
         os.chdir(cwd)
 
     def terminate_gui(self):
