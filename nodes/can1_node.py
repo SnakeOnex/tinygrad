@@ -11,6 +11,8 @@ from pycandb.can_interface import CanInterface
 class Can1RecvItems(Enum):
     wheel_speed = 0
     steering_actual = 1
+    mission = 2
+    start_button = 3
 
 class Can1SendItems(Enum):
     steering = 0
@@ -30,7 +32,7 @@ class Can1Node(mp.Process):
 
         self.message_callbacks = {
             self.CAN1.name2id["MCR_ActualValues_A"]: self.receive_MCR_ActualValues_A,
-            # self.CAN1.name2id["RES_Status"]: self.receive_MCR_ActualValues_A,
+            self.CAN1.name2id["DSH_Status"]: self.receive_DSH_Status,
         }
 
     def run(self):
@@ -50,3 +52,9 @@ class Can1Node(mp.Process):
         
         wheel_speed = float(values[3]) * WHEEL_SPEED_TO_MS
         self.can1_recv_state[Can1RecvItems.wheel_speed.value] = wheel_speed
+
+    def receive_DSH_Status(self, values):
+        mission = values[3]
+        start_button = values[5]
+        self.can1_recv_state[Can1RecvItems.mission.value] = mission
+        self.can1_recv_state[Can1RecvItems.start_button.value] = start_button

@@ -13,14 +13,21 @@ class ASM():
 	READY -> RES_GO -> 
 	"""
 	def __init__(self):
-		self.AS = AS.READY
+		# self.AS = AS.READY
+		self.AS = AS.OFF
 
-	def update(self, go_signal):
+	def update(self, start_button, go_signal):
 		if self.AS == AS.OFF:
-			pass
+
+			if start_button == 1:
+				self.AS = AS.READY
+				# print("ASM -> AS.READY")
+
+
 		elif self.AS == AS.READY:
 			if go_signal == 1:
 				self.AS = AS.DRIVING
+				# print("ASM -> AS.DRIVING")
 
 		elif self.AS == AS.DRIVING:
 			pass

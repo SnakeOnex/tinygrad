@@ -4,16 +4,20 @@ import multiprocessing
 from multiprocessing import Process
 
 from dv_sim.sim.simulation import Simulation
+from dv_sim import sim_config
 from master import main
 
 def test_acceleration():
     # 1. SETUP SIMULATION && BROS
 
     ## 1.A SIMULATION SETUP
+
     map_path = Path("dv_sim/maps/acceleration_map.json").resolve()
     sim = Simulation(
             map_path=map_path,
-            manual=False
+            manual=False,
+            tcp_config=sim_config.tcp_config,
+            can_config=sim_config.can_config
     )
     sim.launch_gui()
 

@@ -6,7 +6,7 @@ import math
 
 from nodes.can1_node import Can1RecvItems, Can1SendItems
 
-class Trackdrive():
+class Autocross():
     def __init__(self, perception_out, can1_recv_state):
         mp.Process.__init__(self)
         self.perception_out = perception_out
