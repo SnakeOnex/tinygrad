@@ -13,8 +13,6 @@ if __name__ == '__main__':
     parser.add_argument('--config_json', type=str, default='sim_config.json')
     args = parser.parse_args()
 
-    args = parser.parse_args()
-
     sim = Simulation(map_path=args.map, manual=args.manual,
                      config_json=Path('sim_config.json').resolve())
 
