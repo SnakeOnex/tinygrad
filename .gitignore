@@ -7,3 +7,4 @@ data/bros_logs/*
 missions/__init__.py
 missions/trackdrive/__init__.py
 *.pkl
+.DS_Store

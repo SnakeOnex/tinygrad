@@ -19,6 +19,7 @@ from config import can_config
 
 from pycandb.can_interface import CanInterface
 
+
 class MissionValue(IntEnum):
     NoValue = 0,
     Acceleration = 1,
@@ -30,6 +31,7 @@ class MissionValue(IntEnum):
     Manual = 7,
     Disco = 8,
     Donuts = 9
+
 
 class MissionNode(mp.Process):
     def __init__(self, perception_out, can1_recv_name, can2_recv_name):
@@ -44,15 +46,19 @@ class MissionNode(mp.Process):
         self.ASM = ASM()
 
     def initialize(self):
-        self.can1_recv_state = shared_memory.ShareableList(name=self.can1_recv_name)
-        self.can2_recv_state = shared_memory.ShareableList(name=self.can2_recv_name)
+        self.can1_recv_state = shared_memory.ShareableList(
+            name=self.can1_recv_name)
+        self.can2_recv_state = shared_memory.ShareableList(
+            name=self.can2_recv_name)
 
-        self.acceleration = Acceleration(self.perception_out, self.can1_recv_state)
+        self.acceleration = Acceleration(
+            self.perception_out, self.can1_recv_state)
         self.autocross = Autocross(self.perception_out, self.can1_recv_state)
         self.trackdrive = Trackdrive(self.perception_out, self.can1_recv_state)
         self.skidpad = Skidpad(self.perception_out, self.can1_recv_state)
 
-        self.missions = [None, self.acceleration, self.autocross, self.trackdrive, self.skidpad]
+        self.missions = [None, self.acceleration,
+                         self.autocross, self.trackdrive, self.skidpad]
         self.mission = self.missions[MissionValue.NoValue]
 
         self.CAN1 = CanInterface(
@@ -66,20 +72,24 @@ class MissionNode(mp.Process):
 
             # 1. update AS State
 
-            ## TODO: change start_button to tson_button
-            self.ASM.update(start_button = self.can1_recv_state[Can1RecvItems.start_button.value], go_signal=self.can2_recv_state[Can2RecvItems.go_signal.value])
+            # TODO: change start_button to tson_button
+            self.ASM.update(start_button=self.can1_recv_state[Can1RecvItems.start_button.value],
+                            go_signal=self.can2_recv_state[Can2RecvItems.go_signal.value])
 
             if self.ASM.AS == AS.DRIVING:
                 steering_angle, speed = self.mission.loop()
-                self.CAN1.send_can_msg([steering_angle], self.CAN1.name2id["XVR_Control"])
-                self.CAN1.send_can_msg([0, 0, 0, 0, speed, 0], self.CAN1.name2id["XVR_SetpointsMotor_A"])
+                self.CAN1.send_can_msg(
+                    [steering_angle], self.CAN1.name2id["XVR_Control"])
+                self.CAN1.send_can_msg(
+                    [0, 0, 0, 0, speed, 0], self.CAN1.name2id["XVR_SetpointsMotor_A"])
             else:
 
                 if self.mission is None and self.can1_recv_state[int(Can1RecvItems.start_button.value)] == 1:
-                    print(f"mission: {MissionValue(self.can1_recv_state[Can1RecvItems.mission.value]).name}")
+                    print(
+                        f"mission: {MissionValue(self.can1_recv_state[Can1RecvItems.mission.value]).name}")
 
-
-                self.mission = self.missions[int(self.can1_recv_state[Can1RecvItems.mission.value])]
+                self.mission = self.missions[int(
+                    self.can1_recv_state[Can1RecvItems.mission.value])]
 
             # 3. send XVR_STATUS
             self.CAN1.send_can_msg(
