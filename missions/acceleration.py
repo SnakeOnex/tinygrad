@@ -17,7 +17,7 @@ class Acceleration():
         self.linear_gain = 2.05
         self.nonlinear_gain = 1.5
 
-    def loop(self):
+    def loop(self, world_state):
         """
         args:
           vision output (path, cone positions)
@@ -26,17 +26,10 @@ class Acceleration():
           wheelspeed_setpoint
         """
         # 1. receive perception data
-
-        percep_data = self.perception_out.get()
-
-        while not self.perception_out.empty():
-            percep_data = self.perception_out.get()
-
         wheel_speed = self.can1_recv_state[Can1RecvItems.wheel_speed.value]
-        path = percep_data["path"]
-
+        # consider moving wheel speed to mission node
         delta, _, log = self.stanley_steering(
-            path, wheel_speed, self.linear_gain, self.nonlinear_gain)
+            world_state["path"], wheel_speed, self.linear_gain, self.nonlinear_gain)
 
         return delta, 5.
 

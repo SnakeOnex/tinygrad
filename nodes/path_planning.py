@@ -1,6 +1,7 @@
 import numpy as np
 import warnings
 
+
 class PathPlanning(object):
     def __init__(self, start_point, clockwise=-1, filling_cones_distance=3.5, movement_direction="x", debugging=False):
         """
@@ -48,11 +49,13 @@ class PathPlanning(object):
 
     def points_above_normal(self, points):
         return points[
-            np.sign((points[:, 1] - self.k * points[:, 0] - self.c)) == np.sign(self.k + 1e-30) * self.clockwise
+            np.sign((points[:, 1] - self.k * points[:, 0] - self.c)
+                    ) == np.sign(self.k + 1e-30) * self.clockwise
         ]
 
     def find_closest_one(self, points):
-        closest_index = np.argmin(np.linalg.norm(points - self.start_points[-1], axis=1))
+        closest_index = np.argmin(np.linalg.norm(
+            points - self.start_points[-1], axis=1))
         closest_cone = points[closest_index]
         return closest_cone
 
@@ -75,7 +78,8 @@ class PathPlanning(object):
         self.c = c
 
     def check_direction(self):
-        if self.k is not None and (self.k - self.k_past) == 0:  # and not(self.auxiliary_variable):
+        # and not(self.auxiliary_variable):
+        if self.k is not None and (self.k - self.k_past) == 0:
             self.clockwise = -self.clockwise
 
     def find_next_center(self, pointsB, pointsY, step=None, verbose=True):
@@ -154,7 +158,8 @@ class PathPlanning(object):
         # step 2)
         if n_steps > 1:
             try:
-                self.find_line_parameters(b_0, y_0, normal=False)  # special case of separate line for 2nd step
+                # special case of separate line for 2nd step
+                self.find_line_parameters(b_0, y_0, normal=False)
                 B_hat = self.points_above_normal(B)
                 Y_hat = self.points_above_normal(Y)
                 b_1 = self.find_closest_one(B_hat)
@@ -217,34 +222,38 @@ class PathPlanning(object):
                 vec2 = vec2 / np.linalg.norm(vec2)
                 angle = np.arccos(np.dot(vec1, vec2)) / 2
                 if yellow:
-                    vec = np.matmul(np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]), vec2)
+                    vec = np.matmul(np.array(
+                        [[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]), vec2)
                 else:
                     vec = np.matmul(
-                        np.array([[np.cos(-angle), -np.sin(-angle)], [np.sin(-angle), np.cos(-angle)]]), vec2
+                        np.array([[np.cos(-angle), -np.sin(-angle)],
+                                 [np.sin(-angle), np.cos(-angle)]]), vec2
                     )
 
-            to_fill = np.vstack((to_fill, full[idx, :] + vec * self.filling_cones_distance))
+            to_fill = np.vstack(
+                (to_fill, full[idx, :] + vec * self.filling_cones_distance))
         # print(to_fill, full)
         if yellow:
             return to_fill, full
         else:
             return full, to_fill
 
+
 class PathPlanner():
     def __init__(self, opt):
         self.n_steps = opt["n_steps"]
 
     def find_path(self, cones):
-        planner = PathPlanning(np.array([0,0]))
+        planner = PathPlanning(np.array([0, 0]))
 
-        blue_cones = cones[cones[:,2] == 1, :]
-        yellow_cones = cones[cones[:,2] == 0, :]
+        blue_cones = cones[cones[:, 2] == 1, :]
+        yellow_cones = cones[cones[:, 2] == 0, :]
 
         try:
-            planner.find_path(blue_cones[:, :2], yellow_cones[:,:2], n_steps=self.n_steps)
+            planner.find_path(
+                blue_cones[:, :2], yellow_cones[:, :2], n_steps=self.n_steps)
             path = np.vstack(planner.start_points)
         except:
             path = np.array([[0., 0.]])
 
         return path
-

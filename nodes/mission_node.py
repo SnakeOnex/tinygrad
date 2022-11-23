@@ -1,6 +1,8 @@
 import multiprocessing as mp
 from multiprocessing import shared_memory
+import pickle
 import numpy as np
+import zmq
 import sys
 import math
 import time
@@ -16,6 +18,7 @@ from missions.autocross import Autocross
 
 from nodes.asm import ASM, AS
 from config import can_config
+from config import tcp_config
 
 from pycandb.can_interface import CanInterface
 
@@ -64,6 +67,11 @@ class MissionNode(mp.Process):
         self.CAN1 = CanInterface(
             can_config["CAN_JSON"], can_config["CAN1_ID"], False)
 
+        self.context = zmq.Context()
+        self.debug_socket = self.context.socket(zmq.PUB)
+        self.debug_socket.bind(
+            tcp_config["TCP_HOST"]+":"+tcp_config["AS_DEBUG_PORT"])
+
     def run(self):
         self.initialize()
 
@@ -77,7 +85,14 @@ class MissionNode(mp.Process):
                             go_signal=self.can2_recv_state[Can2RecvItems.go_signal.value])
 
             if self.ASM.AS == AS.DRIVING:
-                steering_angle, speed = self.mission.loop()
+                percep_data = self.perception_out.get()
+                while not self.perception_out.empty():
+                    percep_data = self.perception_out.get()
+
+                steering_angle, speed = self.mission.loop(percep_data)
+
+                self.debug_socket.send(pickle.dumps(percep_data))
+
                 self.CAN1.send_can_msg(
                     [steering_angle], self.CAN1.name2id["XVR_Control"])
                 self.CAN1.send_can_msg(
