@@ -35,6 +35,7 @@ class CameraMode(Enum):
         v = self.value
         return CameraMode((v + 1) % 3)
 
+
 def world_setup():
     ground = Entity(
         model='cube',
@@ -184,6 +185,15 @@ if __name__ == '__main__':
     gui_poller = zmq.Poller()
     gui_poller.register(gui_socket, zmq.POLLIN)
 
+    # autonomous debug socket
+
+    as_debug_socket = context.socket(zmq.SUB)
+    as_debug_socket.connect(
+        config["TCP_HOST"]+":"+config["AS_DEBUG_PORT"])
+    as_debug_socket.setsockopt(zmq.SUBSCRIBE, b"")
+    as_debug_poller = zmq.Poller()
+    as_debug_poller.register(as_debug_socket, zmq.POLLIN)
+
     data = gui_socket.recv()
     app.visual_state = pickle.loads(data)
 
@@ -228,6 +238,11 @@ if __name__ == '__main__':
             app.track_marshall_text.text = f"ksicht"
 
         controls_socket.send(pickle.dumps(app.controls_state))
+
+        # TODO: Implement visualization of path planning, cone detections and autonomous debug info
+        # while as_debug_poller.poll(0.):
+        #    as_debug_data = as_debug_socket.recv()
+        #   print(pickle.dumps(as_debug_data))
 
         # key handling
 
