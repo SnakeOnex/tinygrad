@@ -60,15 +60,12 @@ def world_setup():
 
 
 def render_path(path_list, path_entity):
-    path = np.array([[app.path_mem[i] for i in range(0, len(app.path_mem)//2)],
-                    [app.path_mem[i] for i in range(len(app.path_mem)//2, len(app.path_mem))]]).T
-
+    path = path_list
     path[:, 0] *= -1
     path = local_to_global(path, state.car_pos, state.heading)
     path = [vec_to_3d(p, y=0.01) for p in path]
 
     # print("path: ", path)
-    # path_entity = Entity(shader=lit_with_shadows_shader,color=color.red,model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line', thickness=5,colors=[color.red, color.red]))
     path_entity.model.vertices = path
     return path
 
@@ -202,6 +199,8 @@ if __name__ == '__main__':
     driver = Entity(model='sphere', scale=0.2)
     car_rect = Entity(model='cube', color=color.black, position=Vec3(
         state.car_pos[0], 0., state.car_pos[1]), scale=Vec3(3, 1.5, 0.3))
+    app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(vertices=[
+        [0., 0., 0.], [0., 0., 0.]], mode='line', thickness=50, colors=[color.red, color.red, color.red, color.red, color.red]))
     car_rect.enabled = False
 
     text_main = Text()
@@ -241,8 +240,11 @@ if __name__ == '__main__':
 
         # TODO: Implement visualization of path planning, cone detections and autonomous debug info
         while as_debug_poller.poll(0.):
-            as_debug_data = as_debug_socket.recv()
-            print(pickle.dumps(as_debug_data))
+            as_debug_data = pickle.loads(as_debug_socket.recv())
+            path = render_path(as_debug_data['path'], app.path_entity)
+            app.path_entity.model = Mesh(vertices=path, mode='line', thickness=50, colors=[
+                                         color.red, color.red, color.red, color.red, color.red])
+            print(app.path_entity.model.vertices)
 
         # key handling
 
