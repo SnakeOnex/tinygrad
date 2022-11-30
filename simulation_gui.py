@@ -240,9 +240,9 @@ if __name__ == '__main__':
         controls_socket.send(pickle.dumps(app.controls_state))
 
         # TODO: Implement visualization of path planning, cone detections and autonomous debug info
-        # while as_debug_poller.poll(0.):
-        #    as_debug_data = as_debug_socket.recv()
-        #   print(pickle.dumps(as_debug_data))
+        while as_debug_poller.poll(0.):
+            as_debug_data = as_debug_socket.recv()
+            print(pickle.dumps(as_debug_data))
 
         # key handling
 
