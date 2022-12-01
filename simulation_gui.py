@@ -59,13 +59,18 @@ def world_setup():
     dl.disable()
 
 
-def compute_path(path, state):
+def compute_as_state(as_debug, state):
+    path = as_debug['path']
+    cone_pos = as_debug['world_preds'][:,:2]
+
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
     path[:, 0] *= -1
     path = local_to_global(path, (car_x, car_y), heading)
+    cone_pos = local_to_global(cone_pos, (car_x, car_y), heading)
     path = [vec_to_3d(p, y=0.01) for p in path]
-    return path
+    cones = [vec_to_3d(cone, y=1.00) for cone in cone_pos]
+    return path, cones
 
 
 def render_cones(state):
@@ -239,10 +244,13 @@ if __name__ == '__main__':
         # TODO: Implement visualization of path planning, cone detections and autonomous debug info
         while as_debug_poller.poll(0.):
             as_debug_data = pickle.loads(as_debug_socket.recv())
-            path = compute_path(
-                as_debug_data['path'], app.visual_state)
+            path, cones = compute_as_state(
+                as_debug_data, app.visual_state)
             app.path_entity.model = Mesh(vertices=path, mode='line', thickness=10, colors=[
                                          color.white, color.white, color.white, color.white, color.white])
+
+            for cone in cones:
+                Entity(model='cube', color=color.black, position=cone, scale=Vec3(1, 1.0, 1.0))
 
         # key handling
 
