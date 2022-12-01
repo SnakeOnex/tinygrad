@@ -61,8 +61,11 @@ def world_setup():
 
 def compute_as_state(as_debug, state):
     path = as_debug['path']
-    cone_pos = as_debug['world_preds'][:,:2]
-
+    cone_pos = as_debug['world_preds'][:, :2]
+    if cone_pos.shape[0] >= 40:
+        cone_count = 40
+    else:
+        cone_count = cone_pos.shape[0]
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
     path[:, 0] *= -1
@@ -70,7 +73,7 @@ def compute_as_state(as_debug, state):
     cone_pos = local_to_global(cone_pos, (car_x, car_y), heading)
     path = [vec_to_3d(p, y=0.01) for p in path]
     cones = [vec_to_3d(cone, y=1.00) for cone in cone_pos]
-    return path, cones
+    return path, cones, cone_count
 
 
 def render_cones(state):
@@ -149,6 +152,8 @@ if __name__ == '__main__':
     app = Ursina()
 
     # config
+    cone_count = 40
+    cone_detections = []
     camera.fov = 78
     window.title = "VirtualMilovice"
     window.size = (1280, 720)
@@ -200,12 +205,15 @@ if __name__ == '__main__':
     app.cones, app.cones_mask = render_cones(state)
     formula = Formula()
     driver = Entity(model='sphere', scale=0.2)
+
     car_rect = Entity(model='cube', color=color.black, position=Vec3(
         state.car_pos[0], 0., state.car_pos[1]), scale=Vec3(3, 1.5, 0.3))
     app.path_entity = Entity(color=color.white, model=Mesh(vertices=[
         [0., 0., 0.], [0., 0., 0.]], mode='line', thickness=50, colors=[color.white, color.white, color.white, color.white, color.white]))
+    for _ in range(cone_count):
+        cone_detections.append(Entity(model='cube', color=color.red,
+                                      position=Vec3(0, 0, 0), scale=Vec3(1, 1.0, 1.0)))
     car_rect.enabled = False
-
     text_main = Text()
     Text.size = 0.05
     app.text_AS = Text(text="", origin=(3.5, -5.), color=color.red)
@@ -244,13 +252,18 @@ if __name__ == '__main__':
         # TODO: Implement visualization of path planning, cone detections and autonomous debug info
         while as_debug_poller.poll(0.):
             as_debug_data = pickle.loads(as_debug_socket.recv())
-            path, cones = compute_as_state(
+            path, cones, cone_count = compute_as_state(
                 as_debug_data, app.visual_state)
             app.path_entity.model = Mesh(vertices=path, mode='line', thickness=10, colors=[
                                          color.white, color.white, color.white, color.white, color.white])
-
-            for cone in cones:
-                Entity(model='cube', color=color.black, position=cone, scale=Vec3(1, 1.0, 1.0))
+            i = 0
+            for cone_detection in cone_detections:
+                if cone_count-i == 0:
+                    cone_detection.enabled = False
+                else:
+                    cone_detection.enabled = True
+                    cone_detection.position = cones[i]
+                    i += 1
 
         # key handling
 
