@@ -69,6 +69,7 @@ def compute_as_state(as_debug, state):
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
     path[:, 0] *= -1
+    cone_pos[:, 0] *= -1
     path = local_to_global(path, (car_x, car_y), heading)
     cone_pos = local_to_global(cone_pos, (car_x, car_y), heading)
     path = [vec_to_3d(p, y=0.01) for p in path]
