@@ -153,7 +153,7 @@ if __name__ == '__main__':
     app = Ursina()
 
     # config
-    cone_count = 40
+    cone_count = 20
     cone_detections = []
     camera.fov = 78
     window.title = "VirtualMilovice"
@@ -209,11 +209,11 @@ if __name__ == '__main__':
 
     car_rect = Entity(model='cube', color=color.black, position=Vec3(
         state.car_pos[0], 0., state.car_pos[1]), scale=Vec3(3, 1.5, 0.3))
-    app.path_entity = Entity(color=color.white, model=Mesh(vertices=[
+    app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.white, model=Mesh(vertices=[
         [0., 0., 0.], [0., 0., 0.]], mode='line', thickness=50, colors=[color.white, color.white, color.white, color.white, color.white]))
     for _ in range(cone_count):
-        cone_detections.append(Entity(model='cube', color=color.red,
-                                      position=Vec3(0, 0, 0), scale=Vec3(1, 1.0, 1.0)))
+        cone_detections.append(Entity(shader=lit_with_shadows_shader, model='sphere', color=color.red,
+                                      position=Vec3(0, 0, 0), scale=Vec3(0.5, 0.5, 0.5)))
     car_rect.enabled = False
     text_main = Text()
     Text.size = 0.05
