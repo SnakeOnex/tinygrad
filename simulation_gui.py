@@ -59,14 +59,12 @@ def world_setup():
     dl.disable()
 
 
-def render_path(path_list, path_entity):
-    path = path_list
+def compute_path(path, state):
+    car_x, car_y = state[GUIValues.car_pos]
+    heading = state[GUIValues.car_heading]
     path[:, 0] *= -1
-    path = local_to_global(path, state.car_pos, state.heading)
+    path = local_to_global(path, (car_x, car_y), heading)
     path = [vec_to_3d(p, y=0.01) for p in path]
-
-    # print("path: ", path)
-    path_entity.model.vertices = path
     return path
 
 
@@ -199,8 +197,8 @@ if __name__ == '__main__':
     driver = Entity(model='sphere', scale=0.2)
     car_rect = Entity(model='cube', color=color.black, position=Vec3(
         state.car_pos[0], 0., state.car_pos[1]), scale=Vec3(3, 1.5, 0.3))
-    app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(vertices=[
-        [0., 0., 0.], [0., 0., 0.]], mode='line', thickness=50, colors=[color.red, color.red, color.red, color.red, color.red]))
+    app.path_entity = Entity(color=color.white, model=Mesh(vertices=[
+        [0., 0., 0.], [0., 0., 0.]], mode='line', thickness=50, colors=[color.white, color.white, color.white, color.white, color.white]))
     car_rect.enabled = False
 
     text_main = Text()
@@ -241,10 +239,10 @@ if __name__ == '__main__':
         # TODO: Implement visualization of path planning, cone detections and autonomous debug info
         while as_debug_poller.poll(0.):
             as_debug_data = pickle.loads(as_debug_socket.recv())
-            path = render_path(as_debug_data['path'], app.path_entity)
-            app.path_entity.model = Mesh(vertices=path, mode='line', thickness=50, colors=[
-                                         color.red, color.red, color.red, color.red, color.red])
-            print(app.path_entity.model.vertices)
+            path = compute_path(
+                as_debug_data['path'], app.visual_state)
+            app.path_entity.model = Mesh(vertices=path, mode='line', thickness=10, colors=[
+                                         color.white, color.white, color.white, color.white, color.white])
 
         # key handling
 
