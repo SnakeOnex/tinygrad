@@ -43,7 +43,7 @@ class MissionNode(mp.Process):
         self.can1_recv_name = can1_recv_name
         self.can2_recv_name = can2_recv_name
 
-        self.frequency = 10  # Hz
+        self.frequency = 60  # Hz
 
         # Autonomous State Machine
         self.ASM = ASM()
