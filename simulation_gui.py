@@ -35,7 +35,6 @@ class CameraMode(Enum):
         v = self.value
         return CameraMode((v + 1) % 3)
 
-
 def world_setup():
     ground = Entity(
         model='cube',
@@ -58,24 +57,62 @@ def world_setup():
                           shadows=True, rotation=(90., 0., 0.))
     dl.disable()
 
+def cone_pos_to_mesh(cone_pos, width=1.0, height=2.0):
+    vertices = []
+
+    x, y = cone_pos
+    center = Vec3(x, 0., y)
+
+    z_bottom = 0.01
+    z_toppom = z_bottom + height
+
+    vertices.append(center + Vec3( width/2, z_bottom, width/2))
+    vertices.append(center + Vec3( width/2, z_toppom, width/2))
+    vertices.append(center + Vec3(-width/2, z_toppom, width/2))
+    vertices.append(center + Vec3(-width/2, z_bottom, width/2))
+    vertices.append(center + Vec3( width/2, z_bottom, width/2))
+
+    vertices.append(center + Vec3(width/2, z_bottom, -width/2))
+    vertices.append(center + Vec3(width/2, z_toppom, -width/2))
+    vertices.append(center + Vec3(width/2, z_toppom,  width/2))
+    vertices.append(center + Vec3(width/2, z_toppom, -width/2))
+
+    vertices.append(center + Vec3(-width/2, z_toppom, -width/2))
+    vertices.append(center + Vec3(-width/2, z_bottom, -width/2))
+    vertices.append(center + Vec3( width/2, z_bottom, -width/2))
+    vertices.append(center + Vec3(-width/2, z_bottom, -width/2))
+    vertices.append(center + Vec3(-width/2, z_bottom,  width/2))
+    vertices.append(center + Vec3(-width/2, z_toppom,  width/2))
+    vertices.append(center + Vec3(-width/2, z_toppom, -width/2))
+
+    return vertices
 
 def compute_as_state(as_debug, state):
+    """
+    given debug information from AS system, returns path and cone positions in global coordinates
+    args:
+      as_debug - AS debug dict
+      state - visual_state list (info about current car_pos & heading)
+    ret:
+      path - path in local coord
+      cones - Nx3, local cone positions + cone class
+    """
+
     path = as_debug['path']
     cone_pos = as_debug['world_preds'][:, :2]
-    if cone_pos.shape[0] >= 40:
-        cone_count = 40
-    else:
-        cone_count = cone_pos.shape[0]
+    cone_cls = as_debug['world_preds'][:, 2:3]
+
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
     path[:, 0] *= -1
     cone_pos[:, 0] *= -1
+
     path = local_to_global(path, (car_x, car_y), heading)
     cone_pos = local_to_global(cone_pos, (car_x, car_y), heading)
-    path = [vec_to_3d(p, y=0.01) for p in path]
-    cones = [vec_to_3d(cone, y=1.00) for cone in cone_pos]
-    return path, cones, cone_count
 
+    path = [vec_to_3d(p, y=0.01) for p in path]
+    cones = np.hstack((cone_pos,cone_cls))
+    return path, cones
 
 def render_cones(state):
     cones = []
@@ -117,7 +154,6 @@ def render_cones(state):
 
 
 def render_car(state, formula, driver, car_rect):
-
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
     steering_angle = state[GUIValues.steering_angle]
@@ -126,8 +162,6 @@ def render_car(state, formula, driver, car_rect):
 
     driver.position = Vec3(car_x, 0., car_y) - 1. * \
         vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
-    # driver.position = Vec3(car_x, 0., car_y) - 0. * vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
-    # driver.position = Vec3(car_x, 1., car_y)
     driver.rotation = formula.offset_rot + Vec3(0., 0., heading)
 
     formula.position = Vec3(car_x, 0., car_y)
@@ -142,7 +176,6 @@ def render_car(state, formula, driver, car_rect):
     car_rect.position = Vec3(car_x, 0., car_y) - 0.5 * vec_to_3d(heading_vec)
     car_rect.rotation = formula.offset_rot + Vec3(0., 0., heading)
     # car_rect = Entity(model='quad', color=color.black, position=Vec3(car_x, 0., car_y))
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -191,8 +224,9 @@ if __name__ == '__main__':
     gui_poller = zmq.Poller()
     gui_poller.register(gui_socket, zmq.POLLIN)
 
-    # autonomous debug socket
+    app.cones, app.cones_mask = render_cones(state)
 
+    # autonomous debug socket
     as_debug_socket = context.socket(zmq.SUB)
     as_debug_socket.connect(
         config["TCP_HOST"]+":"+config["AS_DEBUG_PORT"])
@@ -203,17 +237,17 @@ if __name__ == '__main__':
     data = gui_socket.recv()
     app.visual_state = pickle.loads(data)
 
-    app.cones, app.cones_mask = render_cones(state)
     formula = Formula()
     driver = Entity(model='sphere', scale=0.2)
 
+    ## AS debug init (creating empty path and cone mesh objects)
     car_rect = Entity(model='cube', color=color.black, position=Vec3(
         state.car_pos[0], 0., state.car_pos[1]), scale=Vec3(3, 1.5, 0.3))
-    app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.white, model=Mesh(vertices=[
-        [0., 0., 0.], [0., 0., 0.]], mode='line', thickness=50, colors=[color.white, color.white, color.white, color.white, color.white]))
+    app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.white, model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line'))
+
     for _ in range(cone_count):
-        cone_detections.append(Entity(shader=lit_with_shadows_shader, model='sphere', color=color.red,
-                                      position=Vec3(0, 0, 0), scale=Vec3(0.5, 0.5, 0.5)))
+        cone_detections.append(Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line')))
+
     car_rect.enabled = False
     text_main = Text()
     Text.size = 0.05
@@ -253,18 +287,30 @@ if __name__ == '__main__':
         # TODO: Implement visualization of path planning, cone detections and autonomous debug info
         while as_debug_poller.poll(0.):
             as_debug_data = pickle.loads(as_debug_socket.recv())
-            path, cones, cone_count = compute_as_state(
-                as_debug_data, app.visual_state)
-            app.path_entity.model = Mesh(vertices=path, mode='line', thickness=10, colors=[
-                                         color.white, color.white, color.white, color.white, color.white])
-            i = 0
-            for cone_detection in cone_detections:
-                if cone_count-i == 0:
+            path, cones = compute_as_state(as_debug_data, app.visual_state)
+            app.path_entity.model = Mesh(vertices=path, mode='line', thickness=10)
+
+            for i, cone_detection in enumerate(cone_detections):
+                if cones.shape[0] <= i:
                     cone_detection.enabled = False
                 else:
                     cone_detection.enabled = True
-                    cone_detection.position = cones[i]
-                    i += 1
+
+                    if cones[i, 2] == 0:
+                        cone_color = color.yellow
+                    elif cones[i, 2] == 1:
+                        cone_color = color.blue
+                    elif cones[i, 2] == 2:
+                        cone_color = color.orange
+                    elif cones[i, 2] == 3:
+                        cone_color = color.red
+
+                    if cones[i,2] == 3:
+                        cone_detection.model = Mesh(vertices=cone_pos_to_mesh(cones[i, :2], width=0.3, height=0.6), mode='line', thickness=3)
+                    else:
+                        cone_detection.model = Mesh(vertices=cone_pos_to_mesh(cones[i, :2], width=0.3, height=0.4), mode='line', thickness=3)
+
+                    cone_detection.color = cone_color
 
         # key handling
 

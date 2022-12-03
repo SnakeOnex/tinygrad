@@ -76,7 +76,7 @@ class Simulation():
             self.vision_socket = self.context.socket(zmq.PUB)
             self.vision_socket.bind(
                 config["TCP_HOST"]+":"+config["VISION_PORT"])
-            self.vision_freq = 30  # Hz
+            self.vision_freq = 60  # Hz
             self.vision_time = 0.  # var for keeping track of last time vision packat has been sent
 
         # 2.B sending gui state to the graphical engine
