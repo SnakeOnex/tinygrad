@@ -30,10 +30,12 @@ class CameraMode(Enum):
     WORLD = 0
     FIRST_PERSON = 1
     THIRD_PERSON = 2
+    BIRD_VIEW = 3
 
     def next(self):
         v = self.value
-        return CameraMode((v + 1) % 3)
+        return CameraMode((v + 1) % 4)
+
 
 def world_setup():
     ground = Entity(
@@ -57,6 +59,7 @@ def world_setup():
                           shadows=True, rotation=(90., 0., 0.))
     dl.disable()
 
+
 def cone_pos_to_mesh(cone_pos, width=1.0, height=2.0):
     vertices = []
 
@@ -66,11 +69,11 @@ def cone_pos_to_mesh(cone_pos, width=1.0, height=2.0):
     z_bottom = 0.01
     z_toppom = z_bottom + height
 
-    vertices.append(center + Vec3( width/2, z_bottom, width/2))
-    vertices.append(center + Vec3( width/2, z_toppom, width/2))
+    vertices.append(center + Vec3(width/2, z_bottom, width/2))
+    vertices.append(center + Vec3(width/2, z_toppom, width/2))
     vertices.append(center + Vec3(-width/2, z_toppom, width/2))
     vertices.append(center + Vec3(-width/2, z_bottom, width/2))
-    vertices.append(center + Vec3( width/2, z_bottom, width/2))
+    vertices.append(center + Vec3(width/2, z_bottom, width/2))
 
     vertices.append(center + Vec3(width/2, z_bottom, -width/2))
     vertices.append(center + Vec3(width/2, z_toppom, -width/2))
@@ -79,13 +82,14 @@ def cone_pos_to_mesh(cone_pos, width=1.0, height=2.0):
 
     vertices.append(center + Vec3(-width/2, z_toppom, -width/2))
     vertices.append(center + Vec3(-width/2, z_bottom, -width/2))
-    vertices.append(center + Vec3( width/2, z_bottom, -width/2))
+    vertices.append(center + Vec3(width/2, z_bottom, -width/2))
     vertices.append(center + Vec3(-width/2, z_bottom, -width/2))
     vertices.append(center + Vec3(-width/2, z_bottom,  width/2))
     vertices.append(center + Vec3(-width/2, z_toppom,  width/2))
     vertices.append(center + Vec3(-width/2, z_toppom, -width/2))
 
     return vertices
+
 
 def compute_as_state(as_debug, state):
     """
@@ -111,8 +115,9 @@ def compute_as_state(as_debug, state):
     cone_pos = local_to_global(cone_pos, (car_x, car_y), heading)
 
     path = [vec_to_3d(p, y=0.01) for p in path]
-    cones = np.hstack((cone_pos,cone_cls))
+    cones = np.hstack((cone_pos, cone_cls))
     return path, cones
+
 
 def render_cones(state):
     cones = []
@@ -153,6 +158,14 @@ def render_cones(state):
     return cones, cone_mask
 
 
+def create_text_string(visual_state):
+    trackmarshall_text = f"Cones hit: {int(sum(visual_state[GUIValues.cones_mask]))}\n"
+    trackmarshall_text += f"AS Go signal: {'Active' if int(visual_state[GUIValues.go_signal]) else 'Inactive'}\n"
+    trackmarshall_text += f"Time elapsed: {visual_state[GUIValues.race_time]:.2f}\n"
+    trackmarshall_text += f"Debug: {visual_state[GUIValues.debug][:4]}\n"
+    return trackmarshall_text
+
+
 def render_car(state, formula, driver, car_rect):
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
@@ -176,6 +189,7 @@ def render_car(state, formula, driver, car_rect):
     car_rect.position = Vec3(car_x, 0., car_y) - 0.5 * vec_to_3d(heading_vec)
     car_rect.rotation = formula.offset_rot + Vec3(0., 0., heading)
     # car_rect = Entity(model='quad', color=color.black, position=Vec3(car_x, 0., car_y))
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -240,19 +254,24 @@ if __name__ == '__main__':
     formula = Formula()
     driver = Entity(model='sphere', scale=0.2)
 
-    ## AS debug init (creating empty path and cone mesh objects)
+    # AS debug init (creating empty path and cone mesh objects)
     car_rect = Entity(model='cube', color=color.black, position=Vec3(
         state.car_pos[0], 0., state.car_pos[1]), scale=Vec3(3, 1.5, 0.3))
-    app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.white, model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line'))
+    app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.white, model=Mesh(
+        vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line'))
 
     for _ in range(cone_count):
-        cone_detections.append(Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line')))
+        cone_detections.append(Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
+            vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line')))
 
     car_rect.enabled = False
-    text_main = Text()
-    Text.size = 0.05
-    app.text_AS = Text(text="", origin=(3.5, -5.), color=color.red)
-    app.track_marshall_text = Text(text="not loaded")
+    #text_main = Text()
+    Text.size = 0.03
+    #app.text_AS = Text(text="", origin=(3.5, -5.), color=color.red)
+    app.track_marshall_text = Text(text="not loaded", color=color.red)
+    app.track_marshall_text.x = -0.85
+    app.track_marshall_text.y = 0.45
+    app.track_marshall_text.line_height = 1.3
     app.cam_mode = CameraMode.WORLD
 
     app.update_count = 0
@@ -267,9 +286,9 @@ if __name__ == '__main__':
         if key == 'r':
             state.reset_state()
 
-        if key == 'e':
-            app.AS = True
-            app.text_AS.color = color.lime
+        # if key == 'e':
+        #    app.AS = True
+        #    app.text_AS.color = color.lime
             # app.text_AS.text = "AS: ON"
 
         if key == 'g':
@@ -284,11 +303,11 @@ if __name__ == '__main__':
 
         controls_socket.send(pickle.dumps(app.controls_state))
 
-        # TODO: Implement visualization of path planning, cone detections and autonomous debug info
         while as_debug_poller.poll(0.):
             as_debug_data = pickle.loads(as_debug_socket.recv())
             path, cones = compute_as_state(as_debug_data, app.visual_state)
-            app.path_entity.model = Mesh(vertices=path, mode='line', thickness=10)
+            app.path_entity.model = Mesh(
+                vertices=path, mode='line', thickness=10)
 
             for i, cone_detection in enumerate(cone_detections):
                 if cones.shape[0] <= i:
@@ -305,10 +324,12 @@ if __name__ == '__main__':
                     elif cones[i, 2] == 3:
                         cone_color = color.red
 
-                    if cones[i,2] == 3:
-                        cone_detection.model = Mesh(vertices=cone_pos_to_mesh(cones[i, :2], width=0.3, height=0.6), mode='line', thickness=3)
+                    if cones[i, 2] == 3:
+                        cone_detection.model = Mesh(vertices=cone_pos_to_mesh(
+                            cones[i, :2], width=0.3, height=0.6), mode='line', thickness=3)
                     else:
-                        cone_detection.model = Mesh(vertices=cone_pos_to_mesh(cones[i, :2], width=0.3, height=0.4), mode='line', thickness=3)
+                        cone_detection.model = Mesh(vertices=cone_pos_to_mesh(
+                            cones[i, :2], width=0.3, height=0.4), mode='line', thickness=3)
 
                     cone_detection.color = cone_color
 
@@ -341,16 +362,10 @@ if __name__ == '__main__':
             # cones[cone_idx].enabled = False
             app.cones[cone_idx].rotation = Vec3(90., 0., 0)
 
-        app.cones_mask = received_cones_mask
+        app.track_marshall_text.text = create_text_string(app.visual_state)  #
+        app.track_marshall_text.background = True
 
-        trackmarshall_text = ""
-        trackmarshall_text += f"cones hit: {int(sum(app.visual_state[GUIValues.cones_mask]))}\n"
-        trackmarshall_text += f"go_signal: {int(app.visual_state[GUIValues.go_signal])}\n"
-        trackmarshall_text += f"time: {app.visual_state[GUIValues.race_time]:.2f}\n"
-        trackmarshall_text += f"debug: {str(app.visual_state[GUIValues.debug])}\n"
-        app.track_marshall_text.text = trackmarshall_text
-
-        text_main.text = text
+        #text_main.text = text
 
         # update camera
         if app.cam_mode == CameraMode.WORLD:
@@ -367,5 +382,11 @@ if __name__ == '__main__':
             camera.position = driver.position + Vec3(-rot_x, 2, rot_y)
             camera.rotation = (
                 0., -app.visual_state[GUIValues.car_heading], 0.)
+        elif app.cam_mode == CameraMode.BIRD_VIEW:
+            rot_x, rot_y = rotate_around_point(
+                -app.visual_state[GUIValues.car_heading], (0, 0), (10, 0))
+            camera.position = driver.position + Vec3(0, 20, 0)
+            camera.rotation = (
+                90., -app.visual_state[GUIValues.car_heading], 0.)
 
     app.run()
