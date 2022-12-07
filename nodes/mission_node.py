@@ -91,7 +91,8 @@ class MissionNode(mp.Process):
 
                 steering_angle, speed = self.mission.loop(percep_data)
 
-                self.debug_socket.send(pickle.dumps(percep_data))
+                self.debug_socket.send(pickle.dumps(
+                    {"perception": percep_data, "speed": speed, "steering_angle": steering_angle}))
 
                 self.CAN1.send_can_msg(
                     [steering_angle], self.CAN1.name2id["XVR_Control"])

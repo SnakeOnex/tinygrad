@@ -12,7 +12,7 @@ class Skidpad():
         mp.Process.__init__(self)
         self.perception_out = perception_out
         self.can1_recv_state = can1_recv_state
-
+        
         # CONTROLLER CONFIGURATION
         self.linear_gain = 2.05
         self.nonlinear_gain = 1.5
