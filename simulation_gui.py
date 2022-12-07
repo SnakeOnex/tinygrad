@@ -158,12 +158,20 @@ def render_cones(state):
     return cones, cone_mask
 
 
-def create_text_string(visual_state):
-    trackmarshall_text = f"Cones hit: {int(sum(visual_state[GUIValues.cones_mask]))}\n"
-    trackmarshall_text += f"AS Go signal: {'Active' if int(visual_state[GUIValues.go_signal]) else 'Inactive'}\n"
-    trackmarshall_text += f"Time elapsed: {visual_state[GUIValues.race_time]:.2f}\n"
-    trackmarshall_text += f"Debug: {visual_state[GUIValues.debug][:4]}\n"
-    return trackmarshall_text
+def create_simulation_string(visual_state):
+    simulation_text = "Simulation status:\n"
+    simulation_text += f"Cones hit: {int(sum(visual_state[GUIValues.cones_mask]))}\n"
+    simulation_text += f"AS Go signal: {'Active' if int(visual_state[GUIValues.go_signal]) else 'Inactive'}\n"
+    simulation_text += f"Time elapsed: {visual_state[GUIValues.race_time]:.2f} s\n"
+    simulation_text += f"Debug: {visual_state[GUIValues.debug][:4]}\n"
+    return simulation_text
+
+
+def create_car_string(speed, steering_angle):
+    car_status_text = "Car status:\n"
+    car_status_text += f"Speed: {speed:.2f} m/s\n"
+    car_status_text += f"Steering angle: {steering_angle:.2f} rad/s\n"
+    return car_status_text
 
 
 def render_car(state, formula, driver, car_rect):
@@ -266,14 +274,24 @@ if __name__ == '__main__':
 
     car_rect.enabled = False
     #text_main = Text()
-    Text.size = 0.03
+    Text.size = 0.025
     #app.text_AS = Text(text="", origin=(3.5, -5.), color=color.red)
-    app.track_marshall_text = Text(text="not loaded", color=color.red)
-    app.track_marshall_text.x = -0.85
-    app.track_marshall_text.y = 0.45
-    app.track_marshall_text.line_height = 1.3
-    app.cam_mode = CameraMode.WORLD
+    app.simulation_text = Text(text="not loaded", color=color.turquoise)
+    app.simulation_text.x = -0.85
+    app.simulation_text.y = 0.45
+    app.simulation_text.line_height = 1.3
 
+    app.car_status_text = Text(text=create_car_string(0, 0), color=color.blue)
+    app.car_status_text.x = -0.85
+    app.car_status_text.y = 0.22
+    app.car_status_text.line_height = 1.3
+
+    app.mission_status_text = Text(text="not loaded", color=color.violet)
+    app.mission_status_text.x = -0.85
+    app.mission_status_text.y = 0.05
+    app.mission_status_text.line_height = 1.3
+
+    app.cam_mode = CameraMode.FIRST_PERSON
     app.update_count = 0
     app.frame_start = time.perf_counter()
 
@@ -299,13 +317,14 @@ if __name__ == '__main__':
         while gui_poller.poll(0.):
             data = gui_socket.recv()
             app.visual_state = pickle.loads(data)
-            app.track_marshall_text.text = f"ksicht"
+            #app.simulation_text.text = f"ksicht"
 
         controls_socket.send(pickle.dumps(app.controls_state))
 
         while as_debug_poller.poll(0.):
             as_debug_data = pickle.loads(as_debug_socket.recv())
-            path, cones = compute_as_state(as_debug_data, app.visual_state)
+            path, cones = compute_as_state(
+                as_debug_data["perception"], app.visual_state)
             app.path_entity.model = Mesh(
                 vertices=path, mode='line', thickness=10)
 
@@ -332,6 +351,10 @@ if __name__ == '__main__':
                             cones[i, :2], width=0.3, height=0.4), mode='line', thickness=3)
 
                     cone_detection.color = cone_color
+
+            app.car_status_text.text = create_car_string(
+                as_debug_data["speed"], as_debug_data["steering_angle"])
+            app.car_status_text.background = True
 
         # key handling
 
@@ -362,8 +385,13 @@ if __name__ == '__main__':
             # cones[cone_idx].enabled = False
             app.cones[cone_idx].rotation = Vec3(90., 0., 0)
 
-        app.track_marshall_text.text = create_text_string(app.visual_state)  #
-        app.track_marshall_text.background = True
+        test_string = create_simulation_string(
+            app.visual_state)  #
+        app.simulation_text.text = test_string
+        app.simulation_text.background = True
+
+        app.mission_status_text.text = test_string
+        app.mission_status_text.background = True
 
         #text_main.text = text
 
@@ -385,7 +413,7 @@ if __name__ == '__main__':
         elif app.cam_mode == CameraMode.BIRD_VIEW:
             rot_x, rot_y = rotate_around_point(
                 -app.visual_state[GUIValues.car_heading], (0, 0), (10, 0))
-            camera.position = driver.position + Vec3(0, 20, 0)
+            camera.position = driver.position + Vec3(0, 18, 0)
             camera.rotation = (
                 90., -app.visual_state[GUIValues.car_heading], 0.)
 
