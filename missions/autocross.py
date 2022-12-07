@@ -8,6 +8,8 @@ from nodes.can1_node import Can1RecvItems, Can1SendItems
 
 
 class Autocross():
+    ID = "Autocross"
+
     def __init__(self, perception_out, can1_recv_state):
         mp.Process.__init__(self)
         self.perception_out = perception_out
@@ -31,7 +33,7 @@ class Autocross():
         delta, _, log = self.stanley_steering(
             world_state["path"], wheel_speed, self.linear_gain, self.nonlinear_gain)
 
-        return delta, 5.
+        return delta, 5., log
 
     def stanley_steering(self, path, speed, gain, lateralGain, max_range=22.5):
         index = len(path)-1
@@ -59,10 +61,10 @@ class Autocross():
         delta *= 180/np.pi
         delta = np.clip(delta, -max_range, max_range)
 
-        log_message = {"linear": linear,
-                       "nonlinear": nonLinear,
-                       "lateral_offset": latOffset,
-                       "direction": direction,
-                       "delta": delta
+        log_message = {"Linear": linear,
+                       "Nonlinear": nonLinear,
+                       "Lateral_offset": latOffset,
+                       "Direction": direction,
+                       "Delta": delta
                        }
         return delta, index, log_message

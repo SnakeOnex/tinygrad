@@ -60,8 +60,8 @@ class MissionNode(mp.Process):
         self.trackdrive = Trackdrive(self.perception_out, self.can1_recv_state)
         self.skidpad = Skidpad(self.perception_out, self.can1_recv_state)
 
-        self.missions = [None, self.acceleration,
-                         self.autocross, self.trackdrive, self.skidpad]
+        self.missions = [None, self.acceleration, self.skidpad,
+                         self.autocross, self.trackdrive]
         self.mission = self.missions[MissionValue.NoValue]
 
         self.CAN1 = CanInterface(
@@ -89,10 +89,11 @@ class MissionNode(mp.Process):
                 while not self.perception_out.empty():
                     percep_data = self.perception_out.get()
 
-                steering_angle, speed = self.mission.loop(percep_data)
+                steering_angle, speed, log = self.mission.loop(percep_data)
 
                 self.debug_socket.send(pickle.dumps(
-                    {"perception": percep_data, "speed": speed, "steering_angle": steering_angle}))
+                    {"perception": percep_data, "speed": speed, "steering_angle": steering_angle, "mission_id": self.mission.ID,
+                     "mission_status": log}))
 
                 self.CAN1.send_can_msg(
                     [steering_angle], self.CAN1.name2id["XVR_Control"])
