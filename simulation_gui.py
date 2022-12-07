@@ -174,6 +174,18 @@ def create_car_string(speed, steering_angle):
     return car_status_text
 
 
+def create_mission_string(id, values):
+    mission_status_text = "Mission status:\n"
+    mission_status_text += f"ID: {id}"
+    for key, value in values.items():
+        mission_status_text += f"\n{key}: {format_val_string(value)}"
+    return mission_status_text
+
+
+def format_val_string(val):
+    return f"{val:.5f}" if type(val) != str and type(val) != int else val
+
+
 def render_car(state, formula, driver, car_rect):
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
@@ -211,6 +223,8 @@ if __name__ == '__main__':
     cone_count = 20
     cone_detections = []
     camera.fov = 78
+    line_height = 1.3
+    text_x = -0.85
     window.title = "VirtualMilovice"
     window.size = (1280, 720)
     window.borderless = False
@@ -273,23 +287,26 @@ if __name__ == '__main__':
             vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line')))
 
     car_rect.enabled = False
-    #text_main = Text()
     Text.size = 0.025
-    #app.text_AS = Text(text="", origin=(3.5, -5.), color=color.red)
-    app.simulation_text = Text(text="not loaded", color=color.turquoise)
-    app.simulation_text.x = -0.85
+    app.simulation_text = Text(text=create_simulation_string(
+        app.visual_state), color=color.turquoise)
+    app.simulation_text.x = text_x
     app.simulation_text.y = 0.45
-    app.simulation_text.line_height = 1.3
+    app.simulation_text.line_height = line_height
+    app.simulation_text.background = True
 
-    app.car_status_text = Text(text=create_car_string(0, 0), color=color.blue)
-    app.car_status_text.x = -0.85
+    app.car_status_text = Text(text=create_car_string(0, 0), color=color.azure)
+    app.car_status_text.x = text_x
     app.car_status_text.y = 0.22
-    app.car_status_text.line_height = 1.3
+    app.car_status_text.line_height = line_height
+    app.car_status_text.background = True
 
-    app.mission_status_text = Text(text="not loaded", color=color.violet)
-    app.mission_status_text.x = -0.85
+    app.mission_status_text = Text(
+        text=create_mission_string("N/A", {}), color=color.violet)
+    app.mission_status_text.x = text_x
     app.mission_status_text.y = 0.05
-    app.mission_status_text.line_height = 1.3
+    app.mission_status_text.line_height = line_height
+    app.mission_status_text.background = True
 
     app.cam_mode = CameraMode.FIRST_PERSON
     app.update_count = 0
@@ -304,11 +321,6 @@ if __name__ == '__main__':
         if key == 'r':
             state.reset_state()
 
-        # if key == 'e':
-        #    app.AS = True
-        #    app.text_AS.color = color.lime
-            # app.text_AS.text = "AS: ON"
-
         if key == 'g':
             app.controls_state[ControlsValues.go_signal] = 1
 
@@ -317,7 +329,6 @@ if __name__ == '__main__':
         while gui_poller.poll(0.):
             data = gui_socket.recv()
             app.visual_state = pickle.loads(data)
-            #app.simulation_text.text = f"ksicht"
 
         controls_socket.send(pickle.dumps(app.controls_state))
 
@@ -356,6 +367,10 @@ if __name__ == '__main__':
                 as_debug_data["speed"], as_debug_data["steering_angle"])
             app.car_status_text.background = True
 
+            app.mission_status_text.text = create_mission_string(
+                as_debug_data["mission_id"], as_debug_data["mission_status"])
+            app.mission_status_text.background = True
+
         # key handling
 
         # longitudinal controls
@@ -385,13 +400,9 @@ if __name__ == '__main__':
             # cones[cone_idx].enabled = False
             app.cones[cone_idx].rotation = Vec3(90., 0., 0)
 
-        test_string = create_simulation_string(
-            app.visual_state)  #
-        app.simulation_text.text = test_string
+        app.simulation_text.text = create_simulation_string(
+            app.visual_state)
         app.simulation_text.background = True
-
-        app.mission_status_text.text = test_string
-        app.mission_status_text.background = True
 
         #text_main.text = text
 
