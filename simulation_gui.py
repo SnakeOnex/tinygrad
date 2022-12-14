@@ -279,7 +279,7 @@ if __name__ == '__main__':
     # AS debug init (creating empty path and cone mesh objects)
     car_rect = Entity(model='cube', color=color.black, position=Vec3(
         state.car_pos[0], 0., state.car_pos[1]), scale=Vec3(3, 1.5, 0.3))
-    app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.white, model=Mesh(
+    app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
         vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line'))
 
     for _ in range(cone_count):
@@ -334,10 +334,12 @@ if __name__ == '__main__':
 
         while as_debug_poller.poll(0.):
             as_debug_data = pickle.loads(as_debug_socket.recv())
-            path, cones = compute_as_state(
-                as_debug_data["perception"], app.visual_state)
-            app.path_entity.model = Mesh(
-                vertices=path, mode='line', thickness=10)
+            path, cones = compute_as_state(as_debug_data["perception"], app.visual_state)
+
+            if len(path) > 1:
+                app.path_entity.model = Mesh(vertices=path, mode='line', thickness=10)
+            else:
+                app.path_entity.model = Mesh()
 
             for i, cone_detection in enumerate(cone_detections):
                 if cones.shape[0] <= i:

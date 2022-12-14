@@ -198,8 +198,7 @@ class Simulation():
 
         cwd = os.getcwd()
         os.chdir(sim_gui_path)
-        self.p = subprocess.Popen(
-            ["python", "simulation_gui.py", "--map", self.map_path])
+        self.p = subprocess.Popen(["python", "simulation_gui.py", "--map", self.map_path])
         os.chdir(cwd)
 
     def terminate_gui(self):

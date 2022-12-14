@@ -2,6 +2,7 @@ import numpy as np
 import math
 import json
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 def generate_skidpad_path(alpha, x_t, y_t):
         R = np.array([[np.cos(alpha), -np.sin(alpha), x_t],
@@ -160,6 +161,46 @@ def generate_acceleration_track(width=3., car_size=2.):
     }
     return track_dict
 
+def generate_trackdrive_from_slam_track():
+    # 0. load map from json
+    json_path = Path("slam_map.json")
+
+    # 1. load cone positions from map file
+    with open(json_path, 'r') as f:
+        out = json.load(f)
+
+    car_pos = out["car_position"]
+    car_heading = out["car_heading"]
+    yellow_cones = out["yellow_cones"]
+    blue_cones = out["blue_cones"]
+    orange_cones = out["orange_cones"]
+    big_cones = out["big_cones"]
+
+    start_line = [(1, 0.5), (1, 0.5)]
+    finish_line = start_line
+
+    car_pos[0] -= 0.85
+
+    big_cones = yellow_cones[41:44]
+
+    # finish_line = [(1, 50.), (1, 50.)]
+
+    print(out.keys())
+
+    track_dict = {
+        "car_position" : car_pos,
+        "car_heading"  : car_heading,
+        "yellow_cones" : yellow_cones,
+        "blue_cones"   : blue_cones,
+        "orange_cones" : orange_cones,
+        "big_cones"    : big_cones,
+        "start_line"   : start_line,
+        "finish_line"  : finish_line
+    }
+
+    return track_dict
+
+
 def plot_map(map_dict):
     # 1. car pos
     car_pos = np.array(map_dict["car_position"])
@@ -194,14 +235,18 @@ if __name__ == '__main__':
     acc_dict = generate_acceleration_track(width, car_size)
     skidpad_dict = generate_skidpad_track()
 
-    plot_map(acc_dict)
-    plot_map(skidpad_dict)
+    trackdrive_dict = generate_trackdrive_from_slam_track()
 
-    with open("skidpad_map.json", 'w') as f:
-        json.dump(skidpad_dict, f, indent=4)
+    plot_map(trackdrive_dict)
 
-    with open("acceleration_map.json", 'w') as f:
-        json.dump(acc_dict, f, indent=4)
+    # plot_map(acc_dict)
+    # plot_map(skidpad_dict)
+
+    # with open("skidpad_map.json", 'w') as f:
+    #     json.dump(skidpad_dict, f, indent=4)
+
+    # with open("acceleration_map.json", 'w') as f:
+    #     json.dump(acc_dict, f, indent=4)
 
 
 
