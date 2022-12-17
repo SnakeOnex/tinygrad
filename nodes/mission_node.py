@@ -102,8 +102,7 @@ class MissionNode(mp.Process):
             else:
 
                 if self.mission is None and self.can1_recv_state[int(Can1RecvItems.start_button.value)] == 1:
-                    print(
-                        f"mission: {MissionValue(self.can1_recv_state[Can1RecvItems.mission.value]).name}")
+                    print(f"mission: {MissionValue(self.can1_recv_state[Can1RecvItems.mission.value]).name}")
 
                 self.mission = self.missions[int(
                     self.can1_recv_state[Can1RecvItems.mission.value])]

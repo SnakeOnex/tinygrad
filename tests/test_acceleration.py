@@ -39,7 +39,7 @@ def test_acceleration():
             sim.go_signal()
 
         # after 20 seconds end and return TRUE
-        if time_since_start >= 15.:
+        if time_since_start >= 20.:
             test_outcome = True
             break
 
