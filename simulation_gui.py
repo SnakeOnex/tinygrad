@@ -183,7 +183,7 @@ def create_mission_string(id, values):
 
 
 def format_val_string(val):
-    return f"{val:.5f}" if type(val) != str and type(val) != int else val
+    return f"{val:.5f}" if type(val) == float else val
 
 
 def render_car(state, formula, driver, car_rect):

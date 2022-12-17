@@ -13,7 +13,7 @@ class State():
         self.max_steering_angle = 60. # max and min steering angle
 
         self.max_engine_force = 4000. # nm
-        self.max_brake_force = 2000. # nm
+        self.max_brake_force = 400. # nm
         self.drag_coef = 4
         self.rr_coef = self.drag_coef * 30
         self.mass = 200. # kg
@@ -39,6 +39,8 @@ class State():
         # CONTROLS
         if self.speed_set_point > self.speed:
             self.forward()
+        elif self.speed_set_point == 0.:
+            self.brake()
 
         self.handle_controls(timedelta)
 
@@ -93,7 +95,7 @@ class State():
         elif self.traction_control == "BRAKE":
             self.engine_force = -self.max_brake_force
 
-            if self.speed <= 0.:
+            if self.speed <= 0.1:
                 self.speed = 0.
                 self.engine_force = 0.
 
