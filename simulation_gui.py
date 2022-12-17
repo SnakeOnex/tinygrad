@@ -91,7 +91,7 @@ def cone_pos_to_mesh(cone_pos, width=1.0, height=2.0):
     return vertices
 
 
-def compute_as_state(as_debug, state):
+def compute_as_state(world_preds, path, state):
     """
     given debug information from AS system, returns path and cone positions in global coordinates
     args:
@@ -102,9 +102,8 @@ def compute_as_state(as_debug, state):
       cones - Nx3, local cone positions + cone class
     """
 
-    path = as_debug['path']
-    cone_pos = as_debug['world_preds'][:, :2]
-    cone_cls = as_debug['world_preds'][:, 2:3]
+    cone_pos = world_preds[:, :2]
+    cone_cls = world_preds[:, 2:3]
 
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
@@ -334,10 +333,12 @@ if __name__ == '__main__':
 
         while as_debug_poller.poll(0.):
             as_debug_data = pickle.loads(as_debug_socket.recv())
-            path, cones = compute_as_state(as_debug_data["perception"], app.visual_state)
+            path, cones = compute_as_state(
+                as_debug_data["perception"], as_debug_data["path"], app.visual_state)
 
             if len(path) > 1:
-                app.path_entity.model = Mesh(vertices=path, mode='line', thickness=10)
+                app.path_entity.model = Mesh(
+                    vertices=path, mode='line', thickness=10)
             else:
                 app.path_entity.model = Mesh()
 
