@@ -8,14 +8,14 @@ from master import main
 # from dv_sim import sim_config
 
 
-def test_trackdrive():
+def test_autocross():
     # 1. SETUP SIMULATION && BROS
 
     # 1.A SIMULATION SETUP
     map_path = Path("dv_sim/maps/circle_map.json").resolve()
     sim = Simulation(
             map_path=map_path,
-            mission=4,
+            mission=3,
             manual=False,
             config_json=Path("dv_sim/sim_config.json").resolve()
     )
@@ -38,7 +38,7 @@ def test_trackdrive():
             sim.go_signal()
 
         # after 20 seconds end and return TRUE
-        if time_since_start >= 65.:
+        if time_since_start >= 31.:
             test_outcome = True
             break
 

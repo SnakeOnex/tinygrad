@@ -28,19 +28,24 @@ class Acceleration():
         self.speed_set_point = 10.
 
         ## mission planning variables
+        self.finished = False
         self.start_timestamp = None
+
         self.brake_time = float('inf')
+        self.stopped_time = None
 
     def loop(self, cone_preds):
         """
         args:
           cone_preds - Nx3 np.array containing cone predictions
         ret:
+          finished
           steering angle set point
           speed setpoint
           debug_dict
           path
         """
+        
         # 0. save starting time stamp during the first loop
         if self.start_timestamp is None:
             self.start_timestamp = time.perf_counter()
@@ -51,7 +56,6 @@ class Acceleration():
         path = self.path_planner.find_path(cone_preds)
 
         # 2. planning
-
         ## if have been driving for more than 3 seconds, start looking for finish line
         if time_since_start > 3.:
             dist_to_finish = get_big_orange_distance(cone_preds=cone_preds, min_big_cones=1)
@@ -63,13 +67,22 @@ class Acceleration():
         if self.brake_time < time_since_start:
             self.speed_set_point = 0.
 
+            # if car stopped, set self.finished to True
+            if self.stopped_time is None and wheel_speed <= 0.1:
+                self.stopped_time = time_since_start
+
+        if self.stopped_time is not None and self.stopped_time + 1. < time_since_start:
+            self.finished = True
+
         # 2. controls
         delta, _, log = stanley_steering(path, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
         debug_dict = {
             "time_since_start": time_since_start, 
             "brake_time": self.brake_time,
-            "speed_setpoint": self.speed_set_point
+            "speed_setpoint": self.speed_set_point,
+            "stopped_time": self.stopped_time,
+            "finished": self.finished
         }
 
         return delta, self.speed_set_point, debug_dict, path
