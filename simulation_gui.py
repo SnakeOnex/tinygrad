@@ -182,7 +182,7 @@ def create_mission_string(id, values):
 
 
 def format_val_string(val):
-    return f"{val:.5f}" if type(val) == float else val
+    return f"{val:.2f}" if type(val) is float else val
 
 
 def render_car(state, formula, driver, car_rect):
@@ -303,7 +303,8 @@ if __name__ == '__main__':
     app.mission_status_text = Text(
         text=create_mission_string("N/A", {}), color=color.violet)
     app.mission_status_text.x = text_x
-    app.mission_status_text.y = 0.05
+    # app.mission_status_text.y = 0.05
+    app.mission_status_text.y = -0.05
     app.mission_status_text.line_height = line_height
     app.mission_status_text.background = True
 
