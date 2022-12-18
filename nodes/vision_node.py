@@ -90,19 +90,11 @@ class VisionNode(mp.Process):
         while True:
             data = socket.recv()
             world_preds = pickle.loads(data)
-            path = self.path_planner.find_path(world_preds)
-
-            data = {
-                "world_preds": world_preds,
-                "path": path
-            }
-
             # for i in range(min(path.shape[0], 5)):
             #     self.path_sharemem[i] = float(path[i,0])
             #     self.path_sharemem[i+path.shape[0]-1] = float(path[i,1])
-
-            self.output_queue.put(data)
-            self.logger.log("CONE_DETECTOR_FRAME", data)
+            self.output_queue.put(world_preds)
+            self.logger.log("CONE_DETECTOR_FRAME", world_preds)
 
     def read_zed_image(self):
         if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:

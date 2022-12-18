@@ -1,12 +1,16 @@
-import multiprocessing as mp
-from multiprocessing import shared_memory
 import numpy as np
 import time
 import sys
 import math
-from algorithms.steering import stanley_steering
+import multiprocessing as mp
+from multiprocessing import shared_memory
+
+from config import path_planner_opt
 from nodes.can1_node import Can1RecvItems, Can1SendItems
 
+from algorithms.steering import stanley_steering
+from algorithms.path_planning import PathPlanner
+from algorithms.general import get_big_orange_distance
 
 class Acceleration():
     ID = "Acceleration"
@@ -19,46 +23,53 @@ class Acceleration():
         # CONTROLS CONFIGURATION
         self.linear_gain = 2.05
         self.nonlinear_gain = 1.5
+        self.path_planner = PathPlanner(path_planner_opt)
 
         self.speed_set_point = 10.
 
         ## mission planning variables
-        self.detecting_finish = False
-        self.distance_to_finish = float('inf')
-        self.stop_timestamp = None
-        self.time_until_stop = None
+        self.start_timestamp = None
+        self.brake_time = float('inf')
 
-        self.loop_count = 0
-
-    def loop(self, world_state):
+    def loop(self, cone_preds):
         """
         args:
-          vision output (path, cone positions)
+          cone_preds - Nx3 np.array containing cone predictions
         ret:
-          steering_angle
-          wheelspeed_setpoint
+          steering angle set point
+          speed setpoint
+          debug_dict
+          path
         """
+        # 0. save starting time stamp during the first loop
+        if self.start_timestamp is None:
+            self.start_timestamp = time.perf_counter()
+        time_since_start = time.perf_counter() - self.start_timestamp
+
         # 1. receive perception data
         wheel_speed = self.can1_recv_state[Can1RecvItems.wheel_speed.value]
-        # consider moving wheel speed to mission node
+        path = self.path_planner.find_path(cone_preds)
 
         # 2. planning
-        cone_preds = world_state["world_preds"]
 
-        big_cone_idxs = np.where(cone_preds[:,2] == 3)[0]
-        self.loop_count += 1
-        if len(big_cone_idxs) >= 1:
-            self.detecting_finish = True
-            self.distance_to_finish = np.mean(cone_preds[big_cone_idxs,1])
-            self.stop_timestamp = time.perf_counter() + self.distance_to_finish / wheel_speed
-        elif self.stop_timestamp is not None and time.perf_counter() - self.stop_timestamp >= 0.:
+        ## if have been driving for more than 3 seconds, start looking for finish line
+        if time_since_start > 3.:
+            dist_to_finish = get_big_orange_distance(cone_preds=cone_preds, min_big_cones=1)
+
+            if dist_to_finish is not None:
+                brake_in = dist_to_finish / wheel_speed
+                self.brake_time = time_since_start + brake_in
+
+        if self.brake_time < time_since_start:
             self.speed_set_point = 0.
 
-        if self.stop_timestamp is not None:
-            self.time_until_stop = min(time.perf_counter() - self.stop_timestamp, 0.)
-
         # 2. controls
-        delta, _, log = stanley_steering(
-            world_state["path"], wheel_speed, self.linear_gain, self.nonlinear_gain)
+        delta, _, log = stanley_steering(path, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
-        return delta, self.speed_set_point, {"detecting_finish": self.detecting_finish, "finish_dist": self.distance_to_finish, "time_until_stop": self.time_until_stop}
+        debug_dict = {
+            "time_since_start": time_since_start, 
+            "brake_time": self.brake_time,
+            "speed_setpoint": self.speed_set_point
+        }
+
+        return delta, self.speed_set_point, debug_dict, path

@@ -42,9 +42,7 @@ class MissionNode(mp.Process):
         self.perception_out = perception_out
         self.can1_recv_name = can1_recv_name
         self.can2_recv_name = can2_recv_name
-
         self.frequency = 60  # Hz
-
         # Autonomous State Machine
         self.ASM = ASM()
 
@@ -88,11 +86,10 @@ class MissionNode(mp.Process):
                 percep_data = self.perception_out.get()
                 while not self.perception_out.empty():
                     percep_data = self.perception_out.get()
-
-                steering_angle, speed, log = self.mission.loop(percep_data)
-
+                steering_angle, speed, log, path = self.mission.loop(
+                    percep_data)
                 self.debug_socket.send(pickle.dumps(
-                    {"perception": percep_data, "speed": speed, "steering_angle": steering_angle, "mission_id": self.mission.ID,
+                    {"perception": percep_data, "path": path, "speed": speed, "steering_angle": steering_angle, "mission_id": self.mission.ID,
                      "mission_status": log}))
 
                 self.CAN1.send_can_msg(
