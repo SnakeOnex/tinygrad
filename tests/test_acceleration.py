@@ -3,7 +3,7 @@ import time
 import multiprocessing
 from multiprocessing import Process
 
-from dv_sim.sim.simulation import Simulation
+from dv_sim.sim.simulation import Simulation, MissionValue
 # from dv_sim import sim_config
 from master import main
 
@@ -16,7 +16,7 @@ def test_acceleration():
     map_path = Path("dv_sim/maps/acceleration_map.json").resolve()
     sim = Simulation(
             map_path=map_path,
-            mission=1,
+            mission=MissionValue.Acceleration,
             manual=False,
             config_json=Path("dv_sim/sim_config.json").resolve()
     )

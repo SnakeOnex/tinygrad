@@ -3,7 +3,7 @@ import time
 import multiprocessing
 from multiprocessing import Process
 
-from dv_sim.sim.simulation import Simulation
+from dv_sim.sim.simulation import Simulation, MissionValue
 from master import main
 # from dv_sim import sim_config
 
@@ -15,7 +15,7 @@ def test_autocross():
     map_path = Path("dv_sim/maps/circle_map.json").resolve()
     sim = Simulation(
             map_path=map_path,
-            mission=3,
+            mission=MissionValue.Autocross,
             manual=False,
             config_json=Path("dv_sim/sim_config.json").resolve()
     )

@@ -2,7 +2,7 @@ import numpy as np
 import math
 
 
-def stanley_steering(path, speed, gain, lateralGain, max_range=22.5):
+def stanley_steering(path, speed, gain, lateralGain, max_range=50.):
     index = len(path)-1
     if index > 10:
         index = 10

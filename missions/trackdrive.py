@@ -25,7 +25,7 @@ class Trackdrive():
         self.nonlinear_gain = 1.5
         self.path_planner = PathPlanner(path_planner_opt)
 
-        self.speed_set_point = 10.
+        self.speed_set_point = 3.
 
         ## mission planning variables
         self.finished = False
@@ -35,7 +35,7 @@ class Trackdrive():
         self.finish_time = float('inf')
         self.stopped_time = None
 
-        self.laps_to_drive = 3
+        self.laps_to_drive = 100
         self.laps_driven = 0
 
     def loop(self, cone_preds):
@@ -97,4 +97,4 @@ class Trackdrive():
             "finished": self.finished
         }
 
-        return delta, self.speed_set_point, debug_dict, path
+        return self.finished, delta, self.speed_set_point, debug_dict, path

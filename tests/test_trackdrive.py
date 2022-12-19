@@ -3,7 +3,7 @@ import time
 import multiprocessing
 from multiprocessing import Process
 
-from dv_sim.sim.simulation import Simulation
+from dv_sim.sim.simulation import Simulation, MissionValue
 from master import main
 # from dv_sim import sim_config
 
@@ -12,10 +12,10 @@ def test_trackdrive():
     # 1. SETUP SIMULATION && BROS
 
     # 1.A SIMULATION SETUP
-    map_path = Path("dv_sim/maps/circle_map.json").resolve()
+    map_path = Path("dv_sim/maps/trackdrive_ugly.json").resolve()
     sim = Simulation(
             map_path=map_path,
-            mission=4,
+            mission=MissionValue.Trackdrive,
             manual=False,
             config_json=Path("dv_sim/sim_config.json").resolve()
     )

@@ -48,4 +48,4 @@ class Skidpad():
         delta, _, log = stanley_steering(
             path, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
-        return delta, 5., log, path
+        return False, delta, 5., log, path

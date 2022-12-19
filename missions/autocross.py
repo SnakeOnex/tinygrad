@@ -85,4 +85,4 @@ class Autocross():
             "finished": self.finished
         }
 
-        return delta, self.speed_set_point, debug_dict, path
+        return self.finished, delta, self.speed_set_point, debug_dict, path
