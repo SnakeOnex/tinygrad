@@ -157,12 +157,16 @@ def render_cones(state):
     return cones, cone_mask
 
 
-def create_simulation_string(visual_state):
+def create_simulation_string(debug):
     simulation_text = "Simulation status:\n"
-    simulation_text += f"Cones hit: {int(sum(visual_state[GUIValues.cones_mask]))}\n"
-    simulation_text += f"AS Go signal: {'Active' if int(visual_state[GUIValues.go_signal]) else 'Inactive'}\n"
-    simulation_text += f"Time elapsed: {visual_state[GUIValues.race_time]:.2f} s\n"
-    simulation_text += f"Debug: {visual_state[GUIValues.debug][:4]}\n"
+    # simulation_text += f"Cones hit: {int(sum(visual_state[GUIValues.cones_mask]))}\n"
+    # simulation_text += f"AS Go signal: {'Active' if int(visual_state[GUIValues.go_signal]) else 'Inactive'}\n"
+    # simulation_text += f"Time elapsed: {visual_state[GUIValues.race_time]:.2f} s\n"
+    # simulation_text += f"Debug: {visual_state[GUIValues.debug][:4]}\n"
+    # print(debug)
+    for key, values in debug.items():
+        # print(key, values)
+        simulation_text += f"{key}: {values}\n"
     return simulation_text
 
 
@@ -288,7 +292,7 @@ if __name__ == '__main__':
     car_rect.enabled = False
     Text.size = 0.025
     app.simulation_text = Text(text=create_simulation_string(
-        app.visual_state), color=color.turquoise)
+        app.visual_state[GUIValues.debug]), color=color.turquoise)
     app.simulation_text.x = text_x
     app.simulation_text.y = 0.45
     app.simulation_text.line_height = line_height
@@ -404,8 +408,7 @@ if __name__ == '__main__':
             # cones[cone_idx].enabled = False
             app.cones[cone_idx].rotation = Vec3(90., 0., 0)
 
-        app.simulation_text.text = create_simulation_string(
-            app.visual_state)
+        app.simulation_text.text = create_simulation_string(app.visual_state[GUIValues.debug])
         app.simulation_text.background = True
 
         #text_main.text = text

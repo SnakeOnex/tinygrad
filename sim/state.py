@@ -125,6 +125,7 @@ class State():
 
         self.car_pos = np.array(self.map_dict["car_position"])
         self.heading = self.map_dict["car_heading"]
+        # self.discipline = self.map_dict["discipline"]
 
         ## CAR STATE
         self.reset_state()

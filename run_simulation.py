@@ -13,8 +13,20 @@ if __name__ == '__main__':
     parser.add_argument('--config_json', type=str, default='sim_config.json')
     args = parser.parse_args()
 
+    if args.mission.lower() == "trackdrive":
+        mission = MissionValue.Trackdrive
+    elif args.mission.lower() == "autocross":
+        mission = MissionValue.Autocross
+    elif args.mission.lower() == "skidpad":
+        mission = MissionValue.Skidpad
+    elif args.mission.lower() == "acceleration":
+        mission = MissionValue.Acceleration
+    else:
+        mission = MissionValue.Acceleration
+
     sim = Simulation(map_path=args.map, manual=args.manual,
-                     config_json=Path('sim_config.json').resolve())
+                     config_json=Path('sim_config.json').resolve(),
+                     mission=mission)
 
     if args.gui:
         sim.launch_gui()

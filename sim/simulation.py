@@ -19,7 +19,6 @@ from .track_marshall import TrackMarshall
 from .network_helpers import connect_client, bind_udp_socket
 # from track_marshall import Track_marshall
 
-
 class GUIValues(IntEnum):
     car_pos = 0,
     car_heading = 1,
@@ -31,12 +30,10 @@ class GUIValues(IntEnum):
     race_time = 7,
     debug = 8
 
-
 class ControlsValues(IntEnum):
     go_signal = 0,
     lat_control = 1,
     long_control = 2
-
 
 class MissionValue(IntEnum):
     NoValue = 0,
@@ -49,7 +46,6 @@ class MissionValue(IntEnum):
     Manual = 7,
     Disco = 8,
     Donuts = 9
-
 
 class Simulation():
     def __init__(self, map_path, mission=MissionValue.Trackdrive, gui=False, manual=False, config_json=None):

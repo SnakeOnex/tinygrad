@@ -80,7 +80,14 @@ class TrackMarshall():
 			self.has_started = True
 
 
-		self.debug = (self.is_on_start_line, self.is_on_finish_line, self.has_started, self.has_finished, self.race_time)
+		# self.debug = (self.is_on_start_line, self.is_on_finish_line, self.has_started, self.has_finished, self.race_time)
+		self.debug = {
+			"race_time"	: self.race_time,
+			"mission" : self.state.mission.name,
+			"tson" : self.state.tson,
+			"go_signal" : self.state.go_signal,
+			"cones_hit" : int(np.sum(self.cones_mask))
+		}
 
 	def ksicht(self):
 		pass

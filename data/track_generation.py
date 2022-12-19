@@ -1,8 +1,24 @@
 import numpy as np
+from numpy.linalg import norm
 import math
 import json
 import matplotlib.pyplot as plt
 from pathlib import Path
+
+def remove_closest_points(points, pos):
+    """
+    args:
+      points - Nx2
+      pos - (2,) point
+    """
+    dists = norm(points - pos, axis=1)
+    min_dist = np.min(dists)
+
+    idxs = np.where(dists > min_dist)[0]
+
+    assert len(idxs) == points.shape[0] -1
+
+    return points[idxs,:]
 
 def generate_skidpad_path(alpha, x_t, y_t):
         R = np.array([[np.cos(alpha), -np.sin(alpha), x_t],
@@ -171,17 +187,32 @@ def generate_trackdrive_from_slam_track():
 
     car_pos = out["car_position"]
     car_heading = out["car_heading"]
-    yellow_cones = out["yellow_cones"]
-    blue_cones = out["blue_cones"]
+    yellow_cones = np.array(out["yellow_cones"])
+    blue_cones = np.array(out["blue_cones"])
     orange_cones = out["orange_cones"]
     big_cones = out["big_cones"]
 
-    start_line = [(1, 0.5), (1, 0.5)]
+    start_line = [(1, -0.6), (-3., -0.6)]
     finish_line = start_line
 
     car_pos[0] -= 0.85
+    car_pos[1] -= 2.85
 
-    big_cones = yellow_cones[41:44]
+    closest_yellows = np.where(norm(yellow_cones, axis=1) < 3.5)[0]
+    closest_blues = np.where(norm(blue_cones, axis=1) < 2.)[0]
+
+    farthest_yellows = np.where(norm(yellow_cones, axis=1) > 3.5)[0]
+    farthest_blues = np.where(norm(blue_cones, axis=1) > 2.)[0]
+
+    # print("yellow_cones:", yellow_cones)
+    big_cones = yellow_cones[closest_yellows,:]
+    big_cones = np.vstack((big_cones, blue_cones[closest_blues,:]))
+    big_cones = np.vstack((big_cones, np.array([0.7, -1.7]).reshape((-1,2))))
+
+    yellow_cones = yellow_cones[farthest_yellows,:]
+    blue_cones = blue_cones[farthest_blues,:]
+
+    blue_cones = remove_closest_points(blue_cones, np.array([23.7,-0.5]))
 
     # finish_line = [(1, 50.), (1, 50.)]
 
@@ -190,10 +221,10 @@ def generate_trackdrive_from_slam_track():
     track_dict = {
         "car_position" : car_pos,
         "car_heading"  : car_heading,
-        "yellow_cones" : yellow_cones,
-        "blue_cones"   : blue_cones,
+        "yellow_cones" : yellow_cones.tolist(),
+        "blue_cones"   : blue_cones.tolist(),
         "orange_cones" : orange_cones,
-        "big_cones"    : big_cones,
+        "big_cones"    : big_cones.tolist(),
         "start_line"   : start_line,
         "finish_line"  : finish_line
     }
@@ -212,7 +243,7 @@ def plot_map(map_dict):
     orange_cones = np.array(map_dict["orange_cones"]).reshape(-1, 2)
     big_cones = np.array(map_dict["big_cones"]).reshape(-1, 2)
 
-    plt.plot(yellow_cones[:,0], yellow_cones[:,1], '.', color='yellow', label="yellow_cones")
+    plt.plot(yellow_cones[:,0], yellow_cones[:,1], '.', color='gold', label="yellow_cones")
     plt.plot(blue_cones[:,0], blue_cones[:,1], '.', color='blue', label="blue_cones")
     plt.plot(orange_cones[:,0], orange_cones[:,1], '.', color='orange', label="orange_cones")
     plt.plot(big_cones[:,0], big_cones[:,1], '.', color='red', label="big_orange_cones")
@@ -248,5 +279,7 @@ if __name__ == '__main__':
     # with open("acceleration_map.json", 'w') as f:
     #     json.dump(acc_dict, f, indent=4)
 
+    with open("trackdrive_map.json", 'w') as f:
+        json.dump(trackdrive_dict, f, indent=4)
 
 
