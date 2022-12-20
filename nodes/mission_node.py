@@ -22,7 +22,6 @@ from config import tcp_config
 
 from pycandb.can_interface import CanInterface
 
-
 class MissionValue(IntEnum):
     NoValue = 0,
     Acceleration = 1,
@@ -35,16 +34,16 @@ class MissionValue(IntEnum):
     Disco = 8,
     Donuts = 9
 
-
 class MissionNode(mp.Process):
     def __init__(self, perception_out, can1_recv_name, can2_recv_name):
         mp.Process.__init__(self)
         self.perception_out = perception_out
         self.can1_recv_name = can1_recv_name
         self.can2_recv_name = can2_recv_name
-        self.frequency = 60  # Hz
+        self.frequency = 100  # Hz
         # Autonomous State Machine
         self.ASM = ASM()
+        self.finished = False
 
     def initialize(self):
         self.can1_recv_state = shared_memory.ShareableList(
@@ -52,23 +51,19 @@ class MissionNode(mp.Process):
         self.can2_recv_state = shared_memory.ShareableList(
             name=self.can2_recv_name)
 
-        self.acceleration = Acceleration(
-            self.perception_out, self.can1_recv_state)
+        self.acceleration = Acceleration(self.perception_out, self.can1_recv_state)
         self.autocross = Autocross(self.perception_out, self.can1_recv_state)
         self.trackdrive = Trackdrive(self.perception_out, self.can1_recv_state)
         self.skidpad = Skidpad(self.perception_out, self.can1_recv_state)
 
-        self.missions = [None, self.acceleration, self.skidpad,
-                         self.autocross, self.trackdrive]
+        self.missions = [None, self.acceleration, self.skidpad, self.autocross, self.trackdrive]
         self.mission = self.missions[MissionValue.NoValue]
 
-        self.CAN1 = CanInterface(
-            can_config["CAN_JSON"], can_config["CAN1_ID"], False)
+        self.CAN1 = CanInterface(can_config["CAN_JSON"], can_config["CAN1_ID"], False)
 
         self.context = zmq.Context()
         self.debug_socket = self.context.socket(zmq.PUB)
-        self.debug_socket.bind(
-            tcp_config["TCP_HOST"]+":"+tcp_config["AS_DEBUG_PORT"])
+        self.debug_socket.bind(tcp_config["TCP_HOST"]+":"+tcp_config["AS_DEBUG_PORT"])
 
     def run(self):
         self.initialize()
@@ -77,37 +72,36 @@ class MissionNode(mp.Process):
             start_time = time.perf_counter()
 
             # 1. update AS State
-
             # TODO: change start_button to tson_button
             self.ASM.update(start_button=self.can1_recv_state[Can1RecvItems.start_button.value],
-                            go_signal=self.can2_recv_state[Can2RecvItems.go_signal.value])
+                            go_signal=self.can2_recv_state[Can2RecvItems.go_signal.value],
+                            finished=self.finished)
 
             if self.ASM.AS == AS.DRIVING:
                 percep_data = self.perception_out.get()
                 while not self.perception_out.empty():
                     percep_data = self.perception_out.get()
-                steering_angle, speed, log, path = self.mission.loop(
-                    percep_data)
-                self.debug_socket.send(pickle.dumps(
-                    {"perception": percep_data, "path": path, "speed": speed, "steering_angle": steering_angle, "mission_id": self.mission.ID,
-                     "mission_status": log}))
 
-                self.CAN1.send_can_msg(
-                    [steering_angle], self.CAN1.name2id["XVR_Control"])
-                self.CAN1.send_can_msg(
-                    [0, 0, 0, 0, speed, 0], self.CAN1.name2id["XVR_SetpointsMotor_A"])
+                self.finished, steering_angle, speed, log, path = self.mission.loop(percep_data)
+
+                self.debug_socket.send(pickle.dumps({
+                    "perception": percep_data, 
+                    "path": path, 
+                    "speed": speed, 
+                    "steering_angle": steering_angle, 
+                    "mission_id": self.mission.ID,
+                    "mission_status": log}))
+
+                self.CAN1.send_can_msg([steering_angle], self.CAN1.name2id["XVR_Control"])
+                self.CAN1.send_can_msg([0, 0, 0, 0, speed, 0], self.CAN1.name2id["XVR_SetpointsMotor_A"])
             else:
-
                 if self.mission is None and self.can1_recv_state[int(Can1RecvItems.start_button.value)] == 1:
-                    print(
-                        f"mission: {MissionValue(self.can1_recv_state[Can1RecvItems.mission.value]).name}")
+                    print(f"mission: {MissionValue(self.can1_recv_state[Can1RecvItems.mission.value]).name}")
 
-                self.mission = self.missions[int(
-                    self.can1_recv_state[Can1RecvItems.mission.value])]
+                self.mission = self.missions[int(self.can1_recv_state[Can1RecvItems.mission.value])]
 
             # 3. send XVR_STATUS
-            self.CAN1.send_can_msg(
-                [self.ASM.AS.value, 0, 0, 0, 0, 0, 0, 0], self.CAN1.name2id["XVR_Status"])
+            self.CAN1.send_can_msg([self.ASM.AS.value, 0, 0, 0, 0, 0, 0, 0], self.CAN1.name2id["XVR_Status"])
 
             end_time = time.perf_counter()
             # print(f"loop_delta:  {(end_time - start_time)*1000}ms")

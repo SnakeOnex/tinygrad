@@ -2,7 +2,7 @@ import numpy as np
 import math
 
 
-def stanley_steering(path, speed, gain, lateralGain, max_range=22.5):
+def stanley_steering(path, speed, gain, lateralGain, max_range=50.):
     index = len(path)-1
     if index > 10:
         index = 10
@@ -20,7 +20,7 @@ def stanley_steering(path, speed, gain, lateralGain, max_range=22.5):
         nonLinear = 2 * math.atan2(lateralGain * latOffset, speed) / np.pi
     else:
         nonLinear = 0
-        print("Not using non-linear")
+        # print("Not using non-linear")
 
     linear = gain * direction
     delta = linear + nonLinear

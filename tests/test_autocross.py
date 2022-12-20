@@ -4,19 +4,18 @@ import multiprocessing
 from multiprocessing import Process
 
 from dv_sim.sim.simulation import Simulation, MissionValue
-# from dv_sim import sim_config
 from master import main
+# from dv_sim import sim_config
 
 
-def test_acceleration():
+def test_autocross():
     # 1. SETUP SIMULATION && BROS
 
-    ## 1.A SIMULATION SETUP
-
-    map_path = Path("dv_sim/maps/acceleration_map.json").resolve()
+    # 1.A SIMULATION SETUP
+    map_path = Path("dv_sim/maps/circle_map.json").resolve()
     sim = Simulation(
             map_path=map_path,
-            mission=MissionValue.Acceleration,
+            mission=MissionValue.Autocross,
             manual=False,
             config_json=Path("dv_sim/sim_config.json").resolve()
     )
@@ -39,7 +38,7 @@ def test_acceleration():
             sim.go_signal()
 
         # after 20 seconds end and return TRUE
-        if time_since_start >= 20.:
+        if time_since_start >= 31.:
             test_outcome = True
             break
 
@@ -50,11 +49,4 @@ def test_acceleration():
     # 3. HOUSE KEEPING
     bros_process.terminate()
     sim.terminate_gui()
-    # sim.vision_socket.close()
-    # sim.context.term()
-    print("closed socket")
     time.sleep(0.1)
-
-
-if __name__ == "__main__":
-    test_acceleration()

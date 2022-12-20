@@ -1,12 +1,13 @@
 import multiprocessing as mp
 from multiprocessing import shared_memory
 import numpy as np
+import math
 import sys
+
+from nodes.can1_node import Can1RecvItems, Can1SendItems
+from config import path_planner_opt
 from algorithms.steering import stanley_steering
 from algorithms.path_planning import PathPlanner
-from config import path_planner_opt
-import math
-from nodes.can1_node import Can1RecvItems, Can1SendItems
 
 
 class Skidpad():
@@ -47,4 +48,4 @@ class Skidpad():
         delta, _, log = stanley_steering(
             path, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
-        return delta, 5., log, path
+        return False, delta, 5., log, path
