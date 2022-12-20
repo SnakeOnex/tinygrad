@@ -246,14 +246,16 @@ class PathPlanner():
     def find_path(self, cones):
         planner = PathPlanning(np.array([0, 0]))
 
-        blue_cones = cones[cones[:, 2] == 1, :]
-        yellow_cones = cones[cones[:, 2] == 0, :]
+        blue_cones = cones[cones[:, 2] == 0, :]
+        yellow_cones = cones[cones[:, 2] == 1, :]
 
         try:
-            planner.find_path(
-                blue_cones[:, :2], yellow_cones[:, :2], n_steps=self.n_steps)
+            planner.find_path(blue_cones[:, :2], yellow_cones[:, :2], n_steps=self.n_steps)
             path = np.vstack(planner.start_points)
         except:
             path = np.array([[0., 0.]])
+
+        path_sorted_idxs = path[:,1].argsort()
+        path = path[path_sorted_idxs]
 
         return path

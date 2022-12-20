@@ -37,7 +37,7 @@ cone_localizer_opt = {
 }
 
 path_planner_opt = {
-    "n_steps": 5
+    "n_steps": 3
 }
 
 vision_node_config = {
