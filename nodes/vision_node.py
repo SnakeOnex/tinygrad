@@ -45,8 +45,6 @@ class VisionNode(mp.Process):
             # self.path_sharemem = shared_memory.ShareableList([0. for _ in range(2*5)], name="path")
             # self.path_sharemem = shared_memory.ShareableList(name="path")
             pass
-
-        self.path_planner = PathPlanner(config["path_planner_opt"])
         self.logger = Logger(
             log_name=self.log_opt["log_name"], log_folder_name=self.log_opt["log_folder_name"], main_folder_path=self.main_log_folder)
         self.logger.log("CONE_DETECTOR_CONFIGURATION", config)  # log config
@@ -67,17 +65,14 @@ class VisionNode(mp.Process):
 
             bbox_preds = self.detector.process_image(
                 image).cpu().detach().numpy()
-            world_preds = self.localizer.project_bboxes(bbox_preds)
-            path = self.path_planner.find_path(world_preds)
 
-            self.output_queue.put(path)
+            world_preds = self.localizer.project_bboxes(bbox_preds)
 
             cone_classes = bbox_preds[:, 5].astype(int)
             data = {
                 "bboxes": bbox_preds,
                 "world_preds": world_preds,
                 "cone_classes": cone_classes,
-                "path": path
             }
             self.logger.log("CONE_DETECTOR_FRAME", data)
 
