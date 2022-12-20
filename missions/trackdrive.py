@@ -15,9 +15,8 @@ from algorithms.general import get_big_orange_distance
 class Trackdrive():
     ID = "Trackdrive"
 
-    def __init__(self, perception_out, can1_recv_state):
+    def __init__(self, can1_recv_state):
         mp.Process.__init__(self)
-        self.perception_out = perception_out
         self.can1_recv_state = can1_recv_state
 
         # CONTROLS CONFIGURATION

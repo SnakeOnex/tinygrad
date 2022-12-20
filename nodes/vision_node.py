@@ -13,12 +13,13 @@ from tvojemama.logger import Logger, LogReader, name_to_log
 from config import vision_node_config as config
 from config import tcp_config as tcp
 
+from nodes.node_msgs import create_publisher_socket
+from nodes.node_msgs import VisionNodeMsgPorts
 
 class VisionNode(mp.Process):
-    def __init__(self, output_queue, main_log_folder, brosbag_path=None):
+    def __init__(self, main_log_folder, brosbag_path=None):
         # multiprocessing.Process.__init__(self)
         mp.Process.__init__(self)
-        self.output_queue = output_queue
         self.brosbag_path = brosbag_path
         self.main_log_folder = main_log_folder
         self.log_opt = config["logging_opt"]
@@ -48,6 +49,8 @@ class VisionNode(mp.Process):
         self.logger = Logger(
             log_name=self.log_opt["log_name"], log_folder_name=self.log_opt["log_folder_name"], main_folder_path=self.main_log_folder)
         self.logger.log("CONE_DETECTOR_CONFIGURATION", config)  # log config
+
+        self.cone_preds_socket = create_publisher_socket(VisionNodeMsgPorts.CONE_PREDS)
 
     def run(self):
         print("STARTING CONE DETECTION")
@@ -88,7 +91,7 @@ class VisionNode(mp.Process):
             # for i in range(min(path.shape[0], 5)):
             #     self.path_sharemem[i] = float(path[i,0])
             #     self.path_sharemem[i+path.shape[0]-1] = float(path[i,1])
-            self.output_queue.put(world_preds)
+            self.cone_preds_socket.send(pickle.dumps(world_preds))
             self.logger.log("CONE_DETECTOR_FRAME", world_preds)
 
     def read_zed_image(self):

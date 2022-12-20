@@ -33,8 +33,7 @@ def main(brosbag_folder=None):
     # 1. processes init
 
     # AS
-    vision_node_out = multiprocessing.Queue()
-    vision_node = VisionNode(vision_node_out, main_log_folder, brosbag_folder)
+    vision_node = VisionNode(main_log_folder, brosbag_folder)
 
     # CAN
     can1_recv_state = shared_memory.ShareableList(
@@ -47,7 +46,6 @@ def main(brosbag_folder=None):
 
     # MISSIONS
     mission_node = MissionNode(
-        perception_out=vision_node_out,
         can1_recv_name=can1_recv_state.shm.name,
         can2_recv_name=can2_recv_state.shm.name
     )

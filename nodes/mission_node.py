@@ -22,6 +22,9 @@ from config import tcp_config
 
 from pycandb.can_interface import CanInterface
 
+from nodes.node_msgs import create_subscriber_socket, get_last_subscription_data
+from nodes.node_msgs import VisionNodeMsgPorts
+
 class MissionValue(IntEnum):
     NoValue = 0,
     Acceleration = 1,
@@ -35,9 +38,8 @@ class MissionValue(IntEnum):
     Donuts = 9
 
 class MissionNode(mp.Process):
-    def __init__(self, perception_out, can1_recv_name, can2_recv_name):
+    def __init__(self, can1_recv_name, can2_recv_name):
         mp.Process.__init__(self)
-        self.perception_out = perception_out
         self.can1_recv_name = can1_recv_name
         self.can2_recv_name = can2_recv_name
         self.frequency = 100  # Hz
@@ -45,16 +47,18 @@ class MissionNode(mp.Process):
         self.ASM = ASM()
         self.finished = False
 
+        self.percep_data = np.zeros((0,3))
+
     def initialize(self):
         self.can1_recv_state = shared_memory.ShareableList(
             name=self.can1_recv_name)
         self.can2_recv_state = shared_memory.ShareableList(
             name=self.can2_recv_name)
 
-        self.acceleration = Acceleration(self.perception_out, self.can1_recv_state)
-        self.autocross = Autocross(self.perception_out, self.can1_recv_state)
-        self.trackdrive = Trackdrive(self.perception_out, self.can1_recv_state)
-        self.skidpad = Skidpad(self.perception_out, self.can1_recv_state)
+        self.acceleration = Acceleration(self.can1_recv_state)
+        self.autocross = Autocross(self.can1_recv_state)
+        self.trackdrive = Trackdrive(self.can1_recv_state)
+        self.skidpad = Skidpad(self.can1_recv_state)
 
         self.missions = [None, self.acceleration, self.skidpad, self.autocross, self.trackdrive]
         self.mission = self.missions[MissionValue.NoValue]
@@ -64,6 +68,8 @@ class MissionNode(mp.Process):
         self.context = zmq.Context()
         self.debug_socket = self.context.socket(zmq.PUB)
         self.debug_socket.bind(tcp_config["TCP_HOST"]+":"+tcp_config["AS_DEBUG_PORT"])
+
+        self.cone_preds_socket = create_subscriber_socket(VisionNodeMsgPorts.CONE_PREDS)
 
     def run(self):
         self.initialize()
@@ -77,15 +83,15 @@ class MissionNode(mp.Process):
                             go_signal=self.can2_recv_state[Can2RecvItems.go_signal.value],
                             finished=self.finished)
 
-            if self.ASM.AS == AS.DRIVING:
-                percep_data = self.perception_out.get()
-                while not self.perception_out.empty():
-                    percep_data = self.perception_out.get()
+            if self.ASM.AS == AS.DRIVING:                
+                data = get_last_subscription_data(self.cone_preds_socket)
+                if data != None:
+                    self.percep_data = pickle.loads(data)
 
-                self.finished, steering_angle, speed, log, path = self.mission.loop(percep_data)
+                self.finished, steering_angle, speed, log, path = self.mission.loop(self.percep_data)
 
                 self.debug_socket.send(pickle.dumps({
-                    "perception": percep_data, 
+                    "perception": self.percep_data, 
                     "path": path, 
                     "speed": speed, 
                     "steering_angle": steering_angle, 

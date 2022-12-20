@@ -13,9 +13,8 @@ from algorithms.path_planning import PathPlanner
 class Skidpad():
     ID = "Skidpad"
 
-    def __init__(self, perception_out, can1_recv_state):
+    def __init__(self, can1_recv_state):
         mp.Process.__init__(self)
-        self.perception_out = perception_out
         self.can1_recv_state = can1_recv_state
 
         # CONTROLLER CONFIGURATION

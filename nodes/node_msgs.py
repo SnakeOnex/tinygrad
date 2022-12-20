@@ -25,6 +25,7 @@ def get_last_subscription_data(socket):
 class NodePorts(IntEnum):
     CAN1 = 10000
     CAN2 = 20000
+    VISION = 30000
 
 class CAN1NodeMsgPorts(IntEnum):
     WHEEL_SPEED = NodePorts.CAN1
@@ -33,3 +34,6 @@ class CAN1NodeMsgPorts(IntEnum):
 
 class CAN2NodeMsgPorts(IntEnum):
     GO_SIGNAL = NodePorts.CAN2
+
+class VisionNodeMsgPorts(IntEnum):
+    CONE_PREDS = NodePorts.VISION
