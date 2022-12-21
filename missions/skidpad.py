@@ -13,9 +13,8 @@ from algorithms.path_planning import PathPlanner
 class Skidpad():
     ID = "Skidpad"
 
-    def __init__(self, can1_recv_state):
+    def __init__(self):
         mp.Process.__init__(self)
-        self.can1_recv_state = can1_recv_state
 
         # CONTROLLER CONFIGURATION
         self.linear_gain = 2.05
@@ -32,7 +31,7 @@ class Skidpad():
             "right_far": [False, (0, 0, 0)],
         }
 
-    def loop(self, world_state):
+    def loop(self, world_state, wheel_speed):
         """
         args:
           vision output (path, cone positions)
@@ -41,7 +40,6 @@ class Skidpad():
           wheelspeed_setpoint
         """
         # 1. receive perception data
-        wheel_speed = self.can1_recv_state[Can1RecvItems.wheel_speed.value]
         path = self.path_planner.find_path(world_state)
         # consider moving wheel speed to mission node
         delta, _, log = stanley_steering(

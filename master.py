@@ -36,19 +36,11 @@ def main(brosbag_folder=None):
     vision_node = VisionNode(main_log_folder, brosbag_folder)
 
     # CAN
-    can1_recv_state = shared_memory.ShareableList(
-        [0. for _ in range(len(Can1RecvItems))])
-    can2_recv_state = shared_memory.ShareableList(
-        [0. for _ in range(len(Can2RecvItems))])
-
-    can1_node = Can1Node(mode="SIMULATION", recv_name=can1_recv_state.shm.name)
-    can2_node = Can2Node(mode="SIMULATION", recv_name=can2_recv_state.shm.name)
+    can1_node = Can1Node(mode="SIMULATION")
+    can2_node = Can2Node(mode="SIMULATION")
 
     # MISSIONS
-    mission_node = MissionNode(
-        can1_recv_name=can1_recv_state.shm.name,
-        can2_recv_name=can2_recv_state.shm.name
-    )
+    mission_node = MissionNode()
 
     # ASM
 

@@ -15,9 +15,8 @@ from algorithms.general import get_big_orange_distance
 class Acceleration():
     ID = "Acceleration"
 
-    def __init__(self, can1_recv_state):
+    def __init__(self):
         mp.Process.__init__(self)
-        self.can1_recv_state = can1_recv_state
 
         # CONTROLS CONFIGURATION
         self.linear_gain = 2.05
@@ -33,7 +32,7 @@ class Acceleration():
         self.brake_time = float('inf')
         self.stopped_time = None
 
-    def loop(self, cone_preds):
+    def loop(self, cone_preds, wheel_speed):
         """
         args:
           cone_preds - Nx3 np.array containing cone predictions
@@ -51,7 +50,6 @@ class Acceleration():
         time_since_start = time.perf_counter() - self.start_timestamp
 
         # 1. receive perception data
-        wheel_speed = self.can1_recv_state[Can1RecvItems.wheel_speed.value]
         path = self.path_planner.find_path(cone_preds)
 
         # 2. planning

@@ -13,7 +13,7 @@ from tvojemama.logger import Logger, LogReader, name_to_log
 from config import vision_node_config as config
 from config import tcp_config as tcp
 
-from nodes.node_msgs import create_publisher_socket
+from nodes.node_msgs import create_publisher_socket, publish_data
 from nodes.node_msgs import VisionNodeMsgPorts
 
 class VisionNode(mp.Process):
@@ -91,7 +91,7 @@ class VisionNode(mp.Process):
             # for i in range(min(path.shape[0], 5)):
             #     self.path_sharemem[i] = float(path[i,0])
             #     self.path_sharemem[i+path.shape[0]-1] = float(path[i,1])
-            self.cone_preds_socket.send(pickle.dumps(world_preds))
+            publish_data(self.cone_preds_socket, world_preds)
             self.logger.log("CONE_DETECTOR_FRAME", world_preds)
 
     def read_zed_image(self):

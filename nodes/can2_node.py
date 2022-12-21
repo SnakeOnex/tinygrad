@@ -5,8 +5,12 @@ from enum import Enum
 
 import time
 import math
+import pickle
 
 from pycandb.can_interface import CanInterface
+
+from nodes.node_msgs import create_publisher_socket, publish_data
+from nodes.node_msgs import CAN2NodeMsgPorts
 
 class Can2RecvItems(Enum):
     go_signal = 0
@@ -17,15 +21,15 @@ class Can2SendItems(Enum):
     engine_force = 1
 
 class Can2Node(mp.Process):
-    def __init__(self, mode, recv_name):
+    def __init__(self, mode):
         mp.Process.__init__(self)
         self.mode = mode # "SIMULATION", "CAN"
         self.bus_name = "can2"
-        self.recv_name = recv_name
 
     def initialize(self):
-        self.can2_recv_state = shared_memory.ShareableList(name=self.recv_name)
         self.CAN2 = CanInterface("data/D1.json", 1, False)
+
+        self.go_signal_socket = create_publisher_socket(CAN2NodeMsgPorts.GO_SIGNAL)
 
         self.message_callbacks = {
             self.CAN2.name2id["RES_Status"]: self.receive_RES_Status,
@@ -47,4 +51,4 @@ class Can2Node(mp.Process):
         # print(f"received RES status, values: ", values)
         go_signal = values[2]
         # print("go_signal: ", go_signal)
-        self.can2_recv_state[Can2RecvItems.go_signal.value] = go_signal;
+        publish_data(self.go_signal_socket, go_signal)

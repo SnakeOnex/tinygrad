@@ -15,9 +15,8 @@ from algorithms.general import get_big_orange_distance
 class Trackdrive():
     ID = "Trackdrive"
 
-    def __init__(self, can1_recv_state):
+    def __init__(self):
         mp.Process.__init__(self)
-        self.can1_recv_state = can1_recv_state
 
         # CONTROLS CONFIGURATION
         self.linear_gain = 2.05
@@ -37,7 +36,7 @@ class Trackdrive():
         self.laps_to_drive = 100
         self.laps_driven = 0
 
-    def loop(self, cone_preds):
+    def loop(self, cone_preds, wheel_speed):
         """
         args:
           cone_preds - Nx3 np.array containing cone predictions
@@ -56,8 +55,6 @@ class Trackdrive():
         time_since_last_lap = time_since_start - self.last_lap_time
 
         # 1. receive perception data
-        wheel_speed = self.can1_recv_state[Can1RecvItems.wheel_speed.value]
-
         path = self.path_planner.find_path(cone_preds)
 
         # 2. planning

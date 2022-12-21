@@ -22,8 +22,8 @@ from config import tcp_config
 
 from pycandb.can_interface import CanInterface
 
-from nodes.node_msgs import create_subscriber_socket, get_last_subscription_data
-from nodes.node_msgs import VisionNodeMsgPorts
+from nodes.node_msgs import create_subscriber_socket, update_subscription_data
+from nodes.node_msgs import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts
 
 class MissionValue(IntEnum):
     NoValue = 0,
@@ -38,27 +38,26 @@ class MissionValue(IntEnum):
     Donuts = 9
 
 class MissionNode(mp.Process):
-    def __init__(self, can1_recv_name, can2_recv_name):
+    def __init__(self):
         mp.Process.__init__(self)
-        self.can1_recv_name = can1_recv_name
-        self.can2_recv_name = can2_recv_name
         self.frequency = 100  # Hz
         # Autonomous State Machine
         self.ASM = ASM()
         self.finished = False
-
+        # Vision node data
         self.percep_data = np.zeros((0,3))
+        # CAN1 node data
+        self.wheel_speed = 0.
+        self.mission_num = MissionValue.NoValue.value
+        self.start_button = 0
+        # CAN2 node data
+        self.go_signal = 0
 
     def initialize(self):
-        self.can1_recv_state = shared_memory.ShareableList(
-            name=self.can1_recv_name)
-        self.can2_recv_state = shared_memory.ShareableList(
-            name=self.can2_recv_name)
-
-        self.acceleration = Acceleration(self.can1_recv_state)
-        self.autocross = Autocross(self.can1_recv_state)
-        self.trackdrive = Trackdrive(self.can1_recv_state)
-        self.skidpad = Skidpad(self.can1_recv_state)
+        self.acceleration = Acceleration()
+        self.autocross = Autocross()
+        self.trackdrive = Trackdrive()
+        self.skidpad = Skidpad()
 
         self.missions = [None, self.acceleration, self.skidpad, self.autocross, self.trackdrive]
         self.mission = self.missions[MissionValue.NoValue]
@@ -69,7 +68,16 @@ class MissionNode(mp.Process):
         self.debug_socket = self.context.socket(zmq.PUB)
         self.debug_socket.bind(tcp_config["TCP_HOST"]+":"+tcp_config["AS_DEBUG_PORT"])
 
+        # Vision node message subscriptions
         self.cone_preds_socket = create_subscriber_socket(VisionNodeMsgPorts.CONE_PREDS)
+
+        # CAN1 node message subscriptions
+        self.wheel_speed_socket = create_subscriber_socket(CAN1NodeMsgPorts.WHEEL_SPEED)
+        self.mission_socket = create_subscriber_socket(CAN1NodeMsgPorts.MISSION)
+        self.start_button_socket = create_subscriber_socket(CAN1NodeMsgPorts.START_BUTTON)
+
+        # CAN2 node message subscriptions
+        self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
 
     def run(self):
         self.initialize()
@@ -77,18 +85,20 @@ class MissionNode(mp.Process):
         while True:
             start_time = time.perf_counter()
 
+            self.start_button = update_subscription_data(self.start_button_socket, self.start_button)
+            self.go_signal = update_subscription_data(self.go_signal_socket, self.go_signal)
+
             # 1. update AS State
             # TODO: change start_button to tson_button
-            self.ASM.update(start_button=self.can1_recv_state[Can1RecvItems.start_button.value],
-                            go_signal=self.can2_recv_state[Can2RecvItems.go_signal.value],
+            self.ASM.update(start_button=self.start_button,
+                            go_signal=self.go_signal,
                             finished=self.finished)
 
             if self.ASM.AS == AS.DRIVING:                
-                data = get_last_subscription_data(self.cone_preds_socket)
-                if data != None:
-                    self.percep_data = pickle.loads(data)
+                self.percep_data = update_subscription_data(self.cone_preds_socket, self.percep_data)
+                self.wheel_speed = update_subscription_data(self.wheel_speed_socket, self.wheel_speed)
 
-                self.finished, steering_angle, speed, log, path = self.mission.loop(self.percep_data)
+                self.finished, steering_angle, speed, log, path = self.mission.loop(self.percep_data, self.wheel_speed)
 
                 self.debug_socket.send(pickle.dumps({
                     "perception": self.percep_data, 
@@ -101,10 +111,12 @@ class MissionNode(mp.Process):
                 self.CAN1.send_can_msg([steering_angle], self.CAN1.name2id["XVR_Control"])
                 self.CAN1.send_can_msg([0, 0, 0, 0, speed, 0], self.CAN1.name2id["XVR_SetpointsMotor_A"])
             else:
-                if self.mission is None and self.can1_recv_state[int(Can1RecvItems.start_button.value)] == 1:
-                    print(f"mission: {MissionValue(self.can1_recv_state[Can1RecvItems.mission.value]).name}")
+                self.mission_num = update_subscription_data(self.mission_socket, self.mission_num)
 
-                self.mission = self.missions[int(self.can1_recv_state[Can1RecvItems.mission.value])]
+                if self.mission is None and self.start_button == 1:
+                    print(f"mission: {MissionValue(self.mission_num).name}")
+
+                self.mission = self.missions[self.mission_num]
 
             # 3. send XVR_STATUS
             self.CAN1.send_can_msg([self.ASM.AS.value, 0, 0, 0, 0, 0, 0, 0], self.CAN1.name2id["XVR_Status"])
