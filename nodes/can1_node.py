@@ -9,8 +9,8 @@ import pickle
 
 from pycandb.can_interface import CanInterface
 
-from nodes.node_msgs import create_publisher_socket, publish_data
-from nodes.node_msgs import CAN1NodeMsgPorts
+from internode_communication import create_publisher_socket, publish_data
+from config import CAN1NodeMsgPorts
 
 class Can1RecvItems(Enum):
     wheel_speed = 0

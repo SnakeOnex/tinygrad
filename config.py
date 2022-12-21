@@ -1,6 +1,7 @@
 from pathlib import Path
 import numpy as np
 import os
+from enum import IntEnum, auto
 
 ##################
 # GENERAL CONFIG #
@@ -11,6 +12,27 @@ file_path = Path(__file__).parent
 config = {
     "main_log_folder": Path.cwd() / Path("data/bros_logs")
 }
+
+###########################
+# INTERNODE COMMUNICATION #
+###########################
+
+class NodePorts(IntEnum):
+    CAN1 = 10000
+    CAN2 = 20000
+    VISION = 30000
+
+class CAN1NodeMsgPorts(IntEnum):
+    WHEEL_SPEED = NodePorts.CAN1
+    MISSION = auto()
+    START_BUTTON = auto()
+
+class CAN2NodeMsgPorts(IntEnum):
+    GO_SIGNAL = NodePorts.CAN2
+
+class VisionNodeMsgPorts(IntEnum):
+    CONE_PREDS = NodePorts.VISION
+
 
 ######################
 # VISION NODE CONFIG #

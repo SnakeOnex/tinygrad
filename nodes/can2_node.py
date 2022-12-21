@@ -9,8 +9,8 @@ import pickle
 
 from pycandb.can_interface import CanInterface
 
-from nodes.node_msgs import create_publisher_socket, publish_data
-from nodes.node_msgs import CAN2NodeMsgPorts
+from internode_communication import create_publisher_socket, publish_data
+from config import CAN2NodeMsgPorts
 
 class Can2RecvItems(Enum):
     go_signal = 0

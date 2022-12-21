@@ -17,13 +17,12 @@ from missions.skidpad import Skidpad
 from missions.autocross import Autocross
 
 from nodes.asm import ASM, AS
-from config import can_config
-from config import tcp_config
+from config import can_config, tcp_config
+from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts
 
 from pycandb.can_interface import CanInterface
 
-from nodes.node_msgs import create_subscriber_socket, update_subscription_data
-from nodes.node_msgs import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts
+from internode_communication import create_subscriber_socket, update_subscription_data
 
 class MissionValue(IntEnum):
     NoValue = 0,
