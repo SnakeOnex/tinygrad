@@ -1,6 +1,5 @@
 import multiprocessing as mp
 import multiprocessing.connection as connection
-from multiprocessing import shared_memory
 from enum import Enum
 
 import time
@@ -11,16 +10,6 @@ from pycandb.can_interface import CanInterface
 
 from internode_communication import create_publisher_socket, publish_data
 from config import CAN1NodeMsgPorts
-
-class Can1RecvItems(Enum):
-    wheel_speed = 0
-    steering_actual = 1
-    mission = 2
-    start_button = 3
-
-class Can1SendItems(Enum):
-    steering = 0
-    engine_force = 1
 
 class Can1Node(mp.Process):
     def __init__(self, mode):

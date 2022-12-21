@@ -1,6 +1,5 @@
 import multiprocessing as mp
 import multiprocessing.connection as connection
-from multiprocessing import shared_memory
 import time
 import sys
 import zmq

@@ -1,10 +1,8 @@
 import multiprocessing as mp
-from multiprocessing import shared_memory
 import numpy as np
 import math
 import sys
 
-from nodes.can1_node import Can1RecvItems, Can1SendItems
 from config import path_planner_opt
 from algorithms.steering import stanley_steering
 from algorithms.path_planning import PathPlanner

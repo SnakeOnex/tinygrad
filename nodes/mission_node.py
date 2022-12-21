@@ -1,5 +1,4 @@
 import multiprocessing as mp
-from multiprocessing import shared_memory
 import pickle
 import numpy as np
 import zmq
@@ -7,9 +6,6 @@ import sys
 import math
 import time
 from enum import IntEnum
-
-from nodes.can1_node import Can1RecvItems, Can1SendItems
-from nodes.can2_node import Can2RecvItems, Can2SendItems
 
 from missions.acceleration import Acceleration
 from missions.trackdrive import Trackdrive

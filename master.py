@@ -5,7 +5,6 @@ import sys
 import time
 import os
 import multiprocessing
-from multiprocessing import shared_memory
 from signal import signal
 from signal import SIGTERM
 
@@ -16,8 +15,8 @@ from tvojemama.logger import gen_name_with_time, create_log_folder
 from config import config
 
 from nodes.vision_node import VisionNode
-from nodes.can1_node import Can1Node, Can1RecvItems, Can1SendItems
-from nodes.can2_node import Can2Node, Can2RecvItems, Can2SendItems
+from nodes.can1_node import Can1Node
+from nodes.can2_node import Can2Node
 from nodes.mission_node import MissionNode
 
 
