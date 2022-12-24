@@ -77,7 +77,8 @@ can2_send_callbacks = {
 
 
 def receive_XVR_Control(state, values):
-    state.steering_angle = values[0]
+    # state.steering_angle = values[0]
+    state.steering_angle_set_point = values[0]
 
 
 def receive_XVR_SetpointsMotor_A(state, values):
