@@ -14,10 +14,10 @@ def test_skidpad():
     # 1.A SIMULATION SETUP
     map_path = Path("dv_sim/maps/skidpad_map.json").resolve()
     sim = Simulation(
-            map_path=map_path,
-            mission=MissionValue.Skidpad,
-            manual=False,
-            config_json=Path("dv_sim/sim_config.json").resolve()
+        map_path=map_path,
+        mission=MissionValue.Skidpad,
+        manual=False,
+        config_json=Path("dv_sim/sim_config.json").resolve()
     )
     sim.launch_gui()
 
@@ -38,7 +38,7 @@ def test_skidpad():
             sim.go_signal()
 
         # after 20 seconds end and return TRUE
-        if time_since_start >= 15.:
+        if time_since_start >= 200.:
             test_outcome = True
             break
 
