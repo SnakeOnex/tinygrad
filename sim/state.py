@@ -27,6 +27,7 @@ class State():
         self.go_signal = 0
 
         self.speed_set_point = 0.
+        self.steering_angle_set_point = 0.
 
         ### CAR SENSORS
         self.occlusion_profile = [-6., 6., 2.5, 15.]
@@ -41,6 +42,11 @@ class State():
             self.forward()
         elif self.speed_set_point == 0.:
             self.brake()
+
+        if self.steering_angle_set_point > self.steering_angle:
+            self.steer_left()
+        else:
+            self.steer_right()
 
         self.handle_controls(timedelta)
 
@@ -68,7 +74,6 @@ class State():
         velocity = heading_vec * self.speed
         self.car_pos += self.rotation_vector
         self.car_pos += timedelta * velocity
-
 
     def handle_controls(self, timedelta):
         if self.steering_control == "LEFT":
