@@ -408,7 +408,8 @@ if __name__ == '__main__':
             # cones[cone_idx].enabled = False
             app.cones[cone_idx].rotation = Vec3(90., 0., 0)
 
-        app.simulation_text.text = create_simulation_string(app.visual_state[GUIValues.debug])
+        app.simulation_text.text = create_simulation_string(
+            app.visual_state[GUIValues.debug])
         app.simulation_text.background = True
 
         #text_main.text = text

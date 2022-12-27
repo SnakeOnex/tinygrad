@@ -19,6 +19,7 @@ from .track_marshall import TrackMarshall
 from .network_helpers import connect_client, bind_udp_socket
 # from track_marshall import Track_marshall
 
+
 class GUIValues(IntEnum):
     car_pos = 0,
     car_heading = 1,
@@ -30,10 +31,12 @@ class GUIValues(IntEnum):
     race_time = 7,
     debug = 8
 
+
 class ControlsValues(IntEnum):
     go_signal = 0,
     lat_control = 1,
     long_control = 2
+
 
 class MissionValue(IntEnum):
     NoValue = 0,
@@ -47,11 +50,12 @@ class MissionValue(IntEnum):
     Disco = 8,
     Donuts = 9
 
+
 class Simulation():
     def __init__(self, map_path, mission=MissionValue.Trackdrive, gui=False, manual=False, config_json=None):
         self.map_path = Path(map_path)
         self.manual = manual
-
+        self.context = zmq.Context()
         # 1. setup physics state
         self.state = State(mission, self.map_path)
         self.frequency = 100  # Hz
@@ -68,7 +72,6 @@ class Simulation():
 
         # 2.A vision simulation address
         if not self.manual:
-            self.context = zmq.Context()
             self.vision_socket = self.context.socket(zmq.PUB)
             self.vision_socket.bind(
                 config["TCP_HOST"]+":"+config["VISION_PORT"])
@@ -77,19 +80,23 @@ class Simulation():
 
         # 2.B sending gui state to the graphical engine
         self.gui_state = [0. for _ in range(len(GUIValues))]
-        self.context = zmq.Context()
         self.gui_socket = self.context.socket(zmq.PUB)
         self.gui_socket.bind(
             config["TCP_HOST"]+":"+config["GUI_PORT"])
 
         # 2.C receiving controls commands from graphical engine
-        context = zmq.Context()
-        self.controls_socket = context.socket(zmq.SUB)
+        self.controls_socket = self.context.socket(zmq.SUB)
         self.controls_socket.connect(
             config["TCP_HOST"]+":"+config["CONTROLS_PORT"])
         self.controls_socket.setsockopt(zmq.SUBSCRIBE, b"")
         self.controls_poller = zmq.Poller()
         self.controls_poller.register(self.controls_socket, zmq.POLLIN)
+
+        # ! temporary socket for sending global coordinates to skidpad mission
+
+        self.glob_coord_socket = self.context.socket(zmq.PUB)
+        self.glob_coord_socket.bind(
+            config["TCP_HOST"]+":"+"50004")
 
         # 2.D CAN interaface objects
         self.CAN1 = CanInterface(
@@ -143,6 +150,8 @@ class Simulation():
         # 6. update gui state and send it to the 3D engine
         self.update_gui_state()
         self.gui_socket.send(pickle.dumps(self.gui_state))
+        # ! temporary socket for sending global coordinates to skidpad mission
+        self.glob_coord_socket.send(pickle.dumps(self.state.car_pos))
 
     def sleep(self):
         time.sleep(self.period)
@@ -194,7 +203,8 @@ class Simulation():
 
         cwd = os.getcwd()
         os.chdir(sim_gui_path)
-        self.p = subprocess.Popen(["python", "simulation_gui.py", "--map", self.map_path])
+        self.p = subprocess.Popen(
+            ["python", "simulation_gui.py", "--map", self.map_path])
         os.chdir(cwd)
 
     def terminate_gui(self):
