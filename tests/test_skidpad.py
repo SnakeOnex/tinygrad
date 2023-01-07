@@ -4,6 +4,7 @@ import multiprocessing
 from multiprocessing import Process
 
 from dv_sim.sim.simulation import Simulation, MissionValue
+from nodes.asm import AS
 from master import main
 # from dv_sim import sim_config
 
@@ -39,6 +40,11 @@ def test_skidpad():
 
         # after 20 seconds end and return TRUE
         if time_since_start >= 200.:
+            test_outcome = True
+            break
+            
+        # if state is finished end simulation
+        if sim.state.AS == AS.FINISHED:
             test_outcome = True
             break
 

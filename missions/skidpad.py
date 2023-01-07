@@ -31,13 +31,13 @@ class Skidpad():
         mp.Process.__init__(self)
 
         # CONTROLLER CONFIGURATION
-        self.lookahead_dist = 3.3
+        self.lookahead_dist = 1.8
         self.linear_gain = 2.05
         self.nonlinear_gain = 1.5
         self.path_planner = PathPlanner(path_planner_opt)
         self.finish_detect = False
 
-        self.speed_set_point = 5.
+        self.speed_set_point = 15.
         self.finished = False
 
         # SKIPAD WAYPOINT CONFIGURATION
