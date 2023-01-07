@@ -1,8 +1,16 @@
 import numpy as np
 import json
+from enum import IntEnum
 
 from .math_helpers import angle_to_vector, global_to_local, rotate_around_point, filter_occluded_cones
 # from cones.geometry_functions import filter_occluded_cones
+
+class AS(IntEnum):
+    OFF = 0
+    READY = 1
+    DRIVING = 2
+    FINISHED = 3
+    EMERGENCY = 4
 
 class State():
     def __init__(self, mission, map_filepath):
@@ -25,6 +33,7 @@ class State():
         ## CAR STATE
         self.tson = True
         self.go_signal = 0
+        self.AS = AS.OFF
 
         self.speed_set_point = 0.
         self.steering_angle_set_point = 0.

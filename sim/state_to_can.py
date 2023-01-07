@@ -1,8 +1,8 @@
 import math
 
+from .state import AS
+
 # CAN1 SEND
-
-
 def state_to_MCR_ActualValues_A(state):
     act_InverterStatus = 0
     act_InverterReady = 0
@@ -85,8 +85,11 @@ def receive_XVR_SetpointsMotor_A(state, values):
     state.speed_set_point = values[4]
     #print("received set point: ", state.speed_set_point)
 
+def receive_XVR_Status(state, values):
+    state.AS = AS(values[0])
 
 can1_recv_callbacks = {
+    "XVR_Status": receive_XVR_Status,
     "XVR_Control": receive_XVR_Control,
     "XVR_SetpointsMotor_A": receive_XVR_SetpointsMotor_A
 }

@@ -31,12 +31,10 @@ class GUIValues(IntEnum):
     race_time = 7,
     debug = 8
 
-
 class ControlsValues(IntEnum):
     go_signal = 0,
     lat_control = 1,
     long_control = 2
-
 
 class MissionValue(IntEnum):
     NoValue = 0,
