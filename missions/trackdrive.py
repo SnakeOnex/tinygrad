@@ -17,6 +17,7 @@ class Trackdrive():
         mp.Process.__init__(self)
 
         # CONTROLS CONFIGURATION
+        self.lookahead_dist = 3.3
         self.linear_gain = 2.05
         self.nonlinear_gain = 1.5
         self.path_planner = PathPlanner(path_planner_opt)
@@ -80,7 +81,7 @@ class Trackdrive():
             self.finished = True
 
         # 2. controls
-        delta, _, log = stanley_steering(path, wheel_speed, self.linear_gain, self.nonlinear_gain)
+        delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
         debug_dict = {
             "time_since_start": time_since_start,
@@ -93,4 +94,4 @@ class Trackdrive():
             "path" : path
         }
 
-        return self.finished, delta, self.speed_set_point, debug_dict, path
+        return self.finished, delta, self.speed_set_point, debug_dict, (path, controller_log["target"])
