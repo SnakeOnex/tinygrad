@@ -20,6 +20,7 @@ Better Robot Operating System. This repository contains the autonomous system, w
 git clone git@eforce1.feld.cvut.cz:eforce-driveless/bros.git &&
 cd bros &&
 git submodule update --init --recursive
+./install.sh
 ```
 
 
