@@ -91,7 +91,7 @@ def cone_pos_to_mesh(cone_pos, width=1.0, height=2.0):
     return vertices
 
 
-def compute_as_state(world_preds, path, state):
+def compute_as_state(world_preds, path, target, state):
     """
     given debug information from AS system, returns path and cone positions in global coordinates
     args:
@@ -108,14 +108,19 @@ def compute_as_state(world_preds, path, state):
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
     path[:, 0] *= -1
+    target[0] *= -1
     cone_pos[:, 0] *= -1
 
     path = local_to_global(path, (car_x, car_y), heading)
+
+    target = target.reshape((1,2))
+    target = local_to_global(target, (car_x, car_y), heading)
     cone_pos = local_to_global(cone_pos, (car_x, car_y), heading)
 
     path = [vec_to_3d(p, y=0.01) for p in path]
+    target = vec_to_3d(target[0], y=0.01)
     cones = np.hstack((cone_pos, cone_cls))
-    return path, cones
+    return path, target, cones
 
 
 def render_cones(state):
@@ -285,6 +290,8 @@ if __name__ == '__main__':
     app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
         vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line'))
 
+    app.target = Entity(model='cube', scale=0.3, color=color.green)
+
     for _ in range(cone_count):
         cone_detections.append(Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
             vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line')))
@@ -338,14 +345,16 @@ if __name__ == '__main__':
 
         while as_debug_poller.poll(0.):
             as_debug_data = pickle.loads(as_debug_socket.recv())
-            path, cones = compute_as_state(
-                as_debug_data["perception"], as_debug_data["path"], app.visual_state)
+            path, target, cones = compute_as_state(as_debug_data["perception"], as_debug_data["path"], as_debug_data["target"], app.visual_state)
 
             if len(path) > 1:
                 app.path_entity.model = Mesh(
                     vertices=path, mode='line', thickness=10)
             else:
                 app.path_entity.model = Mesh()
+
+            # render target
+            app.target.position = target
 
             for i, cone_detection in enumerate(cone_detections):
                 if cones.shape[0] <= i:
