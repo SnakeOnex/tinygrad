@@ -31,10 +31,14 @@ class Skidpad():
         mp.Process.__init__(self)
 
         # CONTROLLER CONFIGURATION
+        self.lookahead_dist = 1.
         self.linear_gain = 2.05
         self.nonlinear_gain = 1.5
         self.path_planner = PathPlanner(path_planner_opt)
         self.finish_detect = False
+
+        self.speed_set_point = 5.
+        self.finished = False
 
         # SKIPAD WAYPOINT CONFIGURATION
         self.waypoint_state = False  #  is false when waypoints haven't been initialized
@@ -66,12 +70,18 @@ class Skidpad():
         # 1. receive perception data
         path = self.path_planner.find_path(self.filter_state(world_state))
         # consider moving wheel speed to mission node
-        # print(world_state)
-        delta, _, log = stanley_steering(
-            path, wheel_speed, self.linear_gain, self.nonlinear_gain)
+
+        delta, controller_log = stanley_steering(
+            path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
+
+        debug_dict = {
+            # "waypoints": self.waypoints
+        }
+
         if self.keep_straight:
             delta = 0.
-        return False, delta, 3., log, path
+
+        return self.finished, delta, self.speed_set_point, debug_dict, (path, controller_log["target"])
 
     def update_waypoint_state(self, coords):
         current_passed_zone = None
@@ -83,6 +93,8 @@ class Skidpad():
 
         if current_passed_zone != None:
             n_passes = self.waypoints[current_passed_zone][2]
+            print("N_passes: ", n_passes)
+            print("Curr zone: ", current_passed_zone)
             new_cone_mask = None
             next_active_zone = None
             if current_passed_zone == "center":
@@ -116,24 +128,16 @@ class Skidpad():
             self.waypoints[next_active_zone][1] = True
             self.cone_boolean_mask = new_cone_mask
 
-            print("N_passes: ", n_passes)
-            print("Curr zone: ", current_passed_zone)
-            print("Next zone:", next_active_zone)
-            print("New cone mask:", new_cone_mask)
-
-    def filter_state(self, world_state):
+    def filter_state(self, word_state):
         if self.cone_boolean_mask == "all":
-            return world_state
+            return word_state
         elif self.cone_boolean_mask == "blue_only":
-            return world_state[(world_state[:, 2] == CONE_CLASSES["blue"])]
+            return word_state[(word_state[:, 2] == CONE_CLASSES["blue"])]
         elif self.cone_boolean_mask == "no_blue":
-            # ! needs fixing
-            return world_state[(world_state[:, 0] >= 0) & (world_state[:, 2] != CONE_CLASSES["blue"])]
+            return word_state[(word_state[:, 0] >= 0) & (word_state[:, 2] != CONE_CLASSES["blue"])]
         elif self.cone_boolean_mask == "no_yellow":
-            # ! needs fixing
-            return world_state[(world_state[:, 0] <= 0)]
+            return word_state[(word_state[:, 0] <= 0)]
         elif self.cone_boolean_mask == "yellow_only":
-            # ! needs fixing
-            return world_state[world_state[:, 2] == CONE_CLASSES["yellow"]]
+            return word_state[(word_state[:, 2] == CONE_CLASSES["yellow"]) & (word_state[:, 0] >= 0)]
         elif self.cone_boolean_mask == "orange_only":
-            return world_state[world_state[:, 2] == CONE_CLASSES["orange"]]
+            return word_state[word_state[:, 2] == CONE_CLASSES["orange"]]
