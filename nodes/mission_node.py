@@ -93,11 +93,12 @@ class MissionNode(mp.Process):
                 self.percep_data = update_subscription_data(self.cone_preds_socket, self.percep_data)
                 self.wheel_speed = update_subscription_data(self.wheel_speed_socket, self.wheel_speed)
 
-                self.finished, steering_angle, speed, log, path = self.mission.loop(self.percep_data, self.wheel_speed)
+                self.finished, steering_angle, speed, log, (path, target) = self.mission.loop(self.percep_data, self.wheel_speed)
 
                 self.debug_socket.send(pickle.dumps({
                     "perception": self.percep_data, 
                     "path": path, 
+                    "target": target, 
                     "speed": speed, 
                     "steering_angle": steering_angle, 
                     "mission_id": self.mission.ID,

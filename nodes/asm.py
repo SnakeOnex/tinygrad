@@ -1,6 +1,6 @@
-from enum import Enum
+from enum import IntEnum
 
-class AS(Enum):
+class AS(IntEnum):
 	OFF = 0
 	READY = 1
 	DRIVING = 2
@@ -32,7 +32,8 @@ class ASM():
 
 		elif self.AS == AS.DRIVING:
 			if finished == True:
-				self.AS.FINISHED	
+				self.AS = self.AS.FINISHED	
+				print("ASM -> AS.FINISHED")
 				
 		elif self.AS == AS.FINISHED:
 			pass
