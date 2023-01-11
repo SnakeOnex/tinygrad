@@ -66,12 +66,12 @@ class Skidpad():
         # 1. receive perception data
         path = self.path_planner.find_path(self.filter_state(world_state))
         # consider moving wheel speed to mission node
-
+        # print(world_state)
         delta, _, log = stanley_steering(
             path, wheel_speed, self.linear_gain, self.nonlinear_gain)
         if self.keep_straight:
             delta = 0.
-        return False, delta, 4., log, path
+        return False, delta, 3., log, path
 
     def update_waypoint_state(self, coords):
         current_passed_zone = None
@@ -83,8 +83,6 @@ class Skidpad():
 
         if current_passed_zone != None:
             n_passes = self.waypoints[current_passed_zone][2]
-            print("N_passes: ", n_passes)
-            print("Curr zone: ", current_passed_zone)
             new_cone_mask = None
             next_active_zone = None
             if current_passed_zone == "center":
@@ -118,16 +116,24 @@ class Skidpad():
             self.waypoints[next_active_zone][1] = True
             self.cone_boolean_mask = new_cone_mask
 
-    def filter_state(self, word_state):
+            print("N_passes: ", n_passes)
+            print("Curr zone: ", current_passed_zone)
+            print("Next zone:", next_active_zone)
+            print("New cone mask:", new_cone_mask)
+
+    def filter_state(self, world_state):
         if self.cone_boolean_mask == "all":
-            return word_state
+            return world_state
         elif self.cone_boolean_mask == "blue_only":
-            return word_state[(word_state[:, 2] == CONE_CLASSES["blue"])]
+            return world_state[(world_state[:, 2] == CONE_CLASSES["blue"])]
         elif self.cone_boolean_mask == "no_blue":
-            return word_state[(word_state[:, 0] >= 0) & (word_state[:, 2] != CONE_CLASSES["blue"])]
+            # ! needs fixing
+            return world_state[(world_state[:, 0] >= 0) & (world_state[:, 2] != CONE_CLASSES["blue"])]
         elif self.cone_boolean_mask == "no_yellow":
-            return word_state[(word_state[:, 0] <= 0)]
+            # ! needs fixing
+            return world_state[(world_state[:, 0] <= 0)]
         elif self.cone_boolean_mask == "yellow_only":
-            return word_state[(word_state[:, 2] == CONE_CLASSES["yellow"]) & (word_state[:, 0] >= 0)]
+            # ! needs fixing
+            return world_state[world_state[:, 2] == CONE_CLASSES["yellow"]]
         elif self.cone_boolean_mask == "orange_only":
-            return word_state[word_state[:, 2] == CONE_CLASSES["orange"]]
+            return world_state[world_state[:, 2] == CONE_CLASSES["orange"]]
