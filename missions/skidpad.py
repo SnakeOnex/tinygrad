@@ -31,13 +31,13 @@ class Skidpad():
         mp.Process.__init__(self)
 
         # CONTROLLER CONFIGURATION
-        self.lookahead_dist = 1.8
+        self.lookahead_dist = 1.
         self.linear_gain = 2.05
         self.nonlinear_gain = 1.5
         self.path_planner = PathPlanner(path_planner_opt)
         self.finish_detect = False
 
-        self.speed_set_point = 15.
+        self.speed_set_point = 5.
         self.finished = False
 
         # SKIPAD WAYPOINT CONFIGURATION
@@ -71,10 +71,12 @@ class Skidpad():
         path = self.path_planner.find_path(self.filter_state(world_state))
         # consider moving wheel speed to mission node
 
-        delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
+        delta, controller_log = stanley_steering(
+            path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
-        debug_dict = {}
-
+        debug_dict = {
+            # "waypoints": self.waypoints
+        }
 
         if self.keep_straight:
             delta = 0.
