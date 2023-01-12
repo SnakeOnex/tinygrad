@@ -246,8 +246,15 @@ class PathPlanner():
     def find_path(self, cones):
         planner = PathPlanning(np.array([0, 0]))
 
-        blue_cones = cones[cones[:, 2] == 0, :]
-        yellow_cones = cones[cones[:, 2] == 1, :]
+        print("cones: ", cones)
+
+
+        if cones is None:
+            blue_cones = np.zeros((0,3))
+            yellow_cones = np.zeros((0,3))
+        else:
+            blue_cones = cones[cones[:, 2] == 0, :]
+            yellow_cones = cones[cones[:, 2] == 1, :]
 
         try:
             planner.find_path(blue_cones[:, :2], yellow_cones[:, :2], n_steps=self.n_steps)
