@@ -245,9 +245,7 @@ class PathPlanner():
 
     def find_path(self, cones):
         planner = PathPlanning(np.array([0, 0]))
-
-        print("cones: ", cones)
-
+        # print("cones: ", cones)
 
         if cones is None:
             blue_cones = np.zeros((0,3))
