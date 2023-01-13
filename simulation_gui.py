@@ -8,7 +8,7 @@ import struct
 import select
 import zmq
 
-from enum import Enum
+from enum import IntEnum
 import json
 import sys
 import numpy as np
@@ -24,9 +24,9 @@ from sim.state import State
 from sim.network_helpers import connect_client, bind_udp_socket
 from sim.math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, local_to_global
 from sim.simulation import GUIValues, ControlsValues
+from rendering_helpers import render_world, render_cones, render_car, cone_pos_to_mesh
 
-
-class CameraMode(Enum):
+class CameraMode(IntEnum):
     WORLD = 0
     FIRST_PERSON = 1
     THIRD_PERSON = 2
@@ -36,72 +36,18 @@ class CameraMode(Enum):
         v = self.value
         return CameraMode((v + 1) % 4)
 
-
-def world_setup():
-    ground = Entity(
-        model='cube',
-        color=color.gray,
-        texture='models/asp.jpg',
-        texture_scale=(4, 4),
-        position=(0, 0, 0),
-        scale=(200, 0, 500),
-        collider='box',
-        shader=lit_with_shadows_shader
-    )
-    skybox = load_texture('models/sky.jpg')
-    sky = Sky(
-        texture=skybox,
-        color=color.cyan
-    )
-
-    pivot = Entity()
-    dl = DirectionalLight(parent=pivot, position=(2., 10., 2.),
-                          shadows=True, rotation=(90., 0., 0.))
-    dl.disable()
-
-
-def cone_pos_to_mesh(cone_pos, width=1.0, height=2.0):
-    vertices = []
-
-    x, y = cone_pos
-    center = Vec3(x, 0., y)
-
-    z_bottom = 0.01
-    z_toppom = z_bottom + height
-
-    vertices.append(center + Vec3(width/2, z_bottom, width/2))
-    vertices.append(center + Vec3(width/2, z_toppom, width/2))
-    vertices.append(center + Vec3(-width/2, z_toppom, width/2))
-    vertices.append(center + Vec3(-width/2, z_bottom, width/2))
-    vertices.append(center + Vec3(width/2, z_bottom, width/2))
-
-    vertices.append(center + Vec3(width/2, z_bottom, -width/2))
-    vertices.append(center + Vec3(width/2, z_toppom, -width/2))
-    vertices.append(center + Vec3(width/2, z_toppom,  width/2))
-    vertices.append(center + Vec3(width/2, z_toppom, -width/2))
-
-    vertices.append(center + Vec3(-width/2, z_toppom, -width/2))
-    vertices.append(center + Vec3(-width/2, z_bottom, -width/2))
-    vertices.append(center + Vec3(width/2, z_bottom, -width/2))
-    vertices.append(center + Vec3(-width/2, z_bottom, -width/2))
-    vertices.append(center + Vec3(-width/2, z_bottom,  width/2))
-    vertices.append(center + Vec3(-width/2, z_toppom,  width/2))
-    vertices.append(center + Vec3(-width/2, z_toppom, -width/2))
-
-    return vertices
-
-
 def compute_as_state(world_preds, path, target, state):
     """
     given debug information from AS system, returns path and cone positions in global coordinates
     args:
-      as_debug - AS debug dict
+      world_preds - AS's cone detections in car's coordinate system
+      path - Nx2 array of AS's currently planned path in car's coordinate system
+      target - 2D point representing AS controller current lookahead point 
       state - visual_state list (info about current car_pos & heading)
     ret:
       path - path in local coord
       cones - Nx3, local cone positions + cone class
     """
-
     cone_pos = world_preds[:, :2]
     cone_cls = world_preds[:, 2:3]
 
@@ -122,65 +68,17 @@ def compute_as_state(world_preds, path, target, state):
     cones = np.hstack((cone_pos, cone_cls))
     return path, target, cones
 
-
-def render_cones(state):
-    cones = []
-    # 0.01
-    for c in state.yellow_cones:
-        cone = Cone(model='models/yellow_cone.obj',
-                    position=Vec3(c[0], 0.01, c[1]))
-        cones.append(cone)
-
-    for c in state.blue_cones:
-        cone = Cone(model='models/blue_cone.obj',
-                    position=Vec3(c[0], 0.01, c[1]))
-        cones.append(cone)
-
-    for c in state.orange_cones:
-        cone = Cone(model='models/orange_cone.obj',
-                    position=(c[0], 0.01, c[1]))
-        cones.append(cone)
-
-    for c in state.big_cones:
-        cone = Cone(model='models/big_orange_cone.obj',
-                    position=(c[0], 0.01, c[1]))
-        cones.append(cone)
-
-    cone_mask = np.zeros((len(cones),))
-
-    start_points = [Vec3(x, 0, y) for x, y in state.start_line]
-    start_line = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
-        vertices=start_points, mode='line', thickness=2))
-
-    finish_points = [Vec3(x, 0, y) for x, y in state.finish_line]
-    finish_line = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
-        vertices=finish_points, mode='line', thickness=2))
-
-    car_pos = Entity(model='sphere', position=(
-        state.car_pos[0], 2.0, state.car_pos[1]), scale=(0.1))
-
-    return cones, cone_mask
-
-
 def create_simulation_string(debug):
     simulation_text = "Simulation status:\n"
-    # simulation_text += f"Cones hit: {int(sum(visual_state[GUIValues.cones_mask]))}\n"
-    # simulation_text += f"AS Go signal: {'Active' if int(visual_state[GUIValues.go_signal]) else 'Inactive'}\n"
-    # simulation_text += f"Time elapsed: {visual_state[GUIValues.race_time]:.2f} s\n"
-    # simulation_text += f"Debug: {visual_state[GUIValues.debug][:4]}\n"
-    # print(debug)
     for key, values in debug.items():
-        # print(key, values)
         simulation_text += f"{key}: {values}\n"
     return simulation_text
-
 
 def create_car_string(speed, steering_angle):
     car_status_text = "Car status:\n"
     car_status_text += f"Speed: {speed:.2f} m/s\n"
     car_status_text += f"Steering angle: {steering_angle:.2f} rad/s\n"
     return car_status_text
-
 
 def create_mission_string(id, values):
     mission_status_text = "Mission status:\n"
@@ -189,45 +87,18 @@ def create_mission_string(id, values):
         mission_status_text += f"\n{key}: {format_val_string(value)}"
     return mission_status_text
 
-
 def format_val_string(val):
     return f"{val:.2f}" if type(val) is float else val
 
-
-def render_car(state, formula, driver, car_rect):
-    car_x, car_y = state[GUIValues.car_pos]
-    heading = state[GUIValues.car_heading]
-    steering_angle = state[GUIValues.steering_angle]
-
-    heading_vec = angle_to_vector(heading)
-
-    driver.position = Vec3(car_x, 0., car_y) - 1. * \
-        vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
-    driver.rotation = formula.offset_rot + Vec3(0., 0., heading)
-
-    formula.position = Vec3(car_x, 0., car_y)
-    formula.rotation = formula.offset_rot + Vec3(0., 0, heading)
-
-    formula.fl_wheel.rotation = (0., 0., steering_angle)
-    formula.fr_wheel.rotation = (0., 0., steering_angle)
-
-    formula.steering_wheel.rotation = (steering_angle, 0., 0.)
-
-    # draw rectangle around car
-    car_rect.position = Vec3(car_x, 0., car_y) - 0.5 * vec_to_3d(heading_vec)
-    car_rect.rotation = formula.offset_rot + Vec3(0., 0., heading)
-    # car_rect = Entity(model='quad', color=color.black, position=Vec3(car_x, 0., car_y))
-
-
 if __name__ == '__main__':
+    # 0. parsing arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('--map', type=str, default='maps/circle_map.json')
     parser.add_argument('--config_json', type=str, default='sim_config.json')
     args = parser.parse_args()
 
+    # 1. engine initialization
     app = Ursina()
-
-    # config
     cone_count = 20
     cone_detections = []
     camera.fov = 78
@@ -244,45 +115,14 @@ if __name__ == '__main__':
     if random.random() < 0.01:
         Audio(sound_file_name='models/terrymusic.mp3', autoplay=True, loop=True)
 
-    # 1. SETUP WORLD
-    world_setup()
-
-    # 2. SETUP STATE
+    # 2. Render the environment & initializate engine structures
+    render_world()
     state = State(0, args.map)
-
-    # 3. setup communication interfaces
-
-    # controls
-    context = zmq.Context()
-    controls_socket = context.socket(zmq.PUB)
-    controls_socket.bind(
-        config["TCP_HOST"]+":"+config["CONTROLS_PORT"])
-    # go_signal, lateral, longitudinal
-    app.controls_state = [0 for _ in range(len(ControlsValues))]
-
-    # gui input
-    gui_socket = context.socket(zmq.SUB)
-    gui_socket.connect(
-        config["TCP_HOST"]+":"+config["GUI_PORT"])
-    gui_socket.setsockopt(zmq.SUBSCRIBE, b"")
-    gui_poller = zmq.Poller()
-    gui_poller.register(gui_socket, zmq.POLLIN)
-
     app.cones, app.cones_mask = render_cones(state)
-
-    # autonomous debug socket
-    as_debug_socket = context.socket(zmq.SUB)
-    as_debug_socket.connect(
-        config["TCP_HOST"]+":"+config["AS_DEBUG_PORT"])
-    as_debug_socket.setsockopt(zmq.SUBSCRIBE, b"")
-    as_debug_poller = zmq.Poller()
-    as_debug_poller.register(as_debug_socket, zmq.POLLIN)
-
-    data = gui_socket.recv()
-    app.visual_state = pickle.loads(data)
 
     formula = Formula()
     driver = Entity(model='sphere', scale=0.2)
+    app.cam_mode = CameraMode.FIRST_PERSON
 
     # AS debug init (creating empty path and cone mesh objects)
     car_rect = Entity(model='cube', color=color.black, position=Vec3(
@@ -296,6 +136,35 @@ if __name__ == '__main__':
         cone_detections.append(Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
             vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line')))
 
+    # 2. setup communication interfaces
+
+    ## 2.A - GUI -> Simulation socket for sending control commands
+    context = zmq.Context()
+    controls_socket = context.socket(zmq.PUB)
+    controls_socket.bind(
+        config["TCP_HOST"]+":"+config["CONTROLS_PORT"])
+    # go_signal, lateral, longitudinal
+    app.controls_state = [0 for _ in range(len(ControlsValues))]
+
+    ## 2.B - Simulation -> GUI socket for receiving simulation state needed for visualization
+    gui_socket = context.socket(zmq.SUB)
+    gui_socket.connect(
+        config["TCP_HOST"]+":"+config["GUI_PORT"])
+    gui_socket.setsockopt(zmq.SUBSCRIBE, b"")
+    gui_poller = zmq.Poller()
+    gui_poller.register(gui_socket, zmq.POLLIN)
+    data = gui_socket.recv()
+    app.visual_state = pickle.loads(data)
+
+    ## 2.C - AS -> GUI socket for receiving Autonomous System internal state debbuging messages for visualization
+    as_debug_socket = context.socket(zmq.SUB)
+    as_debug_socket.connect(
+        config["TCP_HOST"]+":"+config["AS_DEBUG_PORT"])
+    as_debug_socket.setsockopt(zmq.SUBSCRIBE, b"")
+    as_debug_poller = zmq.Poller()
+    as_debug_poller.register(as_debug_socket, zmq.POLLIN)
+
+    ## 3. GUI initialization
     car_rect.enabled = False
     Text.size = 0.025
     app.simulation_text = Text(text=create_simulation_string(
@@ -307,7 +176,7 @@ if __name__ == '__main__':
 
     app.car_status_text = Text(text=create_car_string(0, 0), color=color.azure)
     app.car_status_text.x = text_x
-    app.car_status_text.y = 0.22
+    app.car_status_text.y = 0.2
     app.car_status_text.line_height = line_height
     app.car_status_text.background = True
 
@@ -319,12 +188,10 @@ if __name__ == '__main__':
     app.mission_status_text.line_height = line_height
     app.mission_status_text.background = True
 
-    app.cam_mode = CameraMode.FIRST_PERSON
-    app.update_count = 0
-    app.frame_start = time.perf_counter()
-
     def input(key):
-        # change camera mode
+        """
+        Ursina function for processing keyboard inputs
+        """
         if key == 'p':
             app.cam_mode = app.cam_mode.next()
             print(f"CAMERA MODE: {app.cam_mode}")
@@ -336,13 +203,19 @@ if __name__ == '__main__':
             app.controls_state[ControlsValues.go_signal] = 1
 
     def update():
+        """
+        Ursina engine update loop
+        """
 
+        ## 1. send controls packet to simulation process 
+        controls_socket.send(pickle.dumps(app.controls_state))
+
+        ## 2. receive GUI state packet from simulation process
         while gui_poller.poll(0.):
             data = gui_socket.recv()
             app.visual_state = pickle.loads(data)
 
-        controls_socket.send(pickle.dumps(app.controls_state))
-
+        ## 3. receive internal state from BROS for visualization
         while as_debug_poller.poll(0.):
             as_debug_data = pickle.loads(as_debug_socket.recv())
             path, target, cones = compute_as_state(as_debug_data["perception"], as_debug_data["path"], as_debug_data["target"], app.visual_state)
@@ -430,8 +303,7 @@ if __name__ == '__main__':
         elif app.cam_mode == CameraMode.FIRST_PERSON:
             camera.position = driver.position
             # camera.rotation = (0.,-state.heading,0.)
-            camera.rotation = (
-                0., -app.visual_state[GUIValues.car_heading], 0.)
+            camera.rotation = (0., -app.visual_state[GUIValues.car_heading], 0.)
         elif app.cam_mode == CameraMode.THIRD_PERSON:
             rot_x, rot_y = rotate_around_point(
                 -app.visual_state[GUIValues.car_heading], (0, 0), (10, 0))
