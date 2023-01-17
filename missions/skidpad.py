@@ -3,8 +3,7 @@ import multiprocessing as mp
 import zmq
 import pickle
 import numpy as np
-import math
-import sys
+from sklearn.cluster import KMeans
 
 from config import path_planner_opt
 from algorithms.steering import stanley_steering
@@ -36,7 +35,7 @@ class Skidpad():
         self.nonlinear_gain = 1.5
         self.path_planner = PathPlanner(path_planner_opt)
         self.finish_detect = False
-
+        self.debug_dict = {}
         self.speed_set_point = 5.
         self.finished = False
 
@@ -47,6 +46,7 @@ class Skidpad():
         self.cone_boolean_mask = "all"
         self.keep_straight = True
         self.waypoints["center"][1] = True
+        self.map_center_estimator = KMeans(n_clusters=2)
         # ! temporary
         context = zmq.Context()
         self.glob_coord_socket = context.socket(zmq.SUB)
@@ -65,8 +65,20 @@ class Skidpad():
         """
         # 0. get global coordinates
         while self.glob_coord_poller.poll(0.):
-            data = self.glob_coord_socket.recv()
-            self.update_waypoint_state(pickle.loads(data))
+            data = pickle.loads(self.glob_coord_socket.recv())
+            self.debug_dict["glob_coords"] = data
+            self.update_waypoint_state(data)
+
+        # * big orange cone position estimation
+        if not self.waypoint_state:
+            if np.count_nonzero(world_state[:, 2] == CONE_CLASSES["big"]) > 0:
+                big_cones = world_state[world_state[:, 2] == CONE_CLASSES["big"]]
+                big_cones_2d = np.delete(big_cones, 2, axis=1) + np.array(self.debug_dict["glob_coords"])
+                self.map_center_estimator.fit(big_cones_2d)
+            else:
+                self.debug_dict["estimated_centers"] = self.map_center_estimator.cluster_centers_
+                self.waypoint_state = True
+
         # 1. receive perception data
         path = self.path_planner.find_path(self.filter_state(world_state))
         # consider moving wheel speed to mission node
@@ -74,14 +86,10 @@ class Skidpad():
         delta, controller_log = stanley_steering(
             path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
-        debug_dict = {
-            # "waypoints": self.waypoints
-        }
-
         if self.keep_straight:
             delta = 0.
 
-        return self.finished, delta, self.speed_set_point, debug_dict, (path, controller_log["target"])
+        return self.finished, delta, self.speed_set_point, self.debug_dict, (path, controller_log["target"])
 
     def update_waypoint_state(self, coords):
         current_passed_zone = None
@@ -93,14 +101,11 @@ class Skidpad():
 
         if current_passed_zone != None:
             n_passes = self.waypoints[current_passed_zone][2]
-            print("N_passes: ", n_passes)
-            print("Curr zone: ", current_passed_zone)
             new_cone_mask = None
             next_active_zone = None
             if current_passed_zone == "center":
                 if n_passes == 0:
                     self.keep_straight = False
-
                 if n_passes == 0 or n_passes == 1:
                     new_cone_mask = "blue_only"
                     next_active_zone = "end_left"
