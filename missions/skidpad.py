@@ -46,6 +46,7 @@ class Skidpad():
         self.cone_boolean_mask = "all"
         self.keep_straight = True
         self.waypoints["center"][1] = True
+        self.recorded_big_orange_cones = np.empty(shape=(1, 2))
         self.map_center_estimator = KMeans(n_clusters=2)
         # ! temporary
         context = zmq.Context()
@@ -74,8 +75,9 @@ class Skidpad():
             if np.count_nonzero(world_state[:, 2] == CONE_CLASSES["big"]) > 0:
                 big_cones = world_state[world_state[:, 2] == CONE_CLASSES["big"]]
                 big_cones_2d = np.delete(big_cones, 2, axis=1) + np.array(self.debug_dict["glob_coords"])
-                self.map_center_estimator.fit(big_cones_2d)
+                self.recorded_big_orange_cones = np.append(self.recorded_big_orange_cones, big_cones_2d, axis=0)
             else:
+                self.map_center_estimator.fit(self.recorded_big_orange_cones)
                 self.debug_dict["estimated_centers"] = self.map_center_estimator.cluster_centers_
                 self.waypoint_state = True
 
