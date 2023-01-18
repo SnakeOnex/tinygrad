@@ -25,30 +25,38 @@ SIM_WAYPOINTS = {'start_left': np.array([-3.18173506,  3.12047806]),
 class Skidpad():
     ID = "Skidpad"
     WAYPOINT_RADIUS_SQ = 1.5
+    RING_RADIUS = 9.215
 
     def __init__(self):
         mp.Process.__init__(self)
 
         # CONTROLLER CONFIGURATION
-        self.lookahead_dist = 1.
+        self.lookahead_dist = 3.
         self.linear_gain = 2.05
         self.nonlinear_gain = 1.5
         self.path_planner = PathPlanner(path_planner_opt)
         self.finish_detect = False
-        self.debug_dict = {}
-        self.speed_set_point = 5.
+
+        self.speed_set_point = 3.
         self.finished = False
 
         # SKIPAD WAYPOINT CONFIGURATION
         self.waypoint_state = False  #  is false when waypoints haven't been initialized
         self.waypoints = {key: [SIM_WAYPOINTS[key], False, 0]
                           for key in SIM_WAYPOINTS.keys()}
+
         self.cone_boolean_mask = "all"
         self.keep_straight = True
         self.waypoints["center"][1] = True
         self.recorded_big_orange_cones = np.empty(shape=(1, 2))
         self.map_center_estimator = KMeans(n_clusters=2)
-        # ! temporary
+        self.heading = None
+        self.glob_coords = None
+        self.rings = []
+        self.ring_centers = []
+        self.estimated_cone_centers = []
+
+        # ! temporary socket for receiving global coordinates
         context = zmq.Context()
         self.glob_coord_socket = context.socket(zmq.SUB)
         self.glob_coord_socket.connect("tcp://127.0.0.1:50004")
@@ -67,31 +75,37 @@ class Skidpad():
         # 0. get global coordinates
         while self.glob_coord_poller.poll(0.):
             data = pickle.loads(self.glob_coord_socket.recv())
-            self.debug_dict["glob_coords"] = data
-            self.update_waypoint_state(data)
+            self.glob_coords = data[0]
+            self.heading = data[1]
+            self.update_waypoint_state(data[0])
 
         # * big orange cone position estimation
         if not self.waypoint_state:
             if np.count_nonzero(world_state[:, 2] == CONE_CLASSES["big"]) > 0:
-                big_cones = world_state[world_state[:, 2] == CONE_CLASSES["big"]]
-                big_cones_2d = np.delete(big_cones, 2, axis=1) + np.array(self.debug_dict["glob_coords"])
-                self.recorded_big_orange_cones = np.append(self.recorded_big_orange_cones, big_cones_2d, axis=0)
+                self.process_big_cones(world_state.copy())
+                self.estimate_map_position()
             else:
-                self.map_center_estimator.fit(self.recorded_big_orange_cones)
-                self.debug_dict["estimated_centers"] = self.map_center_estimator.cluster_centers_
+                self.estimate_map_position()
                 self.waypoint_state = True
+                self.keep_straight = False
 
         # 1. receive perception data
-        path = self.path_planner.find_path(self.filter_state(world_state))
-        # consider moving wheel speed to mission node
-
-        delta, controller_log = stanley_steering(
-            path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
         if self.keep_straight:
+            path = self.path_planner.find_path(world_state)
+            delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
             delta = 0.
+        else:
+            path = self.global_to_local(self.rings[0])
+            delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
-        return self.finished, delta, self.speed_set_point, self.debug_dict, (path, controller_log["target"])
+        debug_dict = {
+            "heading": self.heading,
+            "glob_coords": self.glob_coords,
+            "ring_centers": self.ring_centers,
+            "cone_centers": self.estimated_cone_centers
+        }
+        return self.finished, delta, self.speed_set_point, debug_dict, (path, controller_log["target"])
 
     def update_waypoint_state(self, coords):
         current_passed_zone = None
@@ -148,3 +162,36 @@ class Skidpad():
             return word_state[(word_state[:, 2] == CONE_CLASSES["yellow"]) & (word_state[:, 0] >= 0)]
         elif self.cone_boolean_mask == "orange_only":
             return word_state[word_state[:, 2] == CONE_CLASSES["orange"]]
+
+    def global_to_local(self, path):
+        """
+        """
+        car_heading = np.deg2rad(self.heading)
+        R = np.array([[np.cos(car_heading), np.sin(car_heading)],
+                      [-np.sin(car_heading), np.cos(car_heading)]])
+
+        path -= self.glob_coords
+        path = (R @ path.T).T
+        return path
+
+    def process_big_cones(self, world_state):
+        big_cones = world_state[world_state[:, 2] == CONE_CLASSES["big"]]
+        big_cones_2d = np.delete(big_cones, 2, axis=1) + np.array(self.glob_coords)
+        self.recorded_big_orange_cones = np.append(self.recorded_big_orange_cones, big_cones_2d, axis=0)
+
+    def estimate_map_position(self):
+        self.map_center_estimator.fit(self.recorded_big_orange_cones)
+        self.estimated_cone_centers = self.map_center_estimator.cluster_centers_
+        self.estimate_map_circles(Skidpad.RING_RADIUS)
+
+    def estimate_map_circles(self, d):
+        centers = self.estimated_cone_centers
+        a, b = np.sum(centers, axis=0)/2, centers[0]
+        D = np.linalg.norm(a-b)
+        c1 = (1-(d/D)) * a + (d/D)*b
+        c2 = (1+(d/D)) * a - (d/D)*b
+        angles = np.linspace(0, 2*np.pi, num=50)
+        coords1 = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + c1 for pt in angles])
+        coords2 = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + c2 for pt in angles])
+        self.ring_centers = [c1, c2]
+        self.rings = [coords1, coords2]
