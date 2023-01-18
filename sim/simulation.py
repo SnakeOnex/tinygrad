@@ -31,10 +31,12 @@ class GUIValues(IntEnum):
     race_time = 7,
     debug = 8
 
+
 class ControlsValues(IntEnum):
     go_signal = 0,
     lat_control = 1,
     long_control = 2
+
 
 class MissionValue(IntEnum):
     NoValue = 0,
@@ -149,7 +151,7 @@ class Simulation():
         self.update_gui_state()
         self.gui_socket.send(pickle.dumps(self.gui_state))
         # ! temporary socket for sending global coordinates to skidpad mission
-        self.glob_coord_socket.send(pickle.dumps(self.state.car_pos))
+        self.glob_coord_socket.send(pickle.dumps([self.state.car_pos, self.gui_state[GUIValues.car_heading]]))
 
     def sleep(self):
         time.sleep(self.period)

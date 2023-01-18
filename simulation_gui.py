@@ -26,6 +26,7 @@ from sim.math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, lo
 from sim.simulation import GUIValues, ControlsValues
 from rendering_helpers import render_world, render_cones, render_car, cone_pos_to_mesh
 
+
 class CameraMode(IntEnum):
     WORLD = 0
     FIRST_PERSON = 1
@@ -35,6 +36,7 @@ class CameraMode(IntEnum):
     def next(self):
         v = self.value
         return CameraMode((v + 1) % 4)
+
 
 def compute_as_state(world_preds, path, target, state):
     """
@@ -48,9 +50,9 @@ def compute_as_state(world_preds, path, target, state):
       path - path in local coord
       cones - Nx3, local cone positions + cone class
     """
+
     cone_pos = world_preds[:, :2]
     cone_cls = world_preds[:, 2:3]
-
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
     path[:, 0] *= -1
@@ -59,7 +61,7 @@ def compute_as_state(world_preds, path, target, state):
 
     path = local_to_global(path, (car_x, car_y), heading)
 
-    target = target.reshape((1,2))
+    target = target.reshape((1, 2))
     target = local_to_global(target, (car_x, car_y), heading)
     cone_pos = local_to_global(cone_pos, (car_x, car_y), heading)
 
@@ -68,17 +70,20 @@ def compute_as_state(world_preds, path, target, state):
     cones = np.hstack((cone_pos, cone_cls))
     return path, target, cones
 
+
 def create_simulation_string(debug):
     simulation_text = "Simulation status:\n"
     for key, values in debug.items():
         simulation_text += f"{key}: {values}\n"
     return simulation_text
 
+
 def create_car_string(speed, steering_angle):
     car_status_text = "Car status:\n"
     car_status_text += f"Speed: {speed:.2f} m/s\n"
     car_status_text += f"Steering angle: {steering_angle:.2f} rad/s\n"
     return car_status_text
+
 
 def create_mission_string(id, values):
     mission_status_text = "Mission status:\n"
@@ -87,8 +92,10 @@ def create_mission_string(id, values):
         mission_status_text += f"\n{key}: {format_val_string(value)}"
     return mission_status_text
 
+
 def format_val_string(val):
     return f"{val:.2f}" if type(val) is float else val
+
 
 if __name__ == '__main__':
     # 0. parsing arguments
@@ -138,7 +145,7 @@ if __name__ == '__main__':
 
     # 2. setup communication interfaces
 
-    ## 2.A - GUI -> Simulation socket for sending control commands
+    # 2.A - GUI -> Simulation socket for sending control commands
     context = zmq.Context()
     controls_socket = context.socket(zmq.PUB)
     controls_socket.bind(
@@ -146,7 +153,7 @@ if __name__ == '__main__':
     # go_signal, lateral, longitudinal
     app.controls_state = [0 for _ in range(len(ControlsValues))]
 
-    ## 2.B - Simulation -> GUI socket for receiving simulation state needed for visualization
+    # 2.B - Simulation -> GUI socket for receiving simulation state needed for visualization
     gui_socket = context.socket(zmq.SUB)
     gui_socket.connect(
         config["TCP_HOST"]+":"+config["GUI_PORT"])
@@ -156,7 +163,7 @@ if __name__ == '__main__':
     data = gui_socket.recv()
     app.visual_state = pickle.loads(data)
 
-    ## 2.C - AS -> GUI socket for receiving Autonomous System internal state debbuging messages for visualization
+    # 2.C - AS -> GUI socket for receiving Autonomous System internal state debbuging messages for visualization
     as_debug_socket = context.socket(zmq.SUB)
     as_debug_socket.connect(
         config["TCP_HOST"]+":"+config["AS_DEBUG_PORT"])
@@ -164,7 +171,7 @@ if __name__ == '__main__':
     as_debug_poller = zmq.Poller()
     as_debug_poller.register(as_debug_socket, zmq.POLLIN)
 
-    ## 3. GUI initialization
+    # 3. GUI initialization
     car_rect.enabled = False
     Text.size = 0.025
     app.simulation_text = Text(text=create_simulation_string(
@@ -207,15 +214,15 @@ if __name__ == '__main__':
         Ursina engine update loop
         """
 
-        ## 1. send controls packet to simulation process 
+        # 1. send controls packet to simulation process
         controls_socket.send(pickle.dumps(app.controls_state))
 
-        ## 2. receive GUI state packet from simulation process
+        # 2. receive GUI state packet from simulation process
         while gui_poller.poll(0.):
             data = gui_socket.recv()
             app.visual_state = pickle.loads(data)
 
-        ## 3. receive internal state from BROS for visualization
+        # 3. receive internal state from BROS for visualization
         while as_debug_poller.poll(0.):
             as_debug_data = pickle.loads(as_debug_socket.recv())
             path, target, cones = compute_as_state(as_debug_data["perception"], as_debug_data["path"], as_debug_data["target"], app.visual_state)
