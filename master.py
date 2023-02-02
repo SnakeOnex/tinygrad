@@ -26,7 +26,7 @@ def main(brosbag_folder=None):
     # 0. create a log folder for the run
     main_log_folder = config["main_log_folder"]
     folder_path = main_log_folder / Path(gen_name_with_time('', ''))
-    folder_path.mkdir()
+    folder_path.mkdir(parents=True)
     print("LOG_FILE: ", folder_path)
 
     # 1. processes init
