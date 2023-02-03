@@ -1,66 +1,74 @@
 from pathlib import Path
 import time
+import os
+import unittest
 import multiprocessing
 from multiprocessing import Process
 
+import sys
+sys.path.append('.')
+sys.path.append('..')
+
+import dv_sim
 from dv_sim.sim.simulation import Simulation, MissionValue
 from nodes.asm import AS
-# from dv_sim import sim_config
 from master import main
 
+class TestAcceleration(unittest.TestCase):
 
-def test_acceleration():
-    # 1. SETUP SIMULATION && BROS
+    def setUp(cls):
+        # 1. SETUP SIMULATION && BROS
 
-    ## 1.A SIMULATION SETUP
+        ## 1.A SIMULATION SETUP
 
-    map_path = Path("dv_sim/maps/acceleration_map.json").resolve()
-    sim = Simulation(
-            map_path=map_path,
-            mission=MissionValue.Acceleration,
-            manual=False,
-            config_json=Path("dv_sim/sim_config.json").resolve()
-    )
-    sim.launch_gui()
+        map_path = Path("dv_sim/maps/acceleration_map.json").resolve()
+        cls.sim = Simulation(
+                map_path=map_path,
+                mission=MissionValue.Acceleration,
+                manual=False,
+                config_json=Path("dv_sim/sim_config.json").resolve()
+        )
+        cls.sim.launch_gui()
 
-    # 1.B BROS SETUP
-    bros_process = Process(target=main)
-    bros_process.start()
+        # 1.B BROS SETUP
+        cls.bros_process = Process(target=main)
+        cls.bros_process.start()
+        time.sleep(1)
 
-    # 2. TEST LOOP
-    start_time = time.perf_counter()
+    def tearDown(cls):
+        print("tearing down!")
+        cls.bros_process.terminate()
+        cls.sim.terminate_gui()
 
-    # simulation loop
-    while True:
-        sim.step()
-        time_since_start = time.perf_counter() - start_time
+        del cls.bros_process
+        del cls.sim
+        time.sleep(1)
 
-        # after 10 seconds send go signal
-        if time_since_start >= 5.:
-            sim.go_signal()
+    def test_acceleration(self):
+        start_time = time.perf_counter()
 
-        # after max seconds end and return TRUE
-        if time_since_start >= 60.:
-            test_outcome = True
-            break
+        # simulation loop
+        while True:
+            self.sim.step()
+            time_since_start = time.perf_counter() - start_time
 
-        # if state is finished end simulation
-        if sim.state.AS == AS.FINISHED:
-            test_outcome = True
-            break
+            # after 10 seconds send go signal
+            if time_since_start >= 5.:
+                self.sim.go_signal()
 
-        sim.sleep()
+            # after max seconds end and return TRUE
+            if time_since_start >= 60.:
+                test_outcome = True
+                break
 
-    assert test_outcome
+            # if state is finished end simulation
+            if self.sim.state.AS == AS.FINISHED:
+                test_outcome = True
+                break
 
-    # 3. HOUSE KEEPING
-    bros_process.terminate()
-    sim.terminate_gui()
-    # sim.vision_socket.close()
-    # sim.context.term()
-    print("closed socket")
-    time.sleep(0.1)
+            self.sim.sleep()
 
+        assert test_outcome
 
 if __name__ == "__main__":
-    test_acceleration()
+    unittest.main()
