@@ -1,18 +1,22 @@
 import numpy as np
 from ursina import *
 
+def get_dir_vector(heading):
+    angle = np.deg2rad(heading)
+    R = np.array([[np.cos(angle), np.sin(angle)],
+                  [-np.sin(angle), np.cos(angle)]])
+    unit_vector = np.array([[0,1]]).reshape((2,1))
+    dir_vec = (R @ unit_vector).T
+    return dir_vec
+
 
 def angle_to_vector(angle):
-    vec = np.array([0., 1.])
     angle = np.deg2rad(angle)
+    vec = np.array([0., 1.])
 
-    R = np.array([[np.cos(angle), np.sin(-angle)],
+    R = np.array([[np.cos(angle), -np.sin(angle)],
                  [np.sin(angle), np.cos(angle)]])
-
     vec = R @ vec
-    vec /= np.linalg.norm(vec)
-
-    # return np.array((vec[0], 0., vec[1]))
     return vec
 
 
@@ -42,9 +46,8 @@ def global_to_local(cones, car_pos, car_heading):
 def local_to_global(cones, car_pos, car_heading):
     car_heading = np.deg2rad(car_heading)
 
-    R = np.array([[np.cos(car_heading), np.sin(car_heading)],
-                  [-np.sin(car_heading), np.cos(car_heading)]])
-    R = np.linalg.inv(R)
+    R = np.array([[np.cos(car_heading), -np.sin(car_heading)],
+                  [np.sin(car_heading), np.cos(car_heading)]])
 
     cones = (R @ cones.T).T
     cones[:, 0:2] += car_pos
