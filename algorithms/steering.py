@@ -41,11 +41,11 @@ def stanley_steering(path, lookahead_dist, speed, gain, lateran_gain, max_range=
 
     target = get_lookahead_point(lookahead_dist, path)
 
-    dx = target[1]
-    dy = target[0]
+    dx = target[0]
+    dy = target[1]
     direction = math.atan2(dy, dx)
     if len(path) > 1:
-        lat_offset = path[1][0]
+        lat_offset = path[1][1]
     else:
         lat_offset = 0
     if speed > 0.3:

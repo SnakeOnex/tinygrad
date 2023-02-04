@@ -42,6 +42,7 @@ class Acceleration():
           debug_dict
           path
         """
+
         
         # 0. save starting time stamp during the first loop
         if self.start_timestamp is None:

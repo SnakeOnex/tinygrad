@@ -57,7 +57,7 @@ class TestTrackdrive(unittest.TestCase):
                 self.sim.go_signal()
 
             # after max seconds end and return TRUE
-            if time_since_start >= 65.:
+            if time_since_start >= 600.:
                 test_outcome = True
                 break
 
