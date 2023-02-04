@@ -1,18 +1,9 @@
 import numpy as np
 from ursina import *
 
-def get_dir_vector(heading):
-    angle = np.deg2rad(heading)
-    R = np.array([[np.cos(angle), np.sin(angle)],
-                  [-np.sin(angle), np.cos(angle)]])
-    unit_vector = np.array([[0,1]]).reshape((2,1))
-    dir_vec = (R @ unit_vector).T
-    return dir_vec
-
-
 def angle_to_vector(angle):
     angle = np.deg2rad(angle)
-    vec = np.array([0., 1.])
+    vec = np.array([1., 0.])
 
     R = np.array([[np.cos(angle), -np.sin(angle)],
                  [np.sin(angle), np.cos(angle)]])
@@ -34,12 +25,11 @@ def global_to_local(cones, car_pos, car_heading):
     """
 
     car_heading = np.deg2rad(car_heading)
-    R = np.array([[np.cos(car_heading), np.sin(car_heading)],
-                  [-np.sin(car_heading), np.cos(car_heading)]])
+    R = np.array([[np.cos(car_heading), -np.sin(car_heading)],
+                  [np.sin(car_heading), np.cos(car_heading)]])
 
     cones[:, 0:2] -= car_pos
-    cones = (R @ cones.T).T
-
+    cones = (R.T @ cones.T).T
     return cones
 
 
@@ -71,8 +61,8 @@ def filter_occluded_cones(cones_local, occlusion_profile):
     """
     left_max, right_max, forward_min, forward_max = occlusion_profile
 
-    mask_lr = (cones_local[:, 0] <= right_max) & (cones_local[:, 0] >= left_max)
-    mask_f = (cones_local[:, 1] <= forward_max) & (cones_local[:, 1] >= forward_min)
+    mask_lr = (cones_local[:, 0] <= forward_max) & (cones_local[:, 0] >= forward_min)
+    mask_f = (cones_local[:, 1] <= right_max) & (cones_local[:, 1] >= left_max)
     mask = mask_lr & mask_f
 
     cones_filtered = cones_local[mask, :]

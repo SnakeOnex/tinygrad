@@ -19,7 +19,7 @@ class Formula(Entity):
         self.driver_pos = np.array([0., 0., 0.])
 
         # rotate the model so things make sense
-        self.offset_rot = Vec3(270., 0., 90.)
+        self.offset_rot = Vec3(270., 0., 0.)
 
         ## tires
         tire_color = color.black

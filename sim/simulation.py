@@ -58,6 +58,7 @@ class Simulation():
         self.context = zmq.Context()
         # 1. setup physics state
         self.state = State(mission, self.map_path)
+        self.state.manual = manual
         self.frequency = 100  # Hz
         self.period = 1. / self.frequency
 

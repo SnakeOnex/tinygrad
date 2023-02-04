@@ -55,9 +55,9 @@ def compute_as_state(world_preds, path, target, state):
     cone_cls = world_preds[:, 2:3]
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
-    path[:, 0] *= -1
-    target[0] *= -1
-    cone_pos[:, 0] *= -1
+    # path[:, 0] *= -1
+    # target[0] *= -1
+    # cone_pos[:, 0] *= -1
 
     path = local_to_global(path, (car_x, car_y), heading)
 
@@ -78,10 +78,12 @@ def create_simulation_string(debug):
     return simulation_text
 
 
-def create_car_string(speed, steering_angle):
+def create_car_string(speed, steering_angle, heading, car_pos):
     car_status_text = "Car status:\n"
     car_status_text += f"Speed: {speed:.2f} m/s\n"
     car_status_text += f"Steering angle: {steering_angle:.2f} rad/s\n"
+    car_status_text += f"heading: {heading:.2f}\n"
+    car_status_text += f"Car pos: {car_pos}\n"
     return car_status_text
 
 
@@ -181,7 +183,7 @@ if __name__ == '__main__':
     app.simulation_text.line_height = line_height
     app.simulation_text.background = True
 
-    app.car_status_text = Text(text=create_car_string(0, 0), color=color.azure)
+    app.car_status_text = Text(text=create_car_string(0, 0, 0, 0), color=color.azure)
     app.car_status_text.x = text_x
     app.car_status_text.y = 0.2
     app.car_status_text.line_height = line_height
@@ -222,6 +224,9 @@ if __name__ == '__main__':
             data = gui_socket.recv()
             app.visual_state = pickle.loads(data)
 
+            app.car_status_text.text = create_car_string(0., 0., app.visual_state[GUIValues.car_heading], app.visual_state[GUIValues.car_pos])
+            app.car_status_text.background = True
+
         # 3. receive internal state from BROS for visualization
         while as_debug_poller.poll(0.):
             as_debug_data = pickle.loads(as_debug_socket.recv())
@@ -260,18 +265,16 @@ if __name__ == '__main__':
 
                     cone_detection.color = cone_color
 
-            app.car_status_text.text = create_car_string(
-                as_debug_data["speed"], as_debug_data["steering_angle"])
-            app.car_status_text.background = True
 
-            app.mission_status_text.text = create_mission_string(
-                as_debug_data["mission_id"], as_debug_data["mission_status"])
+            app.mission_status_text.text = create_mission_string(as_debug_data["mission_id"], as_debug_data["mission_status"])
             app.mission_status_text.background = True
+
 
         # key handling
 
         # longitudinal controls
         if held_keys['w']:
+            print("forward")
             app.controls_state[ControlsValues.long_control] = 1
         elif held_keys['space']:
             app.controls_state[ControlsValues.long_control] = -1
@@ -297,8 +300,7 @@ if __name__ == '__main__':
             # cones[cone_idx].enabled = False
             app.cones[cone_idx].rotation = Vec3(90., 0., 0)
 
-        app.simulation_text.text = create_simulation_string(
-            app.visual_state[GUIValues.debug])
+        app.simulation_text.text = create_simulation_string(app.visual_state[GUIValues.debug])
         app.simulation_text.background = True
 
         #text_main.text = text
@@ -310,18 +312,14 @@ if __name__ == '__main__':
         elif app.cam_mode == CameraMode.FIRST_PERSON:
             camera.position = driver.position
             # camera.rotation = (0.,-state.heading,0.)
-            camera.rotation = (0., -app.visual_state[GUIValues.car_heading], 0.)
+            camera.rotation = (0., -app.visual_state[GUIValues.car_heading] + 90., 0.)
         elif app.cam_mode == CameraMode.THIRD_PERSON:
-            rot_x, rot_y = rotate_around_point(
-                -app.visual_state[GUIValues.car_heading], (0, 0), (10, 0))
+            rot_x, rot_y = rotate_around_point(-app.visual_state[GUIValues.car_heading]+90., (0, 0), (10, 0))
             camera.position = driver.position + Vec3(-rot_x, 2, rot_y)
-            camera.rotation = (
-                0., -app.visual_state[GUIValues.car_heading], 0.)
+            camera.rotation = (0., -app.visual_state[GUIValues.car_heading]+90., 0.)
         elif app.cam_mode == CameraMode.BIRD_VIEW:
-            rot_x, rot_y = rotate_around_point(
-                -app.visual_state[GUIValues.car_heading], (0, 0), (10, 0))
+            rot_x, rot_y = rotate_around_point(-app.visual_state[GUIValues.car_heading] + 90., (0, 0), (10, 0))
             camera.position = driver.position + Vec3(0, 18, 0)
-            camera.rotation = (
-                90., -app.visual_state[GUIValues.car_heading], 0.)
+            camera.rotation = (90., -app.visual_state[GUIValues.car_heading], 0.)
 
     app.run()

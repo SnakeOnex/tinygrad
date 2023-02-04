@@ -90,8 +90,7 @@ def render_car(visual_state, formula, driver, car_rect):
 
     heading_vec = angle_to_vector(heading)
 
-    driver.position = Vec3(car_x, 0., car_y) - 1. * \
-        vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
+    driver.position = Vec3(car_x, 0., car_y) - vec_to_3d(heading_vec) + Vec3(0., 0.7, 0.)
     driver.rotation = formula.offset_rot + Vec3(0., 0., heading)
 
     formula.position = Vec3(car_x, 0., car_y)

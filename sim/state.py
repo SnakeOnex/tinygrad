@@ -15,12 +15,14 @@ class AS(IntEnum):
 class State():
     def __init__(self, mission, map_filepath):
 
+        self.manual = False
+
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
         self.steering_speed = 90. # degrees per second
         self.max_steering_angle = 60. # max and min steering angle
 
-        self.max_engine_force = 4000. # nm
+        self.max_engine_force = 3000. # nm
         self.max_brake_force = 400. # nm
         self.drag_coef = 4
         self.rr_coef = self.drag_coef * 30
@@ -47,15 +49,16 @@ class State():
     def update_state(self, timedelta):
 
         # CONTROLS
-        if self.speed_set_point > self.speed:
+        if self.speed_set_point > self.speed and not self.manual:
             self.forward()
-        elif self.speed_set_point == 0.:
+        elif self.speed_set_point == 0. and not self.manual:
             self.brake()
 
-        if self.steering_angle_set_point > self.steering_angle:
-            self.steer_left()
-        else:
-            self.steer_right()
+        if not self.manual:
+            if self.steering_angle_set_point > self.steering_angle:
+                self.steer_left()
+            else:
+                self.steer_right()
 
         self.handle_controls(timedelta)
 
@@ -70,9 +73,10 @@ class State():
 
         ## LATERAL
         turn_radius = self.wheel_base / np.sin(np.deg2rad(self.steering_angle))
-        rotation = self.speed / (turn_radius*3.6)
+        rotation = self.speed / (turn_radius * 2.6) # "seems better with * 3."
         self.heading += timedelta * np.rad2deg(rotation)
-        self.rotation_vector = rotate_around_point(self.heading,(0,0),(-self.wheel_base,0))
+        # self.rotation_vector = rotate_around_point(self.heading,(0,0),(-self.wheel_base,0))
+        # TODO: get the rotate_around_point function back in
 
         if self.heading >= 360.:
             self.heading -= 360
@@ -81,7 +85,7 @@ class State():
 
         heading_vec = angle_to_vector(self.heading)
         velocity = heading_vec * self.speed
-        self.car_pos += self.rotation_vector
+        # self.car_pos += self.rotation_vector
         self.car_pos += timedelta * velocity
 
     def handle_controls(self, timedelta):
@@ -104,6 +108,7 @@ class State():
             else:
                 self.steering_angle = 0
 
+        # print(self.traction_control)
         if self.traction_control == "FORWARD":
             self.engine_force = self.max_engine_force
         elif self.traction_control == "BRAKE":
@@ -150,8 +155,6 @@ class State():
 
         ## occlusion profile
         cones_local = filter_occluded_cones(cones_local, self.occlusion_profile)
-
-        cones_local[:, 0] *= -1
 
         return cones_local
 

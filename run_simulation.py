@@ -3,7 +3,6 @@ from sim.simulation import Simulation, MissionValue
 from pathlib import Path
 import time
 
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--map', type=str, default='maps/circle_map.json')

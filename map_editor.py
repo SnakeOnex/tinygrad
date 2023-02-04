@@ -9,7 +9,7 @@ from enum import IntEnum
 import sys
 sys.path.append('..')
 
-from sim.math_helpers import angle_to_vector, global_to_local, filter_occluded_cones
+from sim.math_helpers import angle_to_vector, global_to_local, local_to_global, filter_occluded_cones
 from algorithms.path_planning import PathPlanner
 
 class Cones(IntEnum):
@@ -35,7 +35,7 @@ class MapEditor():
 
         yc = np.hstack((out["yellow_cones"], np.full((len(out["yellow_cones"]), 1), 0)))
         bc = np.hstack((out["blue_cones"], np.full((len(out["blue_cones"]), 1), 1)))
-        oc = np.hstack((out["orange_cones"], np.full((len(out["orange_cones"]), 1), 2)))
+        oc = np.hstack((np.array(out["orange_cones"]).reshape((-1,2)), np.full((len(out["orange_cones"]), 1), 2)))
         boc = np.hstack((out["big_cones"], np.full((len(out["big_cones"]), 1), 3)))
         self.all_cones = np.vstack((yc, bc, oc, boc))
 
@@ -88,7 +88,15 @@ class MapEditor():
             self.car_pos = np.array([[event.xdata, event.ydata]]).reshape((1,2))
             self.last_op_msg = f"change car pos to ({event.xdata},{event.ydata})"
         elif self.mode == Modes.CHANGE_CAR_DIR:
-            pass #TODO
+            click_pos = np.array([event.xdata, event.ydata]).reshape((1,2))
+            dir_vec = click_pos - self.car_pos
+            dir_vec /= norm(dir_vec)
+            angle = np.rad2deg(np.arctan2(dir_vec[0,1], dir_vec[0,0]))
+            if angle < 0:
+                angle += 360.
+
+            self.car_heading = angle
+            self.last_op_msg = f"changed car dir to {angle}"
 
         self.redraw()
 
@@ -141,10 +149,11 @@ class MapEditor():
         cones_local = global_to_local(np.array(self.all_cones[:, 0:2]), self.car_pos, self.car_heading)
         cones_local = np.hstack((cones_local, self.all_cones[:, 2:3]))
         cones_local = filter_occluded_cones(cones_local, self.occlusion_profile)
-        cones_local[:, 0] *= -1
+        print("cones_local: ", cones_local)
+        # cones_local[:, 0] *= -1
         path = self.path_planner.find_path(cones_local) 
-        path[:,0] *= -1
-        path = path + self.car_pos
+        # path[:,0] *= -1
+        path = local_to_global(path, self.car_pos, self.car_heading)
         self.drawn_path.set_data(path[:,0], path[:,1])
 
         min_x, min_y = np.min(self.all_cones[:,0:2] ,axis=0)
@@ -168,7 +177,7 @@ class MapEditor():
     def save_to_file(self):
         yc, bc, oc, boc = self.get_cones_by_color()
         map_dict = {
-            "car_position" : self.car_pos.tolist(),
+            "car_position" : self.car_pos.reshape((2,)).tolist(),
             "car_heading"  : self.car_heading,
             "yellow_cones" : yc.tolist(),
             "blue_cones"   : bc.tolist(),

@@ -37,8 +37,8 @@ class TrackMarshall():
 		# cones_local -= (self.state.wheel_base/2) * heading_vec
 
 		## compute manhattan norm of all the cones
-		cones_y_dists = abs(cones_local[:,0])
-		cones_x_dists = abs(cones_local[:,1])
+		cones_y_dists = abs(cones_local[:,1])
+		cones_x_dists = abs(cones_local[:,0])
 
 		collision_idxs = np.where((cones_x_dists < (self.state.car_length / 2)) & (cones_y_dists < (self.state.car_width / 2)))[0]
 		self.cones_mask[collision_idxs] = 1
