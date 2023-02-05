@@ -52,8 +52,8 @@ class Skidpad():
         self.map_center_estimator = KMeans(n_clusters=2)
         self.heading = None
         self.glob_coords = None
-        self.rings = []
-        self.ring_centers = []
+        self.circles = []
+        self.circle_centers = []
         self.estimated_cone_centers = []
 
         # ! temporary socket for receiving global coordinates
@@ -96,13 +96,13 @@ class Skidpad():
             delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
             delta = 0.
         else:
-            path = self.global_to_local(self.rings[0])
+            path = self.global_to_local(self.circles[0])
             delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
         debug_dict = {
             "heading": self.heading,
             "glob_coords": self.glob_coords,
-            "ring_centers": self.ring_centers,
+            "circle_centers": self.circle_centers,
             "cone_centers": self.estimated_cone_centers
         }
         return self.finished, delta, self.speed_set_point, debug_dict, (path, controller_log["target"])
@@ -165,26 +165,43 @@ class Skidpad():
 
     def global_to_local(self, path):
         """
+        Doesn't work yet
         """
-        car_heading = np.deg2rad(self.heading)
+        car_heading = np.deg2rad(self.heading-90)
         R = np.array([[np.cos(car_heading), np.sin(car_heading)],
                       [-np.sin(car_heading), np.cos(car_heading)]])
-
         path -= self.glob_coords
         path = (R @ path.T).T
-        return path
+        path[:, 0] *= -1
+        path = np.flip(path, axis=1)
+        return path  # [path[:, 0] > 0]
 
     def process_big_cones(self, world_state):
+        """
+        Converts detections of big orange cones from local to global coordinates and saves them
+        Args:
+            world_state (numpy.ndarray): array of all cone detections in local coordinates
+        """
         big_cones = world_state[world_state[:, 2] == CONE_CLASSES["big"]]
-        big_cones_2d = np.delete(big_cones, 2, axis=1) + np.array(self.glob_coords)
+        big_cones_2d = np.flip(np.delete(big_cones, 2, axis=1), axis=1)
+        big_cones_2d[:, 0] *= -1
+        big_cones_2d += np.array(self.glob_coords)
         self.recorded_big_orange_cones = np.append(self.recorded_big_orange_cones, big_cones_2d, axis=0)
 
     def estimate_map_position(self):
+        """
+        Estimates the position of the two circles in global coordinates
+        """
         self.map_center_estimator.fit(self.recorded_big_orange_cones)
         self.estimated_cone_centers = self.map_center_estimator.cluster_centers_
         self.estimate_map_circles(Skidpad.RING_RADIUS)
 
     def estimate_map_circles(self, d):
+        """
+        Estimates the centers of map circles and creates points for each circle
+        Args:
+            d (float): radius of circles to be generated
+        """
         centers = self.estimated_cone_centers
         a, b = np.sum(centers, axis=0)/2, centers[0]
         D = np.linalg.norm(a-b)
@@ -193,5 +210,5 @@ class Skidpad():
         angles = np.linspace(0, 2*np.pi, num=50)
         coords1 = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + c1 for pt in angles])
         coords2 = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + c2 for pt in angles])
-        self.ring_centers = [c1, c2]
-        self.rings = [coords1, coords2]
+        self.circle_centers = [c1, c2]
+        self.circles = [coords1, coords2]
