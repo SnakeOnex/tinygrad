@@ -24,12 +24,13 @@ class GUIValues(IntEnum):
     car_pos = 0,
     car_heading = 1,
     steering_angle = 2,
-    in_start = 3,
-    in_finish = 4,
-    cones_mask = 5,
-    go_signal = 6,
-    race_time = 7,
-    debug = 8
+    car_speed = 3,
+    in_start = 4,
+    in_finish = 5,
+    cones_mask = 6,
+    go_signal = 7,
+    race_time = 8,
+    debug = 9
 
 
 class ControlsValues(IntEnum):
@@ -186,6 +187,7 @@ class Simulation():
         self.gui_state[GUIValues.car_pos] = (car_x, car_y)
         self.gui_state[GUIValues.car_heading] = car_heading
         self.gui_state[GUIValues.steering_angle] = steering_angle
+        self.gui_state[GUIValues.car_speed] = self.state.speed
         self.gui_state[GUIValues.cones_mask] = self.track_marshall.cones_mask
         self.gui_state[GUIValues.go_signal] = self.state.go_signal
         self.gui_state[GUIValues.race_time] = self.track_marshall.race_time

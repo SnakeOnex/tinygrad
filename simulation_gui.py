@@ -55,9 +55,6 @@ def compute_as_state(world_preds, path, target, state):
     cone_cls = world_preds[:, 2:3]
     car_x, car_y = state[GUIValues.car_pos]
     heading = state[GUIValues.car_heading]
-    # path[:, 0] *= -1
-    # target[0] *= -1
-    # cone_pos[:, 0] *= -1
 
     path = local_to_global(path, (car_x, car_y), heading)
 
@@ -66,7 +63,7 @@ def compute_as_state(world_preds, path, target, state):
     cone_pos = local_to_global(cone_pos, (car_x, car_y), heading)
 
     path = [vec_to_3d(p, y=0.01) for p in path]
-    target = vec_to_3d(target[0], y=0.01)
+    target = vec_to_3d(target[0], y=-0.05)
     cones = np.hstack((cone_pos, cone_cls))
     return path, target, cones
 
@@ -81,9 +78,9 @@ def create_simulation_string(debug):
 def create_car_string(speed, steering_angle, heading, car_pos):
     car_status_text = "Car status:\n"
     car_status_text += f"Speed: {speed:.2f} m/s\n"
-    car_status_text += f"Steering angle: {steering_angle:.2f} rad/s\n"
+    car_status_text += f"Steering angle: {steering_angle:.2f}\n"
     car_status_text += f"heading: {heading:.2f}\n"
-    car_status_text += f"Car pos: {car_pos}\n"
+    # car_status_text += f"Car pos: {car_pos[0]:.2f}\n"
     return car_status_text
 
 
@@ -139,7 +136,7 @@ if __name__ == '__main__':
     app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
         vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line'))
 
-    app.target = Entity(model='cube', scale=0.3, color=color.green)
+    app.target = Entity(model='cube', scale=0.2, color=color.green)
 
     for _ in range(cone_count):
         cone_detections.append(Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
@@ -224,7 +221,7 @@ if __name__ == '__main__':
             data = gui_socket.recv()
             app.visual_state = pickle.loads(data)
 
-            app.car_status_text.text = create_car_string(0., 0., app.visual_state[GUIValues.car_heading], app.visual_state[GUIValues.car_pos])
+            app.car_status_text.text = create_car_string(app.visual_state[GUIValues.car_speed], app.visual_state[GUIValues.steering_angle], app.visual_state[GUIValues.car_heading], app.visual_state[GUIValues.car_pos])
             app.car_status_text.background = True
 
         # 3. receive internal state from BROS for visualization

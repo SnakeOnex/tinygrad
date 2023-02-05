@@ -69,8 +69,8 @@ def render_cones(state):
     finish_line = Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
         vertices=finish_points, mode='line', thickness=2))
 
-    car_pos = Entity(model='sphere', position=(
-        state.car_pos[0], 2.0, state.car_pos[1]), scale=(0.1))
+    # car_pos = Entity(model='sphere', position=(
+    #     state.car_pos[0], 2.0, state.car_pos[1]), scale=(0.1))
 
     return cones, cone_mask
 
