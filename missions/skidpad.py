@@ -1,4 +1,5 @@
 import multiprocessing as mp
+import time
 # ! temporary
 import zmq
 import pickle
@@ -8,18 +9,12 @@ from sklearn.cluster import KMeans
 from config import path_planner_opt
 from algorithms.steering import stanley_steering
 from algorithms.path_planning import PathPlanner
+from algorithms.general import get_big_orange_distance, get_orange_centerline
 
 CONE_CLASSES = {"yellow": 0.,
                 "blue": 1.,
                 "orange": 2.,
                 "big": 3.}
-
-# ! temporary array for sim testing
-SIM_WAYPOINTS = {'start_left': np.array([-3.18173506,  3.12047806]),
-                 'start_right': np.array([3.32004047, 3.02806534]),
-                 'end_left': np.array([-3.32004047, 16.97193466]),
-                 'end_right': np.array([3.18173506, 16.87952194]),
-                 'center': np.array([0., 8.])}
 
 
 class Skidpad():
@@ -36,18 +31,14 @@ class Skidpad():
         self.nonlinear_gain = 1.5
         self.path_planner = PathPlanner(path_planner_opt)
         self.finish_detect = False
-
-        self.speed_set_point = 3.
+        self.speed_set_point = 5.
         self.finished = False
+        self.start_time = None
+        self.finished_time = None
+        self.brake_time = float('inf')
 
-        # SKIPAD WAYPOINT CONFIGURATION
-        self.waypoint_state = False  #  is false when waypoints haven't been initialized
-        self.waypoints = {key: [SIM_WAYPOINTS[key], False, 0]
-                          for key in SIM_WAYPOINTS.keys()}
-
-        self.cone_boolean_mask = "all"
+        # SKIDPAD ALGORITHM VALUES
         self.keep_straight = True
-        self.waypoints["center"][1] = True
         self.recorded_big_orange_cones = np.empty(shape=(1, 2))
         self.map_center_estimator = KMeans(n_clusters=2)
         self.heading = None
@@ -55,6 +46,9 @@ class Skidpad():
         self.circles = []
         self.circle_centers = []
         self.estimated_cone_centers = []
+        self.current_path = None
+        self.center_pass_counter = 0
+        self.last_passed_center = 0
 
         # ! temporary socket for receiving global coordinates
         context = zmq.Context()
@@ -72,109 +66,82 @@ class Skidpad():
           steering_angle
           wheelspeed_setpoint
         """
-        # 0. get global coordinates
+        if not self.start_time:
+            self.start_time = time.time()
+
+        time_since_start = time.time() - self.start_time
+
         while self.glob_coord_poller.poll(0.):
             data = pickle.loads(self.glob_coord_socket.recv())
             self.glob_coords = data[0]
             self.heading = data[1]
-            self.update_waypoint_state(data[0])
 
         # * big orange cone position estimation
-        if not self.waypoint_state:
+        if self.keep_straight:
             if np.count_nonzero(world_state[:, 2] == CONE_CLASSES["big"]) > 0:
                 self.process_big_cones(world_state.copy())
                 self.estimate_map_position()
             else:
                 self.estimate_map_position()
-                self.waypoint_state = True
+                self.current_path = self.circles[0]
                 self.keep_straight = False
 
-        # 1. receive perception data
-
-        if self.keep_straight:
-            path = self.path_planner.find_path(world_state)
+        if self.keep_straight or self.finish_detect:
+            world_state = world_state[world_state[:, 2] == CONE_CLASSES["big"]] if self.keep_straight else world_state[world_state[:, 2] == CONE_CLASSES["orange"]]
+            path = get_orange_centerline(world_state)
             delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
-            delta = 0.
+
+            if self.finish_detect:
+                world_state[:, 2] = CONE_CLASSES["big"]
+                dist_to_finish = get_big_orange_distance(cone_preds=world_state, min_big_cones=4)
+
+                if dist_to_finish is not None:
+                    brake_in = dist_to_finish / wheel_speed
+                    if brake_in < time.time() - self.last_passed_center:
+                        self.speed_set_point *= 0.8
+
+                if wheel_speed <= 0.1:
+                    self.stopped_time = time.time()
+                    self.finished = True
+
         else:
-            path = self.global_to_local(self.circles[0])
+            if time.time() - self.last_passed_center > 5:
+                self.check_passed_through_center()
+            path = self.global_to_local(self.current_path.copy())[:5, :]
             delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
         debug_dict = {
-            "heading": self.heading,
-            "glob_coords": self.glob_coords,
-            "circle_centers": self.circle_centers,
-            "cone_centers": self.estimated_cone_centers
+            "Glob coords": self.glob_coords,
+            "Time since start": time_since_start,
+            "Finish time": self.finished_time
+            # "circle_centers": self.circle_centers,
+            # "cone_centers": self.estimated_cone_centers
         }
+
         return self.finished, delta, self.speed_set_point, debug_dict, (path, controller_log["target"])
 
-    def update_waypoint_state(self, coords):
-        current_passed_zone = None
-        for key, value in self.waypoints.items():
-            if value[1]:
-                if np.sum(np.square(coords-value[0])) <= Skidpad.WAYPOINT_RADIUS_SQ:
-                    current_passed_zone = key
-                    break
-
-        if current_passed_zone != None:
-            n_passes = self.waypoints[current_passed_zone][2]
-            new_cone_mask = None
-            next_active_zone = None
-            if current_passed_zone == "center":
-                if n_passes == 0:
-                    self.keep_straight = False
-                if n_passes == 0 or n_passes == 1:
-                    new_cone_mask = "blue_only"
-                    next_active_zone = "end_left"
-                elif n_passes == 2 or n_passes == 3:
-                    new_cone_mask = "yellow_only"
-                    next_active_zone = "end_right"
-                else:
-                    new_cone_mask = "orange_only"
-                    self.finish_detect = True
-            elif current_passed_zone == "start_left":
-                new_cone_mask = "no_blue"
-                next_active_zone = "center"
-            elif current_passed_zone == "start_right":
-                new_cone_mask = "no_yellow"
-                next_active_zone = "center"
-            elif current_passed_zone == "end_left":
-                new_cone_mask = "all"
-                next_active_zone = "start_left"
-            elif current_passed_zone == "end_right":
-                new_cone_mask = "all"
-                next_active_zone = "start_right"
-
-            self.waypoints[current_passed_zone][2] += 1
-            self.waypoints[current_passed_zone][1] = False
-            self.waypoints[next_active_zone][1] = True
-            self.cone_boolean_mask = new_cone_mask
-
-    def filter_state(self, word_state):
-        if self.cone_boolean_mask == "all":
-            return word_state
-        elif self.cone_boolean_mask == "blue_only":
-            return word_state[(word_state[:, 2] == CONE_CLASSES["blue"])]
-        elif self.cone_boolean_mask == "no_blue":
-            return word_state[(word_state[:, 0] >= 0) & (word_state[:, 2] != CONE_CLASSES["blue"])]
-        elif self.cone_boolean_mask == "no_yellow":
-            return word_state[(word_state[:, 0] <= 0)]
-        elif self.cone_boolean_mask == "yellow_only":
-            return word_state[(word_state[:, 2] == CONE_CLASSES["yellow"]) & (word_state[:, 0] >= 0)]
-        elif self.cone_boolean_mask == "orange_only":
-            return word_state[word_state[:, 2] == CONE_CLASSES["orange"]]
+    def check_passed_through_center(self):
+        map_center = np.sum(self.estimated_cone_centers, axis=0)/2
+        if np.linalg.norm(self.glob_coords - map_center) <= Skidpad.WAYPOINT_RADIUS_SQ:
+            if self.center_pass_counter == 2:
+                self.current_path = self.circles.pop()
+            elif self.center_pass_counter == 4:
+                self.finish_detect = True
+            self.center_pass_counter += 1
+            self.last_passed_center = time.time()
 
     def global_to_local(self, path):
         """
-        Doesn't work yet
+        Works now
         """
-        car_heading = np.deg2rad(self.heading-90)
-        R = np.array([[np.cos(car_heading), np.sin(car_heading)],
-                      [-np.sin(car_heading), np.cos(car_heading)]])
+        car_heading = np.deg2rad(self.heading)
+        R = np.array([[np.cos(car_heading), -np.sin(car_heading)],
+                      [np.sin(car_heading), np.cos(car_heading)]])
         path -= self.glob_coords
-        path = (R @ path.T).T
-        path[:, 0] *= -1
-        path = np.flip(path, axis=1)
-        return path  # [path[:, 0] > 0]
+        path = (R.T @ path.T).T
+        dists = np.sqrt(path[:, 0]**2 + path[:, 1]**2)
+        path = path[np.argsort(dists, axis=0)]
+        return path[path[:, 0] > 0]
 
     def process_big_cones(self, world_state):
         """
@@ -207,8 +174,7 @@ class Skidpad():
         D = np.linalg.norm(a-b)
         c1 = (1-(d/D)) * a + (d/D)*b
         c2 = (1+(d/D)) * a - (d/D)*b
-        angles = np.linspace(0, 2*np.pi, num=50)
-        coords1 = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + c1 for pt in angles])
-        coords2 = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + c2 for pt in angles])
+        coords1 = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + c1 for pt in np.linspace(0, 2*np.pi, num=50)])
+        coords2 = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + c2 for pt in np.linspace(0, 2*np.pi, num=50)])
         self.circle_centers = [c1, c2]
         self.circles = [coords1, coords2]
