@@ -70,8 +70,8 @@ def compute_as_state(world_preds, path, target, state):
 
 def create_simulation_string(debug):
     simulation_text = "Simulation status:\n"
-    for key, values in debug.items():
-        simulation_text += f"{key}: {values}\n"
+    for key, value in debug.items():
+        simulation_text += f"{key}: {value}\n"
     return simulation_text
 
 
@@ -79,7 +79,7 @@ def create_car_string(speed, steering_angle, heading, car_pos):
     car_status_text = "Car status:\n"
     car_status_text += f"Speed: {speed:.2f} m/s\n"
     car_status_text += f"Steering angle: {steering_angle:.2f}\n"
-    car_status_text += f"heading: {heading:.2f}\n"
+    car_status_text += f"Heading: {heading:.2f}\n"
     # car_status_text += f"Car pos: {car_pos[0]:.2f}\n"
     return car_status_text
 
@@ -93,7 +93,12 @@ def create_mission_string(id, values):
 
 
 def format_val_string(val):
-    return f"{val:.2f}" if type(val) is float else val
+    value_str = val
+    if type(val) == float or type(val) == np.float_:
+        value_str = f"{val: .2f}"
+    elif type(val) == np.ndarray:
+        value_str = np.array2string(val, precision=2, suppress_small=True)
+    return value_str
 
 
 if __name__ == '__main__':
@@ -221,7 +226,11 @@ if __name__ == '__main__':
             data = gui_socket.recv()
             app.visual_state = pickle.loads(data)
 
-            app.car_status_text.text = create_car_string(app.visual_state[GUIValues.car_speed], app.visual_state[GUIValues.steering_angle], app.visual_state[GUIValues.car_heading], app.visual_state[GUIValues.car_pos])
+            app.car_status_text.text = create_car_string(
+                app.visual_state[GUIValues.car_speed],
+                app.visual_state[GUIValues.steering_angle],
+                app.visual_state[GUIValues.car_heading],
+                app.visual_state[GUIValues.car_pos])
             app.car_status_text.background = True
 
         # 3. receive internal state from BROS for visualization
@@ -262,10 +271,8 @@ if __name__ == '__main__':
 
                     cone_detection.color = cone_color
 
-
             app.mission_status_text.text = create_mission_string(as_debug_data["mission_id"], as_debug_data["mission_status"])
             app.mission_status_text.background = True
-
 
         # key handling
 
