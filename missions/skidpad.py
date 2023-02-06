@@ -35,7 +35,6 @@ class Skidpad():
         self.finished = False
         self.start_time = None
         self.finished_time = None
-        self.brake_time = float('inf')
 
         # SKIDPAD ALGORITHM VALUES
         self.keep_straight = True
@@ -49,6 +48,7 @@ class Skidpad():
         self.current_path = None
         self.center_pass_counter = 0
         self.last_passed_center = 0
+        self.start_position = np.zeros((1, 2))
 
         # ! temporary socket for receiving global coordinates
         context = zmq.Context()
@@ -75,6 +75,8 @@ class Skidpad():
             data = pickle.loads(self.glob_coord_socket.recv())
             self.glob_coords = data[0]
             self.heading = data[1]
+            if not self.start_position.any():
+                self.start_position = data[0]
 
         # * big orange cone position estimation
         if self.keep_straight:
@@ -83,7 +85,7 @@ class Skidpad():
                 self.estimate_map_position()
             else:
                 self.estimate_map_position()
-                self.current_path = self.circles[0]
+                self.current_path = self.circles["right"]
                 self.keep_straight = False
 
         if self.keep_straight or self.finish_detect:
@@ -107,41 +109,55 @@ class Skidpad():
         else:
             if time.time() - self.last_passed_center > 5:
                 self.check_passed_through_center()
-            path = self.global_to_local(self.current_path.copy())[:5, :]
+            path = self.get_circular_path()
             delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
         debug_dict = {
             "Glob coords": self.glob_coords,
             "Time since start": time_since_start,
-            "Finish time": self.finished_time
-            # "circle_centers": self.circle_centers,
+            "Finish time": self.finished_time,
+            "Start pos": self.start_position,
+            # "circle_centers": self.circle_centers
             # "cone_centers": self.estimated_cone_centers
         }
 
         return self.finished, delta, self.speed_set_point, debug_dict, (path, controller_log["target"])
 
+    def get_circular_path(self):
+        """
+        Computes circular path
+
+        Returns:
+            np.ndarray: 2d points making up the path curve
+        """
+        path = self.global_to_local(self.glob_coords, self.heading, self.current_path.copy())
+        dists = np.sqrt(path[:, 0]**2 + path[:, 1]**2)
+        path = path[np.argsort(dists, axis=0)]
+        return path[path[:, 0] > 0][:5, :]
+
     def check_passed_through_center(self):
+        """
+        Checks whether car has passed through the center for the map and performs corresponding action
+        """
         map_center = np.sum(self.estimated_cone_centers, axis=0)/2
         if np.linalg.norm(self.glob_coords - map_center) <= Skidpad.WAYPOINT_RADIUS_SQ:
             if self.center_pass_counter == 2:
-                self.current_path = self.circles.pop()
+                self.current_path = self.circles["left"]
             elif self.center_pass_counter == 4:
                 self.finish_detect = True
             self.center_pass_counter += 1
             self.last_passed_center = time.time()
 
-    def global_to_local(self, path):
+    def global_to_local(self, pos, heading, path):
         """
         Works now
         """
-        car_heading = np.deg2rad(self.heading)
+        car_heading = np.deg2rad(heading)
         R = np.array([[np.cos(car_heading), -np.sin(car_heading)],
                       [np.sin(car_heading), np.cos(car_heading)]])
-        path -= self.glob_coords
+        path -= pos
         path = (R.T @ path.T).T
-        dists = np.sqrt(path[:, 0]**2 + path[:, 1]**2)
-        path = path[np.argsort(dists, axis=0)]
-        return path[path[:, 0] > 0]
+        return path
 
     def process_big_cones(self, world_state):
         """
@@ -174,7 +190,10 @@ class Skidpad():
         D = np.linalg.norm(a-b)
         c1 = (1-(d/D)) * a + (d/D)*b
         c2 = (1+(d/D)) * a - (d/D)*b
-        coords1 = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + c1 for pt in np.linspace(0, 2*np.pi, num=50)])
-        coords2 = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + c2 for pt in np.linspace(0, 2*np.pi, num=50)])
-        self.circle_centers = [c1, c2]
-        self.circles = [coords1, coords2]
+        circle_centers = np.array([c1, c2])
+        local_centers = self.global_to_local(self.start_position, 90, circle_centers.copy())
+        circle_centers = circle_centers[np.lexsort((local_centers[:, 1], local_centers[:, 0]))]
+        left = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + circle_centers[0] for pt in np.linspace(0, 2*np.pi, num=50)])
+        right = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + circle_centers[1] for pt in np.linspace(0, 2*np.pi, num=50)])
+        self.circle_centers = circle_centers
+        self.circles = {"right": right, "left": left}
