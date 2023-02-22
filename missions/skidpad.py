@@ -9,7 +9,8 @@ from sklearn.cluster import KMeans
 from config import path_planner_opt
 from algorithms.steering import stanley_steering
 from algorithms.path_planning import PathPlanner
-from algorithms.general import get_big_orange_distance, get_orange_centerline
+from algorithms.general import get_big_orange_distance, get_orange_centerline, local_to_global, global_to_local
+from algorithms.skidpad_utils import *
 
 CONE_CLASSES = {"yellow": 0.,
                 "blue": 1.,
@@ -36,7 +37,7 @@ class Skidpad():
         self.start_time = None
         self.finished_time = None
 
-        # SKIDPAD ALGORITHM VALUES
+        #  SKIDPAD ALGORITHM VALUES
         self.keep_straight = True
         self.recorded_big_orange_cones = np.empty(shape=(1, 2))
         self.map_center_estimator = KMeans(n_clusters=2)
@@ -130,7 +131,7 @@ class Skidpad():
         Returns:
             np.ndarray: 2d points making up the path curve
         """
-        path = self.global_to_local(self.glob_coords, self.heading, self.current_path.copy())
+        path = global_to_local(self.glob_coords, self.heading, self.current_path.copy())
         dists = np.sqrt(path[:, 0]**2 + path[:, 1]**2)
         path = path[np.argsort(dists, axis=0)]
         return path[path[:, 0] > 0][:5, :]
@@ -147,17 +148,6 @@ class Skidpad():
                 self.finish_detect = True
             self.center_pass_counter += 1
             self.last_passed_center = time.time()
-
-    def global_to_local(self, pos, heading, path):
-        """
-        Works now
-        """
-        car_heading = np.deg2rad(heading)
-        R = np.array([[np.cos(car_heading), -np.sin(car_heading)],
-                      [np.sin(car_heading), np.cos(car_heading)]])
-        path -= pos
-        path = (R.T @ path.T).T
-        return path
 
     def process_big_cones(self, world_state):
         """
@@ -191,7 +181,7 @@ class Skidpad():
         c1 = (1-(d/D)) * a + (d/D)*b
         c2 = (1+(d/D)) * a - (d/D)*b
         circle_centers = np.array([c1, c2])
-        local_centers = self.global_to_local(self.start_position, 90, circle_centers.copy())
+        local_centers = global_to_local(self.start_position, 90, circle_centers.copy())
         circle_centers = circle_centers[np.lexsort((local_centers[:, 1], local_centers[:, 0]))]
         left = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + circle_centers[0] for pt in np.linspace(0, 2*np.pi, num=50)])
         right = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + circle_centers[1] for pt in np.linspace(0, 2*np.pi, num=50)])

@@ -20,6 +20,7 @@ from pycandb.can_interface import CanInterface
 
 from internode_communication import create_subscriber_socket, update_subscription_data
 
+
 class MissionValue(IntEnum):
     NoValue = 0,
     Acceleration = 1,
@@ -32,6 +33,7 @@ class MissionValue(IntEnum):
     Disco = 8,
     Donuts = 9
 
+
 class MissionNode(mp.Process):
     def __init__(self):
         mp.Process.__init__(self)
@@ -40,7 +42,7 @@ class MissionNode(mp.Process):
         self.ASM = ASM()
         self.finished = False
         # Vision node data
-        self.percep_data = np.zeros((0,3))
+        self.percep_data = np.zeros((0, 3))
         # CAN1 node data
         self.wheel_speed = 0.
         self.mission_num = MissionValue.NoValue.value
@@ -89,18 +91,18 @@ class MissionNode(mp.Process):
                             go_signal=self.go_signal,
                             finished=self.finished)
 
-            if self.ASM.AS == AS.DRIVING:                
+            if self.ASM.AS == AS.DRIVING:
                 self.percep_data = update_subscription_data(self.cone_preds_socket, self.percep_data)
                 self.wheel_speed = update_subscription_data(self.wheel_speed_socket, self.wheel_speed)
 
                 self.finished, steering_angle, speed, log, (path, target) = self.mission.loop(self.percep_data, self.wheel_speed)
 
                 self.debug_socket.send(pickle.dumps({
-                    "perception": self.percep_data, 
-                    "path": path, 
-                    "target": target, 
-                    "speed": speed, 
-                    "steering_angle": steering_angle, 
+                    "perception": self.percep_data,
+                    "path": path,
+                    "target": target,
+                    "speed": speed,
+                    "steering_angle": steering_angle,
                     "mission_id": self.mission.ID,
                     "mission_status": log}))
 

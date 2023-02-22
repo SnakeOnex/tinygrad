@@ -1,6 +1,26 @@
 import numpy as np
 
 
+def global_to_local(pos, heading, path):
+    car_heading = np.deg2rad(heading)
+    R = np.array([[np.cos(car_heading), -np.sin(car_heading)],
+                  [np.sin(car_heading), np.cos(car_heading)]])
+    path -= pos
+    path = (R.T @ path.T).T
+    return path
+
+
+def local_to_global(cones, car_pos, car_heading):
+    car_heading = np.deg2rad(car_heading)
+
+    R = np.array([[np.cos(car_heading), -np.sin(car_heading)],
+                  [np.sin(car_heading), np.cos(car_heading)]])
+
+    cones = (R @ cones.T).T
+    cones[:, 0:2] += car_pos
+    return cones
+
+
 def get_big_orange_distance(cone_preds, min_big_cones):
     """
     given cone predictions, returns distance of the car to mean position of big orange cones
