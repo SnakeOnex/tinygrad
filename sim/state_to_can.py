@@ -46,6 +46,7 @@ def state_to_RES_Status(state):
 
     return values
 
+# CAN2 SEND
 def state_to_DSH_Status(state):
     Voltage = 0
     Current = 0
@@ -63,6 +64,15 @@ def state_to_DSH_Status(state):
 
     return values
 
+def state_to_INS_D_EKF_POS(state):
+    values = [state.car_pos[0], state.car_pos[1]]
+    # print(values)
+    return values
+
+def state_to_INS_D_EKF_EULER(state):
+    values = [0., 0., state.heading]
+    return values
+
 
 can1_send_callbacks = {
     "MCR_ActualValues_A" : state_to_MCR_ActualValues_A,
@@ -70,7 +80,9 @@ can1_send_callbacks = {
 }
 
 can2_send_callbacks = {
-    "RES_Status": state_to_RES_Status
+    "RES_Status": state_to_RES_Status,
+    "INS_D_EKF_POS": state_to_INS_D_EKF_POS,
+    "INS_D_EKF_EULER": state_to_INS_D_EKF_EULER
 }
 
 # CAN1 RECV
@@ -93,3 +105,6 @@ can1_recv_callbacks = {
     "XVR_Control": receive_XVR_Control,
     "XVR_SetpointsMotor_A": receive_XVR_SetpointsMotor_A
 }
+
+
+
