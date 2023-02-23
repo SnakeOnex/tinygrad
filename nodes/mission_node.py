@@ -49,6 +49,8 @@ class MissionNode(mp.Process):
         self.start_button = 0
         # CAN2 node data
         self.go_signal = 0
+        self.position = None
+        self.euler = (None, None, None)
 
     def initialize(self):
         self.acceleration = Acceleration()
@@ -75,6 +77,8 @@ class MissionNode(mp.Process):
 
         # CAN2 node message subscriptions
         self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
+        self.position_socket = create_subscriber_socket(CAN2NodeMsgPorts.POSITION)
+        self.euler_socket = create_subscriber_socket(CAN2NodeMsgPorts.EULER)
 
     def run(self):
         self.initialize()
@@ -94,6 +98,10 @@ class MissionNode(mp.Process):
             if self.ASM.AS == AS.DRIVING:
                 self.percep_data = update_subscription_data(self.cone_preds_socket, self.percep_data)
                 self.wheel_speed = update_subscription_data(self.wheel_speed_socket, self.wheel_speed)
+                self.position = update_subscription_data(self.position_socket, self.position)
+                self.euler = update_subscription_data(self.euler_socket, self.euler)
+
+                print(self.position)
 
                 self.finished, steering_angle, speed, log, (path, target) = self.mission.loop(self.percep_data, self.wheel_speed)
 

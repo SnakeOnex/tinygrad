@@ -21,9 +21,13 @@ class Can2Node(mp.Process):
         self.CAN2 = CanInterface("data/D1.json", 1, False)
 
         self.go_signal_socket = create_publisher_socket(CAN2NodeMsgPorts.GO_SIGNAL)
+        self.position_socket = create_publisher_socket(CAN2NodeMsgPorts.POSITION)
+        self.euler_socket = create_publisher_socket(CAN2NodeMsgPorts.EULER)
 
         self.message_callbacks = {
             self.CAN2.name2id["RES_Status"]: self.receive_RES_Status,
+            self.CAN2.name2id["INS_D_EKF_EULER"]: self.receive_INS_D_EKF_EULER,
+            self.CAN2.name2id["INS_D_EKF_POS"]: self.receive_INS_D_EKF_POS,
         }
 
     def run(self):
@@ -43,3 +47,12 @@ class Can2Node(mp.Process):
         go_signal = values[2]
         # print("go_signal: ", go_signal)
         publish_data(self.go_signal_socket, go_signal)
+
+    def receive_INS_D_EKF_POS(self, values):
+        latitude = values[0]
+        longitude = values[1]
+        publish_data(self.position_socket, (latitude, longitude))
+
+    def receive_INS_D_EKF_EULER(self, values):
+        pitch, yaw, roll = values
+        publish_data(self.euler_socket, (pitch, yaw, roll))

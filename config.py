@@ -29,6 +29,8 @@ class CAN1NodeMsgPorts(IntEnum):
 
 class CAN2NodeMsgPorts(IntEnum):
     GO_SIGNAL = NodePorts.CAN2
+    POSITION = auto()
+    EULER = auto()
 
 class VisionNodeMsgPorts(IntEnum):
     CONE_PREDS = NodePorts.VISION
