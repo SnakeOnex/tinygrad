@@ -59,7 +59,7 @@ class Skidpad():
         self.glob_coord_poller = zmq.Poller()
         self.glob_coord_poller.register(self.glob_coord_socket, zmq.POLLIN)
 
-    def loop(self, world_state, wheel_speed):
+    def loop(self, **kwargs):
         """
         args:
           vision output (path, cone positions)
@@ -67,22 +67,25 @@ class Skidpad():
           steering_angle
           wheelspeed_setpoint
         """
+
+        percep_data = kwargs["percep_data"]
+        wheel_speed = kwargs["wheel_speed"]
+
         if not self.start_time:
             self.start_time = time.time()
 
         time_since_start = time.time() - self.start_time
 
-        while self.glob_coord_poller.poll(0.):
-            data = pickle.loads(self.glob_coord_socket.recv())
-            self.glob_coords = data[0]
-            self.heading = data[1]
-            if not self.start_position.any():
-                self.start_position = data[0]
+        self.glob_coords = kwargs["position"]
+        self.heading = kwargs["euler"][2]
+
+        if not self.start_position.any():
+            self.start_position = kwargs["position"]
 
         # * big orange cone position estimation
         if self.keep_straight:
-            if np.count_nonzero(world_state[:, 2] == CONE_CLASSES["big"]) > 0:
-                self.process_big_cones(world_state.copy())
+            if np.count_nonzero(percep_data[:, 2] == CONE_CLASSES["big"]) > 0:
+                self.process_big_cones(percep_data.copy())
                 self.estimate_map_position()
             else:
                 self.estimate_map_position()
@@ -90,13 +93,13 @@ class Skidpad():
                 self.keep_straight = False
 
         if self.keep_straight or self.finish_detect:
-            world_state = world_state[world_state[:, 2] == CONE_CLASSES["big"]] if self.keep_straight else world_state[world_state[:, 2] == CONE_CLASSES["orange"]]
-            path = get_orange_centerline(world_state)
+            percep_data = percep_data[percep_data[:, 2] == CONE_CLASSES["big"]] if self.keep_straight else percep_data[percep_data[:, 2] == CONE_CLASSES["orange"]]
+            path = get_orange_centerline(percep_data)
             delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
             if self.finish_detect:
-                world_state[:, 2] = CONE_CLASSES["big"]
-                dist_to_finish = get_big_orange_distance(cone_preds=world_state, min_big_cones=4)
+                percep_data[:, 2] = CONE_CLASSES["big"]
+                dist_to_finish = get_big_orange_distance(cone_preds=percep_data, min_big_cones=4)
 
                 if dist_to_finish is not None:
                     brake_in = dist_to_finish / wheel_speed
@@ -149,13 +152,13 @@ class Skidpad():
             self.center_pass_counter += 1
             self.last_passed_center = time.time()
 
-    def process_big_cones(self, world_state):
+    def process_big_cones(self, percep_data):
         """
         Converts detections of big orange cones from local to global coordinates and saves them
         Args:
-            world_state (numpy.ndarray): array of all cone detections in local coordinates
+            percep_data (numpy.ndarray): array of all cone detections in local coordinates
         """
-        big_cones = world_state[world_state[:, 2] == CONE_CLASSES["big"]]
+        big_cones = percep_data[percep_data[:, 2] == CONE_CLASSES["big"]]
         big_cones_2d = np.flip(np.delete(big_cones, 2, axis=1), axis=1)
         big_cones_2d[:, 0] *= -1
         big_cones_2d += np.array(self.glob_coords)

@@ -10,6 +10,7 @@ from algorithms.steering import stanley_steering
 from algorithms.path_planning import PathPlanner
 from algorithms.general import get_big_orange_distance
 
+
 class Autocross():
     ID = "Autocross"
 
@@ -24,17 +25,17 @@ class Autocross():
 
         self.speed_set_point = 5.
 
-        ## mission planning variables
+        # mission planning variables
         self.finished = False
         self.start_timestamp = None
 
         self.brake_time = float('inf')
         self.stopped_time = None
 
-    def loop(self, cone_preds, wheel_speed):
+    def loop(self, **kwargs):
         """
         args:
-          cone_preds - Nx3 np.array containing cone predictions
+          percep_data - Nx3 np.array containing cone predictions
         ret:
           finished
           steering angle set point
@@ -42,19 +43,20 @@ class Autocross():
           debug_dict
           path
         """
-        
+        percep_data = kwargs["percep_data"]
+        wheel_speed = kwargs["wheel_speed"]
         # 0. save starting time stamp during the first loop
         if self.start_timestamp is None:
             self.start_timestamp = time.perf_counter()
         time_since_start = time.perf_counter() - self.start_timestamp
 
         # 1. receive perception data
-        path = self.path_planner.find_path(cone_preds)
+        path = self.path_planner.find_path(percep_data)
 
         # 2. planning
-        ## if have been driving for more than 3 seconds, start looking for finish line
+        # if have been driving for more than 3 seconds, start looking for finish line
         if time_since_start > 3.:
-            dist_to_finish = get_big_orange_distance(cone_preds=cone_preds, min_big_cones=1)
+            dist_to_finish = get_big_orange_distance(cone_preds=percep_data, min_big_cones=1)
 
             if dist_to_finish is not None:
                 brake_in = dist_to_finish / wheel_speed
@@ -74,7 +76,7 @@ class Autocross():
         delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
         debug_dict = {
-            "time_since_start": time_since_start, 
+            "time_since_start": time_since_start,
             "brake_time": self.brake_time,
             "speed_setpoint": self.speed_set_point,
             "stopped_time": self.stopped_time,

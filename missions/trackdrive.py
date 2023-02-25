@@ -10,6 +10,7 @@ from algorithms.steering import stanley_steering
 from algorithms.path_planning import PathPlanner
 from algorithms.general import get_big_orange_distance
 
+
 class Trackdrive():
     ID = "Trackdrive"
 
@@ -24,7 +25,7 @@ class Trackdrive():
 
         self.speed_set_point = 6.
 
-        ## mission planning variables
+        # mission planning variables
         self.finished = False
         self.start_timestamp = None
 
@@ -35,10 +36,10 @@ class Trackdrive():
         self.laps_to_drive = 10
         self.laps_driven = 0
 
-    def loop(self, cone_preds, wheel_speed):
+    def loop(self, **kwargs):
         """
         args:
-          cone_preds - Nx3 np.array containing cone predictions
+          percep_data - Nx3 np.array containing cone predictions
         ret:
           finished
           steering angle set point
@@ -46,7 +47,10 @@ class Trackdrive():
           debug_dict
           path
         """
-        
+
+        percep_data = kwargs["percep_data"]
+        wheel_speed = kwargs["wheel_speed"]
+
         # 0. save starting time stamp during the first loop
         if self.start_timestamp is None:
             self.start_timestamp = time.perf_counter()
@@ -54,12 +58,12 @@ class Trackdrive():
         time_since_last_lap = time_since_start - self.last_lap_time
 
         # 1. receive perception data
-        path = self.path_planner.find_path(cone_preds)
+        path = self.path_planner.find_path(percep_data)
 
         # 2. planning
-        ## if have been driving for more than 3 seconds since passing start/finish, start looking for it again
+        # if have been driving for more than 3 seconds since passing start/finish, start looking for it again
         if time_since_last_lap > 3.:
-            dist_to_finish = get_big_orange_distance(cone_preds=cone_preds, min_big_cones=1)
+            dist_to_finish = get_big_orange_distance(cone_preds=percep_data, min_big_cones=1)
 
             if dist_to_finish is not None:
                 finish_in = dist_to_finish / wheel_speed
@@ -88,7 +92,7 @@ class Trackdrive():
             "lap_time": time_since_last_lap,
             "finish_time": self.finish_time,
             "laps_driven": f"{self.laps_driven} / {self.laps_to_drive}",
-            "finished": self.finished,  
+            "finished": self.finished,
         }
 
         return self.finished, delta, self.speed_set_point, debug_dict, (path, controller_log["target"])
