@@ -71,13 +71,13 @@ class Skidpad():
         percep_data = kwargs["percep_data"]
         wheel_speed = kwargs["wheel_speed"]
 
+        self.glob_coords = kwargs["position"]
+        self.heading = kwargs["euler"][2]
+
         if not self.start_time:
             self.start_time = time.time()
 
         time_since_start = time.time() - self.start_time
-
-        self.glob_coords = kwargs["position"]
-        self.heading = kwargs["euler"][2]
 
         if not self.start_position.any():
             self.start_position = kwargs["position"]
