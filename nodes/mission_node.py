@@ -114,7 +114,7 @@ class MissionNode(mp.Process):
 
                 self.update_data()
 
-                self.finished, steering_angle, speed, log, (path, target) = self.mission.loop(**self.get_mission_kwargs())
+                self.finished, steering_angle, speed, log, path, target = self.mission.loop(**self.get_mission_kwargs())
 
                 self.debug_socket.send(pickle.dumps({
                     "perception": self.percep_data,

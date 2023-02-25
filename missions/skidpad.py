@@ -1,8 +1,5 @@
 import multiprocessing as mp
 import time
-# ! temporary
-import zmq
-import pickle
 import numpy as np
 from sklearn.cluster import KMeans
 
@@ -50,14 +47,6 @@ class Skidpad():
         self.center_pass_counter = 0
         self.last_passed_center = 0
         self.start_position = np.zeros((1, 2))
-
-        # ! temporary socket for receiving global coordinates
-        context = zmq.Context()
-        self.glob_coord_socket = context.socket(zmq.SUB)
-        self.glob_coord_socket.connect("tcp://127.0.0.1:50004")
-        self.glob_coord_socket.setsockopt(zmq.SUBSCRIBE, b"")
-        self.glob_coord_poller = zmq.Poller()
-        self.glob_coord_poller.register(self.glob_coord_socket, zmq.POLLIN)
 
     def loop(self, **kwargs):
         """
@@ -125,7 +114,7 @@ class Skidpad():
             # "cone_centers": self.estimated_cone_centers
         }
 
-        return self.finished, delta, self.speed_set_point, debug_dict, (path, controller_log["target"])
+        return self.finished, delta, self.speed_set_point, debug_dict, path, controller_log["target"]
 
     def get_circular_path(self):
         """

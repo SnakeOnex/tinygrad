@@ -7,13 +7,12 @@ import pickle
 
 from cones.cone_detector import ConeDetector
 from cones.cone_localizer import ConeLocalizer
-from .path_planning import PathPlanner
 from tvojemama.logger import Logger, LogReader, name_to_log
 from config import vision_node_config as config
 from config import tcp_config as tcp
-
 from internode_communication import create_publisher_socket, publish_data
 from config import VisionNodeMsgPorts
+
 
 class VisionNode(mp.Process):
     def __init__(self, main_log_folder, brosbag_path=None):

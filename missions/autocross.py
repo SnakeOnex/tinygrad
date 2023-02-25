@@ -83,4 +83,4 @@ class Autocross():
             "finished": self.finished
         }
 
-        return self.finished, delta, self.speed_set_point, debug_dict, (path, controller_log["target"])
+        return self.finished, delta, self.speed_set_point, debug_dict, path, controller_log["target"]
