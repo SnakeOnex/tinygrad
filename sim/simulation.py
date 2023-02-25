@@ -94,12 +94,6 @@ class Simulation():
         self.controls_poller = zmq.Poller()
         self.controls_poller.register(self.controls_socket, zmq.POLLIN)
 
-        # ! temporary socket for sending global coordinates to skidpad mission
-
-        self.glob_coord_socket = self.context.socket(zmq.PUB)
-        self.glob_coord_socket.bind(
-            config["TCP_HOST"]+":"+"50004")
-
         # 2.D CAN interaface objects
         self.CAN1 = CanInterface(
             config["CAN_JSON"], config["CAN1_ID"], True)
@@ -152,8 +146,6 @@ class Simulation():
         # 6. update gui state and send it to the 3D engine
         self.update_gui_state()
         self.gui_socket.send(pickle.dumps(self.gui_state))
-        # ! temporary socket for sending global coordinates to skidpad mission
-        self.glob_coord_socket.send(pickle.dumps([self.state.car_pos, self.gui_state[GUIValues.car_heading]]))
 
     def sleep(self):
         time.sleep(self.period)
