@@ -61,7 +61,7 @@ class Skidpad():
         wheel_speed = kwargs["wheel_speed"]
 
         self.glob_coords = kwargs["position"]
-        self.heading = kwargs["euler"][2]
+        self.heading = kwargs["euler"][2] + 180
 
         if not self.start_time:
             self.start_time = time.time()
@@ -110,6 +110,7 @@ class Skidpad():
             "Time since start": time_since_start,
             "Finish time": self.finished_time,
             "Start pos": self.start_position,
+            "Euler CAN heading": self.heading
             # "circle_centers": self.circle_centers
             # "cone_centers": self.estimated_cone_centers
         }
