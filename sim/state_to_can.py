@@ -3,6 +3,8 @@ import math
 from .state import AS
 
 # CAN1 SEND
+
+
 def state_to_MCR_ActualValues_A(state):
     act_InverterStatus = 0
     act_InverterReady = 0
@@ -47,11 +49,13 @@ def state_to_RES_Status(state):
     return values
 
 # CAN2 SEND
+
+
 def state_to_DSH_Status(state):
     Voltage = 0
     Current = 0
     Brightness = 0
-    Missions_sel = state.mission # TODO: change to state.mission
+    Missions_sel = state.mission  # TODO: change to state.mission
     TSON_INT = 0
     START_INT = 1
     SW1 = 0
@@ -64,19 +68,22 @@ def state_to_DSH_Status(state):
 
     return values
 
+
 def state_to_INS_D_EKF_POS(state):
     values = [state.car_pos[0], state.car_pos[1]]
     # print(values)
     return values
 
+
 def state_to_INS_D_EKF_EULER(state):
-    values = [0., 0., state.heading]
+    # subtract 180 to change range to < -180, 180 > to mimick INS
+    values = [0., 0., state.heading-180]
     return values
 
 
 can1_send_callbacks = {
-    "MCR_ActualValues_A" : state_to_MCR_ActualValues_A,
-    "DSH_Status" : state_to_DSH_Status
+    "MCR_ActualValues_A": state_to_MCR_ActualValues_A,
+    "DSH_Status": state_to_DSH_Status
 }
 
 can2_send_callbacks = {
@@ -95,16 +102,15 @@ def receive_XVR_Control(state, values):
 
 def receive_XVR_SetpointsMotor_A(state, values):
     state.speed_set_point = values[4]
-    #print("received set point: ", state.speed_set_point)
+    # print("received set point: ", state.speed_set_point)
+
 
 def receive_XVR_Status(state, values):
     state.AS = AS(values[0])
+
 
 can1_recv_callbacks = {
     "XVR_Status": receive_XVR_Status,
     "XVR_Control": receive_XVR_Control,
     "XVR_SetpointsMotor_A": receive_XVR_SetpointsMotor_A
 }
-
-
-
