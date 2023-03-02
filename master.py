@@ -18,7 +18,7 @@ from nodes.vision_node import VisionNode
 from nodes.can1_node import Can1Node
 from nodes.can2_node import Can2Node
 from nodes.mission_node import MissionNode
-from nodes.log_node import PerfLogNode
+from nodes.perf_log_node import PerfLogNode
 
 
 def main(mode="SIM"):

@@ -75,7 +75,6 @@ if __name__ == '__main__':
     test_folder_path = Path("image_benchmark")
     print("Files saved at:", test_folder_path.absolute())
     test_folder_path.mkdir(exist_ok=True)
-    # print("cwd: ", Path(__file__).absolute().parent)
     for arg in sys.argv[1:]:
         N = int(arg)
         res = (720, 1280, 3)
