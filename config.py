@@ -17,20 +17,24 @@ config = {
 # INTERNODE COMMUNICATION #
 ###########################
 
+
 class NodePorts(IntEnum):
     CAN1 = 10000
     CAN2 = 20000
     VISION = 30000
+
 
 class CAN1NodeMsgPorts(IntEnum):
     WHEEL_SPEED = NodePorts.CAN1
     MISSION = auto()
     START_BUTTON = auto()
 
+
 class CAN2NodeMsgPorts(IntEnum):
     GO_SIGNAL = NodePorts.CAN2
     POSITION = auto()
     EULER = auto()
+
 
 class VisionNodeMsgPorts(IntEnum):
     CONE_PREDS = NodePorts.VISION
@@ -69,6 +73,11 @@ vision_node_config = {
     "cone_localizer_opt": cone_localizer_opt,
     "path_planner_opt": path_planner_opt,
     "logging_opt": logging_opt
+}
+
+perf_logger_config = {
+    "log_name": "computer_status",
+    "log_folder_name": "PC_STAT",
 }
 
 tcp_config = {

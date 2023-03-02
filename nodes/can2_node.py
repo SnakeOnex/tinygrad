@@ -11,10 +11,11 @@ from pycandb.can_interface import CanInterface
 from internode_communication import create_publisher_socket, publish_data
 from config import CAN2NodeMsgPorts
 
+
 class Can2Node(mp.Process):
     def __init__(self, mode):
         mp.Process.__init__(self)
-        self.mode = mode # "SIMULATION", "CAN"
+        self.mode = mode  # "SIM", "CAN"
         self.bus_name = "can2"
 
     def initialize(self):
@@ -41,7 +42,7 @@ class Can2Node(mp.Process):
                 # print(f"received msg: {self.CAN2.id2name[msg.arbitration_id]} values: {values}")
                 self.message_callbacks[msg.arbitration_id](values)
 
-    ## CAN MESSAGE RECEIVE CALLBACK FUNCTIONS
+    # CAN MESSAGE RECEIVE CALLBACK FUNCTIONS
     def receive_RES_Status(self, values):
         # print(f"received RES status, values: ", values)
         go_signal = values[2]

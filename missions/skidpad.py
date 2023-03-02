@@ -61,7 +61,7 @@ class Skidpad():
         wheel_speed = kwargs["wheel_speed"]
 
         self.glob_coords = kwargs["position"]
-        self.heading = kwargs["euler"][2] + 180
+        self.heading = kwargs["euler"][2] + 180.
 
         if not self.start_time:
             self.start_time = time.time()

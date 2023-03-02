@@ -18,7 +18,7 @@ from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts
 
 from pycandb.can_interface import CanInterface
 
-from internode_communication import create_subscriber_socket, update_subscription_data
+from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, publish_data
 
 
 class MissionValue(IntEnum):
@@ -44,9 +44,10 @@ class MissionNode(mp.Process):
         MissionValue.Trackdrive: Trackdrive,
     }
 
-    def __init__(self):
+    def __init__(self, mode="RACE"):
         mp.Process.__init__(self)
         self.frequency = 100  # Hz
+        self.mode = mode
         # Autonomous State Machine
         self.ASM = ASM()
         self.finished = False
@@ -64,9 +65,9 @@ class MissionNode(mp.Process):
 
     def initialize(self):
         self.CAN1 = CanInterface(can_config["CAN_JSON"], can_config["CAN1_ID"], False)
-        self.context = zmq.Context()
-        self.debug_socket = self.context.socket(zmq.PUB)
-        self.debug_socket.bind(tcp_config["TCP_HOST"]+":"+tcp_config["AS_DEBUG_PORT"])
+
+        if self.mode == "SIM":
+            self.debug_socket = create_publisher_socket(tcp_config["AS_DEBUG_PORT"])
 
         # Vision node message subscriptions
         self.cone_preds_socket = create_subscriber_socket(VisionNodeMsgPorts.CONE_PREDS)
@@ -116,17 +117,19 @@ class MissionNode(mp.Process):
 
                 self.finished, steering_angle, speed, log, path, target = self.mission.loop(**self.get_mission_kwargs())
 
-                self.debug_socket.send(pickle.dumps({
-                    "perception": self.percep_data,
-                    "path": path,
-                    "target": target,
-                    "speed": speed,
-                    "steering_angle": steering_angle,
-                    "mission_id": self.mission.ID,
-                    "mission_status": log}))
-
                 self.CAN1.send_can_msg([steering_angle], self.CAN1.name2id["XVR_Control"])
                 self.CAN1.send_can_msg([0, 0, 0, 0, speed, 0], self.CAN1.name2id["XVR_SetpointsMotor_A"])
+
+                if self.mode == "SIM":
+                    debug_dict = {
+                        "perception": self.percep_data,
+                        "path": path,
+                        "target": target,
+                        "speed": speed,
+                        "steering_angle": steering_angle,
+                        "mission_id": self.mission.ID,
+                        "mission_status": log}
+                    publish_data(self.debug_socket, debug_dict)
 
             else:
                 self.mission_num = update_subscription_data(self.mission_socket, self.mission_num)
@@ -139,7 +142,7 @@ class MissionNode(mp.Process):
             self.CAN1.send_can_msg([self.ASM.AS.value, 0, 0, 0, 0, 0, 0, 0], self.CAN1.name2id["XVR_Status"])
 
             end_time = time.perf_counter()
-            # print(f"loop_delta:  {(end_time - start_time)*1000}ms")
+
             time_to_sleep = (1. / self.frequency) - (end_time - start_time)
 
             if time_to_sleep > 0.:

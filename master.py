@@ -18,6 +18,7 @@ from nodes.vision_node import VisionNode
 from nodes.can1_node import Can1Node
 from nodes.can2_node import Can2Node
 from nodes.mission_node import MissionNode
+from nodes.log_node import PerfLogNode
 
 
 def main(brosbag_folder=None):
@@ -35,13 +36,16 @@ def main(brosbag_folder=None):
     vision_node = VisionNode(main_log_folder, brosbag_folder)
 
     # CAN
-    can1_node = Can1Node(mode="SIMULATION")
-    can2_node = Can2Node(mode="SIMULATION")
+    can1_node = Can1Node(mode="SIM")
+    can2_node = Can2Node(mode="SIM")
 
     # MISSIONS
-    mission_node = MissionNode()
+    mission_node = MissionNode(mode="SIM")
 
     # ASM
+
+    # LOG
+    perf_log_node = PerfLogNode(main_log_folder=main_log_folder, mode="SIM")
 
     # 2. start the processes
     vision_node.start()
@@ -53,12 +57,15 @@ def main(brosbag_folder=None):
     print("CAN2 NODE STARTED")
     mission_node.start()
     print("MISSION NODE STARTED")
+    perf_log_node.start()
+    print("PERF LOG NODE STARTED")
 
     def handler(sig, frame):
         vision_node.terminate()
         can1_node.terminate()
         can2_node.terminate()
         mission_node.terminate()
+        perf_log_node.terminate()
         print("BROS: TERMINATED ALL CHILD PROCESSES")
         sys.exit(0)
 

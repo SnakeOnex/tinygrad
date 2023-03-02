@@ -16,7 +16,6 @@ from config import VisionNodeMsgPorts
 
 class VisionNode(mp.Process):
     def __init__(self, main_log_folder, brosbag_path=None):
-        # multiprocessing.Process.__init__(self)
         mp.Process.__init__(self)
         self.brosbag_path = brosbag_path
         self.main_log_folder = main_log_folder
@@ -37,13 +36,11 @@ class VisionNode(mp.Process):
             self.runtime_parameters = sl.RuntimeParameters()
             self.detector = ConeDetector(config["cone_detector_opt"])
             self.localizer = ConeLocalizer(config["cone_localizer_opt"])
+
         elif self.mode == "BROSBAG":
             self.brosbag_gen = LogReader(name_to_log(
                 self.log_opt["log_name"], self.brosbag_path)) if self.brosbag_path is not None else None
-        elif self.mode == "SIMULATION":
-            # self.path_sharemem = shared_memory.ShareableList([0. for _ in range(2*5)], name="path")
-            # self.path_sharemem = shared_memory.ShareableList(name="path")
-            pass
+
         self.logger = Logger(
             log_name=self.log_opt["log_name"], log_folder_name=self.log_opt["log_folder_name"], main_folder_path=self.main_log_folder)
         self.logger.log("CONE_DETECTOR_CONFIGURATION", config)  # log config
@@ -86,9 +83,6 @@ class VisionNode(mp.Process):
         while True:
             data = socket.recv()
             world_preds = pickle.loads(data)
-            # for i in range(min(path.shape[0], 5)):
-            #     self.path_sharemem[i] = float(path[i,0])
-            #     self.path_sharemem[i+path.shape[0]-1] = float(path[i,1])
             publish_data(self.cone_preds_socket, world_preds)
             self.logger.log("CONE_DETECTOR_FRAME", world_preds)
 

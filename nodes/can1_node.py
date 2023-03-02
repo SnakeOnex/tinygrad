@@ -11,12 +11,13 @@ from pycandb.can_interface import CanInterface
 from internode_communication import create_publisher_socket, publish_data
 from config import CAN1NodeMsgPorts
 
+
 class Can1Node(mp.Process):
     def __init__(self, mode):
         mp.Process.__init__(self)
-        self.mode = mode # "SIMULATION", "CAN"
+        self.mode = mode  # "SIM", "CAN"
         self.bus_name = "can1"
-        self.report_rate = 100 # hz
+        self.report_rate = 100  # hz
 
     def initialize(self):
         self.CAN1 = CanInterface("data/D1.json", 0, False)
@@ -41,10 +42,10 @@ class Can1Node(mp.Process):
 
                 self.message_callbacks[msg.arbitration_id](values)
 
-    ## CAN MESSAGE RECEIVE CALLBACK FUNCTIONS
+    # CAN MESSAGE RECEIVE CALLBACK FUNCTIONS
     def receive_MCR_ActualValues_A(self, values):
         WHEEL_SPEED_TO_MS = 1 / (60 * 6.7) * 2 * 0.2 * math.pi
-        
+
         wheel_speed = float(values[3]) * WHEEL_SPEED_TO_MS
         publish_data(self.wheel_speed_socket, wheel_speed)
 
