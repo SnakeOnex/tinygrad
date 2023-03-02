@@ -22,8 +22,6 @@ from nodes.log_node import PerfLogNode
 
 
 def main(mode="SIM"):
-    # multiprocessing.set_start_method('spawn')
-
     # 0. create a log folder for the run
     main_log_folder = config["main_log_folder"]
     folder_path = main_log_folder / Path(gen_name_with_time('', ''))
