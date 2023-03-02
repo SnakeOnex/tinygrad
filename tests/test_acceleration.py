@@ -14,6 +14,7 @@ from dv_sim.sim.simulation import Simulation, MissionValue
 from nodes.asm import AS
 from master import main
 
+
 class TestAcceleration(unittest.TestCase):
 
     def setUp(cls):

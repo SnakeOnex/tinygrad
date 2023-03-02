@@ -21,7 +21,7 @@ from nodes.mission_node import MissionNode
 from nodes.log_node import PerfLogNode
 
 
-def main(brosbag_folder=None):
+def main(mode="SIM"):
     # multiprocessing.set_start_method('spawn')
 
     # 0. create a log folder for the run
@@ -33,19 +33,19 @@ def main(brosbag_folder=None):
     # 1. processes init
 
     # AS
-    vision_node = VisionNode(main_log_folder, brosbag_folder)
+    vision_node = VisionNode(main_log_folder=main_log_folder, mode=mode)
 
     # CAN
-    can1_node = Can1Node(mode="SIM")
-    can2_node = Can2Node(mode="SIM")
+    can1_node = Can1Node()
+    can2_node = Can2Node()
 
     # MISSIONS
-    mission_node = MissionNode(mode="SIM")
+    mission_node = MissionNode(main_log_folder=main_log_folder, mode=mode)
 
     # ASM
 
     # LOG
-    perf_log_node = PerfLogNode(main_log_folder=main_log_folder, mode="SIM")
+    perf_log_node = PerfLogNode(main_log_folder=main_log_folder)
 
     # 2. start the processes
     vision_node.start()
@@ -78,6 +78,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--brosbag_folder', type=str, default=None)
     parser.add_argument('--tcp', type=bool, default=False)
+    parser.add_argument('--mode', type=str, default="RACE")
     args = parser.parse_args()
 
-    main(args.brosbag_folder)
+    main(args.mode)

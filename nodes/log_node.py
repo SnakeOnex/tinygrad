@@ -15,9 +15,8 @@ from tvojemama.computer_status import get_cpu_info, get_memory_info, get_process
 
 
 class PerfLogNode(mp.Process):
-    def __init__(self, mode, main_log_folder, frequency=10, main_drive_path="/dev/nvme0n1p5"):
+    def __init__(self, main_log_folder, frequency=10, main_drive_path="/dev/nvme0n1p5"):
         mp.Process.__init__(self)
-        self.mode = mode  # "SIM", "RACE"
         self.frequency = frequency
         self.main_drive_path = main_drive_path
         self.main_log_folder = main_log_folder

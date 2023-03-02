@@ -1,3 +1,4 @@
+import numpy as np
 import multiprocessing as mp
 import multiprocessing.connection as connection
 import time
@@ -15,35 +16,27 @@ from config import VisionNodeMsgPorts
 
 
 class VisionNode(mp.Process):
-    def __init__(self, main_log_folder, brosbag_path=None):
+    def __init__(self, main_log_folder, mode):
         mp.Process.__init__(self)
-        self.brosbag_path = brosbag_path
         self.main_log_folder = main_log_folder
-        self.log_opt = config["logging_opt"]
-
-        self.mode = "SIMULATION"  # "BROSBAG", "CAMERA", "SIMULATION"
+        self.mode = mode
 
     def initialize(self):
         print("INITTING")
         # zed setup or brosbag setup
-        if self.mode == "CAMERA":
+        if not config["simulation_mode"]:
             import pyzed.sl as sl
             self.zed = sl.Camera()
             init_params = sl.InitParameters()
             init_params.camera_resolution = sl.RESOLUTION.HD720
-            init_params.camera_fps = 60
+            init_params.camera_fps = 30
             self.zed_image = sl.Mat()
             self.runtime_parameters = sl.RuntimeParameters()
             self.detector = ConeDetector(config["cone_detector_opt"])
             self.localizer = ConeLocalizer(config["cone_localizer_opt"])
 
-        elif self.mode == "BROSBAG":
-            self.brosbag_gen = LogReader(name_to_log(
-                self.log_opt["log_name"], self.brosbag_path)) if self.brosbag_path is not None else None
-
-        self.logger = Logger(
-            log_name=self.log_opt["log_name"], log_folder_name=self.log_opt["log_folder_name"], main_folder_path=self.main_log_folder)
-        self.logger.log("CONE_DETECTOR_CONFIGURATION", config)  # log config
+        self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
+        self.logger.log("VISION_CONFIGURATION", config)  # log config
 
         self.cone_preds_socket = create_publisher_socket(VisionNodeMsgPorts.CONE_PREDS)
 
@@ -51,7 +44,7 @@ class VisionNode(mp.Process):
         print("STARTING CONE DETECTION")
         self.initialize()
 
-        if self.mode == "SIMULATION":
+        if config["simulation_mode"]:
             self.run_simulation()
             return
 
@@ -61,8 +54,7 @@ class VisionNode(mp.Process):
             elif self.mode == "CAMERA":
                 image = self.read_zed_image()
 
-            bbox_preds = self.detector.process_image(
-                image).cpu().detach().numpy()
+            bbox_preds = self.detector.process_image(image).cpu().detach().numpy()
 
             world_preds = self.localizer.project_bboxes(bbox_preds)
 
@@ -79,12 +71,16 @@ class VisionNode(mp.Process):
         socket = context.socket(zmq.SUB)
         socket.connect(tcp["TCP_HOST"] + ":" + tcp["VISION_PORT"])
         socket.setsockopt(zmq.SUBSCRIBE, b"")
+        image = None
+
+        if config["simulate_images"]:
+            image = (np.random.rand(720,1280,3) * 255).astype(np.uint8)
 
         while True:
             data = socket.recv()
             world_preds = pickle.loads(data)
             publish_data(self.cone_preds_socket, world_preds)
-            self.logger.log("CONE_DETECTOR_FRAME", world_preds)
+            self.logger.log("CONE_DETECTOR_FRAME", {"image": image, "world_preds": world_preds})
 
     def read_zed_image(self):
         if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:

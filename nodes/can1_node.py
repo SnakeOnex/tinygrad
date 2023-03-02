@@ -13,9 +13,8 @@ from config import CAN1NodeMsgPorts
 
 
 class Can1Node(mp.Process):
-    def __init__(self, mode):
+    def __init__(self):
         mp.Process.__init__(self)
-        self.mode = mode  # "SIM", "CAN"
         self.bus_name = "can1"
         self.report_rate = 100  # hz
 

@@ -39,15 +39,33 @@ class CAN2NodeMsgPorts(IntEnum):
 class VisionNodeMsgPorts(IntEnum):
     CONE_PREDS = NodePorts.VISION
 
+tcp_config = {
+    "TCP_HOST": 'tcp://127.0.0.1',
+    "VISION_PORT": '50000',
+    "GUI_PORT": '50001',
+    "CONTROLS_PORT": '50002',
+    "AS_DEBUG_PORT": '50003'
+}
+
+can_config = {
+    "CAN1_ID": 0,
+    "CAN2_ID": 1,
+    "CAN_JSON": "data/D1.json"
+}
+
+#######################
+# MISSION NODE CONFIG #
+#######################
+
+mission_opt = {
+    "frequency": 100,
+    "log_name": "mission",
+    "log_folder_name": "AS"
+}
 
 ######################
 # VISION NODE CONFIG #
 ######################
-
-logging_opt = {
-    "log_name": "cone_detector",
-    "log_folder_name": "AS",
-}
 
 cone_detector_opt = {
     "cpu_weights": file_path / Path('data/weights/yolov3_tiny_640_cpu.pt'),
@@ -72,7 +90,10 @@ vision_node_config = {
     "cone_detector_opt": cone_detector_opt,
     "cone_localizer_opt": cone_localizer_opt,
     "path_planner_opt": path_planner_opt,
-    "logging_opt": logging_opt
+    "log_name": "vision",
+    "log_folder_name": "AS",
+    "simulation_mode": True,
+    "simulate_images": False
 }
 
 perf_logger_config = {
@@ -80,20 +101,4 @@ perf_logger_config = {
     "log_folder_name": "PC_STAT",
 }
 
-tcp_config = {
-    "TCP_HOST": 'tcp://127.0.0.1',
-    "VISION_PORT": '50000',
-    "GUI_PORT": '50001',
-    "CONTROLS_PORT": '50002',
-    "AS_DEBUG_PORT": '50003'
-}
 
-can_config = {
-    "CAN1_ID": 0,
-    "CAN2_ID": 1,
-    "CAN_JSON": "data/D1.json"
-}
-
-##########################
-# TRACKDRIVE NODE CONFIG #
-##########################

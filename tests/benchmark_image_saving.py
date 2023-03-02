@@ -10,11 +10,9 @@ import cv2
 
 from tvojemama.logger import Logger
 
-
 def generate_random_image(img_size):
     image = (np.random.rand(*img_size) * 255).astype(np.uint8)
     return image
-
 
 def benchmark_pickle(number_of_images, img_size, folder_path):
     logger = Logger(log_name="benchmark", log_folder_name="AS", main_folder_path=folder_path.parent)
