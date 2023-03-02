@@ -1,50 +1,33 @@
-from enum import Enum
 import multiprocessing as mp
 import subprocess
-
-import numpy as np
-import matplotlib.pyplot as plt
-from pathlib import Path
 from config import perf_logger_config as log_opt
-
 import time
-from datetime import datetime
-
 from tvojemama.logger import Logger
-from tvojemama.computer_status import get_cpu_info, get_memory_info, get_processes_info, get_gpu_info
+from tvojemama.computer_status import get_cpu_info, get_memory_info, get_ssd_info, get_process_info, get_gpu_info
 
 
 class PerfLogNode(mp.Process):
-    def __init__(self, main_log_folder, frequency=10, main_drive_path="/dev/nvme0n1p5"):
+    def __init__(self, main_log_folder, frequency=10):
         mp.Process.__init__(self)
         self.frequency = frequency
-        self.main_drive_path = main_drive_path
         self.main_log_folder = main_log_folder
         self.log_opt = log_opt
         self.logger = Logger(
             log_name=self.log_opt["log_name"], log_folder_name=self.log_opt["log_folder_name"], main_folder_path=self.main_log_folder)
 
-        # END OF LOGGER SETUP
+        # END OF PERFLOGGER SETUP
 
     def log_computer_state(self):
-
-        cpu_info = get_cpu_info()
-        mem_info = get_memory_info(self.main_drive_path)
-        if self.log_gpu:
-            gpu_info = get_gpu_info()
-        else:
-            gpu_info = "NO GPU AVAILABLE ON SYSTEM"
-
         # TODO implement process info for vision, slam, lidar, mission node
-        # processes_info = get_processes_info([cone_detection_node, slam_node])
 
         log_frame_msg = {
-            "cpu_info": cpu_info,
-            "mem_info": mem_info,
-            # "processses_info": processes_info,
-            "gpu_info": gpu_info
+            "cpu_info": get_cpu_info(),
+            "mem_info": get_memory_info(),
+            "ssd_info": get_ssd_info(),
+            "gpu_info": get_gpu_info() if self.log_gpu else "NO GPU ON SYSTEM",
+            # TODO "processses_info": processes_info,
         }
-
+        # print(log_frame_msg)
         self.logger.log("LOG_NODE_FRAME", log_frame_msg)
 
     def initialize(self):

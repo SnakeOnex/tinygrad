@@ -1,13 +1,5 @@
 import multiprocessing as mp
-import multiprocessing.connection as connection
-from enum import Enum
-
-import time
-import math
-import pickle
-
 from pycandb.can_interface import CanInterface
-
 from internode_communication import create_publisher_socket, publish_data
 from config import CAN2NodeMsgPorts
 

@@ -1,9 +1,5 @@
 import multiprocessing as mp
-import pickle
 import numpy as np
-import zmq
-import sys
-import math
 import time
 from enum import IntEnum
 
@@ -135,14 +131,15 @@ class MissionNode(mp.Process):
                     "log": log
                 }
 
-                self.debug_socket.send(pickle.dumps({
-                    "perception": self.percep_data,
-                    "path": path,
-                    "target": target,
-                    "speed": speed,
-                    "steering_angle": steering_angle,
-                    "mission_id": self.mission.ID,
-                    "mission_status": log}))
+                if self.mode == "SIM":
+                    publish_data(self.debug_socket, {
+                        "perception": self.percep_data,
+                        "path": path,
+                        "target": target,
+                        "speed": speed,
+                        "steering_angle": steering_angle,
+                        "mission_id": self.mission.ID,
+                        "mission_status": log})
 
                 self.CAN1.send_can_msg([steering_angle], self.CAN1.name2id["XVR_Control"])
                 self.CAN1.send_can_msg([0, 0, 0, 0, speed, 0], self.CAN1.name2id["XVR_SetpointsMotor_A"])
