@@ -10,9 +10,11 @@ import cv2
 
 from tvojemama.logger import Logger
 
+
 def generate_random_image(img_size):
     image = (np.random.rand(*img_size) * 255).astype(np.uint8)
     return image
+
 
 def benchmark_pickle(number_of_images, img_size, folder_path):
     logger = Logger(log_name="benchmark", log_folder_name="AS", main_folder_path=folder_path.parent)
@@ -63,18 +65,10 @@ def benchmark_NUMPY(number_of_images, img_size):
         np.save("image_benchmark/" + f"NUMPY_{i}.npy", image)
     loop_end_time = time.perf_counter()
 
-    image_batch = [image]*number_of_images
-    batch_start_time = time.perf_counter()
-    np.save("image_benchmark/" + f"NUMPY_IMAGE_BATCH.npy", np.array(image_batch))
-    batch_end_time = time.perf_counter()
-
     print(f"NUMPY BENCHMARK FINISHED: ")
     print(f"\tLOOP:")
     print(f"\tsaved {number_of_images} images of res {img_size} in {loop_end_time - loop_start_time:.2f} seconds.")
     print(f"\twhich is a frequency of {number_of_images/(loop_end_time-loop_start_time):.2f} images per second")
-    print(f"\tBATCH:")
-    print(f"\tsaved {number_of_images} images of res {img_size} in {batch_end_time - batch_start_time:.2f} seconds.")
-    print(f"\twhich is a frequency of {number_of_images/(batch_end_time-batch_start_time):.2f} images per second")
 
 
 if __name__ == '__main__':
