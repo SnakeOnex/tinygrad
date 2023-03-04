@@ -23,7 +23,7 @@ class Trackdrive():
         self.nonlinear_gain = 1.5
         self.path_planner = PathPlanner(path_planner_opt)
 
-        self.speed_set_point = 6.
+        self.speed_set_point = 6.5
 
         # mission planning variables
         self.finished = False
@@ -33,7 +33,7 @@ class Trackdrive():
         self.finish_time = float('inf')
         self.stopped_time = None
 
-        self.laps_to_drive = 10
+        self.laps_to_drive = 2
         self.laps_driven = 0
 
     def loop(self, **kwargs):

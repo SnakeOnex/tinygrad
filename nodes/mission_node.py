@@ -47,7 +47,7 @@ class MissionNode(mp.Process):
         mp.Process.__init__(self)
         self.main_log_folder = main_log_folder
         self.frequency = config["frequency"]  # Hz
-        self.mission_log = {}
+        self.mission_log = {"steering_angle": 0., "speed": 0.}
         self.mode = mode
 
         # Autonomous State Machine

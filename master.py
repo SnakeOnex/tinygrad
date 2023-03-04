@@ -43,7 +43,7 @@ def main(mode="SIM"):
     # ASM
 
     # LOG
-    perf_log_node = PerfLogNode(main_log_folder=main_log_folder)
+    # perf_log_node = PerfLogNode(main_log_folder=main_log_folder)
 
     # 2. start the processes
     vision_node.start()
@@ -55,15 +55,16 @@ def main(mode="SIM"):
     print("CAN2 NODE STARTED")
     mission_node.start()
     print("MISSION NODE STARTED")
-    perf_log_node.start()
-    print("PERF LOG NODE STARTED")
+    # perf_log_node.start()
+    # print("PERF LOG NODE STARTED")
+    time.sleep(1)
 
     def handler(sig, frame):
         vision_node.terminate()
         can1_node.terminate()
         can2_node.terminate()
         mission_node.terminate()
-        perf_log_node.terminate()
+        # perf_log_node.terminate()
         print("BROS: TERMINATED ALL CHILD PROCESSES")
         sys.exit(0)
 

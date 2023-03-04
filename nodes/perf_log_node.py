@@ -11,9 +11,6 @@ class PerfLogNode(mp.Process):
         mp.Process.__init__(self)
         self.frequency = frequency
         self.main_log_folder = main_log_folder
-        self.log_opt = log_opt
-        self.logger = Logger(
-            log_name=self.log_opt["log_name"], log_folder_name=self.log_opt["log_folder_name"], main_folder_path=self.main_log_folder)
 
         # END OF PERFLOGGER SETUP
 
@@ -31,6 +28,13 @@ class PerfLogNode(mp.Process):
         self.logger.log("LOG_NODE_FRAME", log_frame_msg)
 
     def initialize(self):
+        self.log_opt = log_opt
+        self.logger = Logger(
+            log_name=self.log_opt["log_name"], 
+            log_folder_name=self.log_opt["log_folder_name"], 
+            main_folder_path=self.main_log_folder
+        )
+
         # Check NVIDIA GPU presence and set logging accordingly
         try:
             subprocess.check_output('nvidia-smi')

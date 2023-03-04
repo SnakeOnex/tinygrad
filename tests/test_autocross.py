@@ -62,7 +62,7 @@ class TestAutocross(unittest.TestCase):
                 self.sim.go_signal()
 
             # after 20 seconds end and return TRUE
-            if time_since_start >= 31.:
+            if time_since_start >= 60.:
                 test_outcome = True
                 break
                 
