@@ -19,7 +19,7 @@ class State():
 
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
-        self.steering_speed = 90. # degrees per second
+        self.steering_speed = 70. # degrees per second
         self.max_steering_angle = 60. # max and min steering angle
 
         self.max_engine_force = 3000. # nm
@@ -39,6 +39,7 @@ class State():
 
         self.speed_set_point = 0.
         self.steering_angle_set_point = 0.
+        self.velocity = np.array([0., 0.])
 
         ### CAR SENSORS
         self.occlusion_profile = [-6., 6., 2.5, 15.]
@@ -84,9 +85,11 @@ class State():
             self.heading += 360
 
         heading_vec = angle_to_vector(self.heading)
-        velocity = heading_vec * self.speed
+        self.velocity = heading_vec * self.speed
+        # print(self.velocity)
+        # print(np.linalg.norm(self.velocity))
         # self.car_pos += self.rotation_vector
-        self.car_pos += timedelta * velocity
+        self.car_pos += timedelta * self.velocity
 
     def handle_controls(self, timedelta):
         if self.steering_control == "LEFT":

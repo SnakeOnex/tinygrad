@@ -15,11 +15,13 @@ class Can1Node(mp.Process):
         self.CAN1 = CanInterface("data/D1.json", 0, False)
 
         self.wheel_speed_socket = create_publisher_socket(CAN1NodeMsgPorts.WHEEL_SPEED)
+        self.steering_angle_socket = create_publisher_socket(CAN1NodeMsgPorts.STEERING_ANGLE)
         self.mission_socket = create_publisher_socket(CAN1NodeMsgPorts.MISSION)
         self.start_button_socket = create_publisher_socket(CAN1NodeMsgPorts.START_BUTTON)
 
         self.message_callbacks = {
             self.CAN1.name2id["MCR_ActualValues_A"]: self.receive_MCR_ActualValues_A,
+            self.CAN1.name2id["SA_SteeringAngle"]: self.receive_SA_SteeringAngle,
             self.CAN1.name2id["DSH_Status"]: self.receive_DSH_Status,
         }
 
@@ -46,3 +48,7 @@ class Can1Node(mp.Process):
         start_button = values[5]
         publish_data(self.mission_socket, mission)
         publish_data(self.start_button_socket, start_button)
+
+    def receive_SA_SteeringAngle(self, values):
+        steering_angle = values[2]
+        publish_data(self.steering_angle_socket, steering_angle)

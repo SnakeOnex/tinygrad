@@ -59,14 +59,16 @@ class MissionNode(mp.Process):
 
         # CAN1 node data
         self.wheel_speed = 0.
+        self.steering_angle = 0.
         self.mission_num = MissionValue.NoValue.value
         self.mission = MissionNode.Missions[self.mission_num]
         self.start_button = 0
 
         # CAN2 node data
         self.go_signal = 0
-        self.position = None
+        self.position = (None, None)
         self.euler = (None, None, None)
+        self.acceleration = (0., 0., 0.)
 
     def initialize(self):
         self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
@@ -80,26 +82,32 @@ class MissionNode(mp.Process):
 
         # CAN1 node message subscriptions
         self.wheel_speed_socket = create_subscriber_socket(CAN1NodeMsgPorts.WHEEL_SPEED)
+        self.steering_angle_socket = create_subscriber_socket(CAN1NodeMsgPorts.STEERING_ANGLE)
         self.mission_socket = create_subscriber_socket(CAN1NodeMsgPorts.MISSION)
         self.start_button_socket = create_subscriber_socket(CAN1NodeMsgPorts.START_BUTTON)
 
         # CAN2 node message subscriptions
         self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
         self.position_socket = create_subscriber_socket(CAN2NodeMsgPorts.POSITION)
+        self.acceleration_socket = create_subscriber_socket(CAN2NodeMsgPorts.ACCELERATION)
         self.euler_socket = create_subscriber_socket(CAN2NodeMsgPorts.EULER)
 
     def get_mission_kwargs(self):
         return {
             "percep_data": self.percep_data,
             "wheel_speed": self.wheel_speed,
+            "steering_angle": self.steering_angle,
             "position": np.array(self.position),
+            "acceleration": self.acceleration,
             "euler": np.array(self.euler)
         }
 
     def update_data(self):
         self.percep_data = update_subscription_data(self.cone_preds_socket, self.percep_data)
         self.wheel_speed = update_subscription_data(self.wheel_speed_socket, self.wheel_speed)
+        self.steering_angle = update_subscription_data(self.steering_angle_socket, self.steering_angle)
         self.position = update_subscription_data(self.position_socket, self.position)
+        self.acceleration = update_subscription_data(self.acceleration_socket, self.acceleration)
         self.euler = update_subscription_data(self.euler_socket, self.euler)
 
     def run(self):

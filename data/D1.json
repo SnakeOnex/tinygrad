@@ -1086,7 +1086,8 @@
                                 "FSE11.DSH",
                                 "FSE11.FSB",
                                 "FSE11.PDL",
-                                "FSE11.STW"
+                                "FSE11.STW",
+                                "Playground.FSB"
                             ],
                             "sent_by": [],
                             "timeout": null,
@@ -1207,7 +1208,8 @@
                                 "FSE11.DSH",
                                 "FSE11.FSB",
                                 "FSE11.PDL",
-                                "FSE11.STW"
+                                "FSE11.STW",
+                                "Playground.FSB"
                             ],
                             "timeout": null,
                             "tx_period": null
@@ -1324,6 +1326,14 @@
                         },
                         {
                             "bus": "FSE10.CAN2",
+                            "note": null
+                        },
+                        {
+                            "bus": "FSE11.CAN1",
+                            "note": null
+                        },
+                        {
+                            "bus": "FSE11.CAN2",
                             "note": null
                         }
                     ],
@@ -1706,426 +1716,12 @@
                             ],
                             "sent_by": [
                                 "D1.PDL",
-                                "D1.SA",
                                 "FSE09.DSH",
                                 "FSE09.PDL",
                                 "FSE10.DSH",
                                 "FSE10.PDL",
                                 "FSE11.DSH",
                                 "FSE11.PDL"
-                            ],
-                            "timeout": null,
-                            "tx_period": null
-                        }
-                    ]
-                },
-                {
-                    "name": "CarDiagnostics",
-                    "description": "Abstract unit wrapping messages used for car, CAN bus and similar diagnostics, e.g. reporting cable issues.",
-                    "bus_links": [
-                        {
-                            "bus": "FSE09.CAN1",
-                            "note": null
-                        },
-                        {
-                            "bus": "FSE09.CAN2",
-                            "note": null
-                        },
-                        {
-                            "bus": "D1.CAN1_powertrain",
-                            "note": null
-                        },
-                        {
-                            "bus": "D1.CAN3",
-                            "note": null
-                        },
-                        {
-                            "bus": "FSE10.CAN1",
-                            "note": null
-                        },
-                        {
-                            "bus": "FSE10.CAN2",
-                            "note": null
-                        }
-                    ],
-                    "enum_types": [
-                        {
-                            "name": "BusName",
-                            "description": "Symbolic name for a CAN bus.",
-                            "items": [
-                                {
-                                    "name": "FSE09_CAN1",
-                                    "value": 0,
-                                    "description": "Fse09 bus 1"
-                                },
-                                {
-                                    "name": "FSE09_CAN2",
-                                    "value": 1,
-                                    "description": "Fse09 bus 2"
-                                },
-                                {
-                                    "name": "DV01_CAN1",
-                                    "value": 2,
-                                    "description": "Driverless bus 1"
-                                },
-                                {
-                                    "name": "DV01_CAN3",
-                                    "value": 3,
-                                    "description": "Driverless bus 2"
-                                }
-                            ]
-                        },
-                        {
-                            "name": "ClockState",
-                            "description": "Indicates, how hard has the clock system crashed.",
-                            "items": [
-                                {
-                                    "name": "waiting_for_init",
-                                    "value": 0,
-                                    "description": "no initialization has been performed yet"
-                                },
-                                {
-                                    "name": "waiting_for_hse",
-                                    "value": 1,
-                                    "description": "waiting for HSE to stabilize"
-                                },
-                                {
-                                    "name": "waiting_for_pll",
-                                    "value": 2,
-                                    "description": "waiting for PLL to stabilize"
-                                },
-                                {
-                                    "name": "hse_dead",
-                                    "value": 3,
-                                    "description": "HSE has refused to start. DV01 Vietman flashbacks"
-                                },
-                                {
-                                    "name": "pll_dead",
-                                    "value": 4,
-                                    "description": "Pll has refused to lock"
-                                },
-                                {
-                                    "name": "fully_operational",
-                                    "value": 5,
-                                    "description": "No failure is detected"
-                                },
-                                {
-                                    "name": "css_triggered",
-                                    "value": 6,
-                                    "description": "Clock security system detected failure of HSE"
-                                }
-                            ]
-                        },
-                        {
-                            "name": "ECU",
-                            "description": "Symbolic names for ECUs in the car. Used to identify the source of diagnostic message.",
-                            "items": [
-                                {
-                                    "name": "AMS",
-                                    "value": 0,
-                                    "description": "Accurator management system"
-                                },
-                                {
-                                    "name": "DSH",
-                                    "value": 1,
-                                    "description": "Dashboard"
-                                },
-                                {
-                                    "name": "PDL",
-                                    "value": 2,
-                                    "description": "Pedal unit"
-                                },
-                                {
-                                    "name": "FSB",
-                                    "value": 3,
-                                    "description": "Fusebox"
-                                },
-                                {
-                                    "name": "VDCU",
-                                    "value": 4,
-                                    "description": "Vehicle dynamics control unit"
-                                },
-                                {
-                                    "name": "STW",
-                                    "value": 5,
-                                    "description": "Steering wheel"
-                                },
-                                {
-                                    "name": "EBSS",
-                                    "value": 6,
-                                    "description": "Driverless fusebox and some other functionality"
-                                },
-                                {
-                                    "name": "Bootloader",
-                                    "value": 7,
-                                    "description": "Bootloader of some ECU"
-                                },
-                                {
-                                    "name": "DRT",
-                                    "value": 8,
-                                    "description": "SiC Motor controller"
-                                }
-                            ]
-                        },
-                        {
-                            "name": "FirmwareState",
-                            "description": "Identifies the high level state of the firmware - its stability and the cause of recent resets",
-                            "items": [
-                                {
-                                    "name": "coldStart",
-                                    "value": 0,
-                                    "description": "The device has experienced a power reset"
-                                },
-                                {
-                                    "name": "bootloaderRequested",
-                                    "value": 1,
-                                    "description": "Software reset occured because a bootloader was running."
-                                },
-                                {
-                                    "name": "minorError",
-                                    "value": 2,
-                                    "description": "Software reset occured because a noncritical error was encountered"
-                                },
-                                {
-                                    "name": "fatalError",
-                                    "value": 3,
-                                    "description": "Software reset occured because of a major failure"
-                                },
-                                {
-                                    "name": "failedAssertion",
-                                    "value": 4,
-                                    "description": "Software reset because of failed assertion"
-                                },
-                                {
-                                    "name": "clockError",
-                                    "value": 5,
-                                    "description": "Clock security system detected fail of HSE during the previous run."
-                                },
-                                {
-                                    "name": "stable",
-                                    "value": 6,
-                                    "description": "The firmware is stable and running"
-                                },
-                                {
-                                    "name": "initialization",
-                                    "value": 7,
-                                    "description": "The firmware is being monitored because of recent reset (boot loop detection is active)"
-                                },
-                                {
-                                    "name": "infiniteBootLoop",
-                                    "value": 8,
-                                    "description": "The MCU has repeatedly failed to properly initialize."
-                                },
-                                {
-                                    "name": "tooManyFatalErrors",
-                                    "value": 9,
-                                    "description": "The firmware repeatedly encountered a fatal error"
-                                },
-                                {
-                                    "name": "stateRegisterCorrupted",
-                                    "value": 10,
-                                    "description": "The state register contains unrecognized value"
-                                },
-                                {
-                                    "name": "mainReturned",
-                                    "value": 11,
-                                    "description": "Application's main function exited"
-                                }
-                            ]
-                        }
-                    ],
-                    "messages": [
-                        {
-                            "name": "CommunicationInterrupted",
-                            "description": "Reports that the CAN communication has been interrupted (possibly by a cable fuckup)...",
-                            "bus": null,
-                            "fields": [
-                                {
-                                    "name": "Origin",
-                                    "description": "Which unit is reporting the problem",
-                                    "type": "enum CarDiagnostics_ECU",
-                                    "bits": 3,
-                                    "count": 1,
-                                    "start_bit": 0,
-                                    "unit": null,
-                                    "factor": null,
-                                    "factor_num": null,
-                                    "offset": null,
-                                    "min": null,
-                                    "max": null
-                                },
-                                {
-                                    "name": "AffectedBus",
-                                    "description": "Which bus is affected by the problem",
-                                    "type": "enum CarDiagnostics_BusName",
-                                    "bits": 2,
-                                    "count": 1,
-                                    "start_bit": 3,
-                                    "unit": null,
-                                    "factor": null,
-                                    "factor_num": null,
-                                    "offset": null,
-                                    "min": null,
-                                    "max": null
-                                },
-                                {
-                                    "name": "SEQ",
-                                    "description": "Sequence counter",
-                                    "type": "uint",
-                                    "bits": 3,
-                                    "count": 1,
-                                    "start_bit": 5,
-                                    "unit": null,
-                                    "factor": null,
-                                    "factor_num": null,
-                                    "offset": null,
-                                    "min": null,
-                                    "max": null
-                                }
-                            ],
-                            "frame_type": "CAN_STD",
-                            "id": 32,
-                            "length": 1,
-                            "received_by": [],
-                            "sent_by": [],
-                            "timeout": null,
-                            "tx_period": 100
-                        },
-                        {
-                            "name": "RecoveryModeBeacon",
-                            "description": "Beacon sent by a unit stuck in recovery mode.",
-                            "bus": null,
-                            "fields": [
-                                {
-                                    "name": "ECU",
-                                    "description": "The name of unit that generated this message.",
-                                    "type": "enum CarDiagnostics_ECU",
-                                    "bits": 3,
-                                    "count": 1,
-                                    "start_bit": 0,
-                                    "unit": null,
-                                    "factor": null,
-                                    "factor_num": null,
-                                    "offset": null,
-                                    "min": null,
-                                    "max": null
-                                },
-                                {
-                                    "name": "ClockState",
-                                    "description": "State of the clock system (failed HSE\/PLL)",
-                                    "type": "enum CarDiagnostics_ClockState",
-                                    "bits": 3,
-                                    "count": 1,
-                                    "start_bit": 3,
-                                    "unit": null,
-                                    "factor": null,
-                                    "factor_num": null,
-                                    "offset": null,
-                                    "min": null,
-                                    "max": null
-                                },
-                                {
-                                    "name": "NumFatalFirmwareErrors",
-                                    "description": "The number of detected fatal software errors (these include mainly failed assertions or bus faults)",
-                                    "type": "uint",
-                                    "bits": 2,
-                                    "count": 1,
-                                    "start_bit": 6,
-                                    "unit": null,
-                                    "factor": "1",
-                                    "factor_num": 1,
-                                    "offset": "0",
-                                    "min": "0",
-                                    "max": "3"
-                                },
-                                {
-                                    "name": "FirmwareState",
-                                    "description": "High level state of the firmware. What errors has it recently encountered.",
-                                    "type": "enum CarDiagnostics_FirmwareState",
-                                    "bits": 4,
-                                    "count": 1,
-                                    "start_bit": 8,
-                                    "unit": null,
-                                    "factor": null,
-                                    "factor_num": null,
-                                    "offset": null,
-                                    "min": null,
-                                    "max": null
-                                },
-                                {
-                                    "name": "WillEnterBootloader",
-                                    "description": "True iff the unit is in recovery mode only temporarily and will enter the bootloader in a few seconds.",
-                                    "type": "bool",
-                                    "bits": 1,
-                                    "count": 1,
-                                    "start_bit": 12,
-                                    "unit": null,
-                                    "factor": null,
-                                    "factor_num": null,
-                                    "offset": null,
-                                    "min": null,
-                                    "max": null
-                                },
-                                {
-                                    "name": "SEQ",
-                                    "description": "Safety up counter",
-                                    "type": "uint",
-                                    "bits": 3,
-                                    "count": 1,
-                                    "start_bit": 13,
-                                    "unit": null,
-                                    "factor": "1",
-                                    "factor_num": 1,
-                                    "offset": "0",
-                                    "min": "0",
-                                    "max": "15"
-                                }
-                            ],
-                            "frame_type": "CAN_STD",
-                            "id": 35,
-                            "length": 2,
-                            "received_by": [],
-                            "sent_by": [
-                                "Accessory.Bootloader",
-                                "D1.AMS",
-                                "FSE09.AMS",
-                                "FSE09.DSH",
-                                "FSE10.AMS",
-                                "FSE10.DSH",
-                                "FSE11.AMS",
-                                "FSE11.DSH"
-                            ],
-                            "timeout": null,
-                            "tx_period": 100
-                        },
-                        {
-                            "name": "TimestampMark",
-                            "description": "Marks a certain point of interest within the message log. Used for debugging and postprocessing purposes.\r\n\r\nFor driver's comfort, the transmissin is bound to a press of a button on the steering wheel. This way it is possible to pinpoint precise timestamps of strange behaviour of vehicle dynamics, BPPC, motors etc. ",
-                            "bus": null,
-                            "fields": [
-                                {
-                                    "name": "Index",
-                                    "description": "Strictly increasing number for unique identification of marks within a log",
-                                    "type": "uint",
-                                    "bits": 16,
-                                    "count": 1,
-                                    "start_bit": 0,
-                                    "unit": null,
-                                    "factor": "1",
-                                    "factor_num": 1,
-                                    "offset": "0",
-                                    "min": "0",
-                                    "max": "65535"
-                                }
-                            ],
-                            "frame_type": "CAN_STD",
-                            "id": 1,
-                            "length": 2,
-                            "received_by": [],
-                            "sent_by": [
-                                "FSE09.STW",
-                                "FSE10.STW",
-                                "FSE11.STW"
                             ],
                             "timeout": null,
                             "tx_period": null
@@ -2283,6 +1879,157 @@
                                     "name": "lost_connection",
                                     "value": 3,
                                     "description": "AMS recognized the environment (received some messages), but communication has stopped working."
+                                }
+                            ]
+                        },
+                        {
+                            "name": "ErrorCode",
+                            "description": "Various accumulator errors causing SDC to open",
+                            "items": [
+                                {
+                                    "name": "OK",
+                                    "value": 0,
+                                    "description": "OK"
+                                },
+                                {
+                                    "name": "SDC_TIMEOUT",
+                                    "value": 1,
+                                    "description": "vyprsel timeout na uzavreni SDC"
+                                },
+                                {
+                                    "name": "HVM_MELT",
+                                    "value": 2,
+                                    "description": "speceny AIR-"
+                                },
+                                {
+                                    "name": "HVP_MELT",
+                                    "value": 3,
+                                    "description": "speceny AIR+"
+                                },
+                                {
+                                    "name": "HVM_TIMEOUT",
+                                    "value": 4,
+                                    "description": "AIR- se neuzavrel"
+                                },
+                                {
+                                    "name": "HVP_TIMEOUT",
+                                    "value": 5,
+                                    "description": "AIR+ se neuzavrel"
+                                },
+                                {
+                                    "name": "VDIFF_TIMEOUT",
+                                    "value": 6,
+                                    "description": "napeti mezi ACCU a AIR se nesrovnalo"
+                                },
+                                {
+                                    "name": "SDC_INTERRUPTED",
+                                    "value": 7,
+                                    "description": "preruseni SDC za behu"
+                                },
+                                {
+                                    "name": "HVM_SpontaneousDisconnect",
+                                    "value": 8,
+                                    "description": "AIR- se otevrel za behu"
+                                },
+                                {
+                                    "name": "HVP_SpontaneousDisconnect",
+                                    "value": 9,
+                                    "description": "AIR+ se otevrel za behu"
+                                },
+                                {
+                                    "name": "BMS_CELL_MIN_VOLTAGE",
+                                    "value": 10,
+                                    "description": "nektery clanek ma mensi napeti nez povolene minimum"
+                                },
+                                {
+                                    "name": "BMS_CELL_BALANCE",
+                                    "value": 11,
+                                    "description": "prilis velky rozdil napeti na 2 clancich"
+                                },
+                                {
+                                    "name": "BMS_CELL_TEMPERATURE",
+                                    "value": 12,
+                                    "description": "prilis horky clanek"
+                                },
+                                {
+                                    "name": "BMS_COMMUNICATION",
+                                    "value": 13,
+                                    "description": "BMS nekomunikuji"
+                                },
+                                {
+                                    "name": "PRECHARGE_SLOPE",
+                                    "value": 14,
+                                    "description": "Voltage on DC link caps rises too slowly"
+                                },
+                                {
+                                    "name": "PRECHARGE_RELAY_STUCK",
+                                    "value": 15,
+                                    "description": "precharge relay stuck"
+                                },
+                                {
+                                    "name": "PRECHARGE_RELAY_TO",
+                                    "value": 16,
+                                    "description": "precharge relay timeout"
+                                },
+                                {
+                                    "name": "BMS_CELL_MAX_VOLTAGE",
+                                    "value": 17,
+                                    "description": "nektery clanek ma vyssi napeti nez povolene maximum"
+                                },
+                                {
+                                    "name": "CurrentSensorDisconnect",
+                                    "value": 18,
+                                    "description": "Current sensor has been disconnected"
+                                },
+                                {
+                                    "name": "OvercurrentDischarging",
+                                    "value": 19,
+                                    "description": "Current flowing from the accumulator (positive) too high"
+                                },
+                                {
+                                    "name": "AcpAIRs_VoltageMismatch",
+                                    "value": 20,
+                                    "description": "Sum of cell voltages is not equal to the measured voltage on inner side of airs. Caused either by disconected maintenance plug or blown fuse. CriticalIdleCurrentIn = 21, \/\/There is too high idle (TS disconnected) current flowing into the accumulator or measurement error occured (calibrated zero has shifted)"
+                                },
+                                {
+                                    "name": "CriticalIdleCurrentIn",
+                                    "value": 21,
+                                    "description": "There is too high idle (TS disconnected) current flowing into the accumulator or measurement error occured (calibrated zero has shifted)"
+                                },
+                                {
+                                    "name": "CriticalIdleCurrentOut",
+                                    "value": 22,
+                                    "description": "There is too high idle (TS disconnected) current flowing out of the accumulator or measurement error occured (calibrated zero has shifted)"
+                                },
+                                {
+                                    "name": "EnvironmentConnectionLost",
+                                    "value": 23,
+                                    "description": "Already registered environment (car\/charger) stopped responding"
+                                },
+                                {
+                                    "name": "VoltageMeasurementUnavailable",
+                                    "value": 24,
+                                    "description": "Voltage measurements from AIRs are missing"
+                                },
+                                {
+                                    "name": "PrechargeVerificationTimeout",
+                                    "value": 25,
+                                    "description": "No measureable voltage on the outer side of AIRs despite precharge relay being closed. Possible causations include shorted TS+ and TS- due to stuck discharge relay, swapped connector pins (occured during the first test of DV AMS) or blown precharge fuse."
+                                },
+                                {
+                                    "name": "PrechargeRelayDisconnectTimeout",
+                                    "value": 26,
+                                    "description": "Could not disconnect precharge relay fast enough"
+                                },
+                                {
+                                    "name": "PrechargeRelaySpontaneousDisconnect",
+                                    "value": 27,
+                                    "description": "The precharge relay disconnected during precharge"
+                                },
+                                {
+                                    "name": "TOO_MANY_ERRORS",
+                                    "value": 128,
+                                    "description": "prilis mnoho nefatalnich chyb -> fatalni chyba"
                                 }
                             ]
                         },
@@ -5875,66 +5622,110 @@
                                     "max": "255"
                                 },
                                 {
-                                    "name": "Status",
-                                    "description": "Status of energy meter",
-                                    "type": "uint",
-                                    "bits": 8,
+                                    "name": "Ready",
+                                    "description": "Ready bit",
+                                    "type": "bool",
+                                    "bits": 1,
                                     "count": 1,
                                     "start_bit": 8,
                                     "unit": null,
-                                    "factor": "1",
-                                    "factor_num": 1,
-                                    "offset": "0",
-                                    "min": "0",
-                                    "max": "255"
+                                    "factor": null,
+                                    "factor_num": null,
+                                    "offset": null,
+                                    "min": null,
+                                    "max": null
                                 },
                                 {
-                                    "name": "Power",
-                                    "description": "Measured Power",
-                                    "type": "int",
-                                    "bits": 16,
+                                    "name": "Logging",
+                                    "description": "Logging data",
+                                    "type": "bool",
+                                    "bits": 1,
                                     "count": 1,
-                                    "start_bit": 16,
-                                    "unit": "W",
-                                    "factor": "3",
-                                    "factor_num": 3,
-                                    "offset": "0",
-                                    "min": "-98304",
-                                    "max": "98301"
+                                    "start_bit": 9,
+                                    "unit": null,
+                                    "factor": null,
+                                    "factor_num": null,
+                                    "offset": null,
+                                    "min": null,
+                                    "max": null
+                                },
+                                {
+                                    "name": "TriggeredVoltage",
+                                    "description": "N\/A",
+                                    "type": "bool",
+                                    "bits": 1,
+                                    "count": 1,
+                                    "start_bit": 10,
+                                    "unit": null,
+                                    "factor": null,
+                                    "factor_num": null,
+                                    "offset": null,
+                                    "min": null,
+                                    "max": null
+                                },
+                                {
+                                    "name": "TriggeredCurrent",
+                                    "description": "N\/A",
+                                    "type": "bool",
+                                    "bits": 1,
+                                    "count": 1,
+                                    "start_bit": 11,
+                                    "unit": null,
+                                    "factor": null,
+                                    "factor_num": null,
+                                    "offset": null,
+                                    "min": null,
+                                    "max": null
+                                },
+                                {
+                                    "name": null,
+                                    "description": null,
+                                    "type": "reserved",
+                                    "bits": 4,
+                                    "count": 1,
+                                    "start_bit": 12,
+                                    "unit": null,
+                                    "factor": null,
+                                    "factor_num": null,
+                                    "offset": null,
+                                    "min": null,
+                                    "max": null
                                 },
                                 {
                                     "name": "Voltage",
                                     "description": "Measurent Voltage",
-                                    "type": "int",
+                                    "type": "uint",
                                     "bits": 16,
                                     "count": 1,
-                                    "start_bit": 32,
+                                    "start_bit": 16,
                                     "unit": "V",
-                                    "factor": "0.04",
-                                    "factor_num": 0.04,
+                                    "factor": "0.016",
+                                    "factor_num": 0.016,
                                     "offset": "0",
-                                    "min": "-1310.72",
-                                    "max": "1310.68"
+                                    "min": "0",
+                                    "max": "1048"
                                 },
                                 {
                                     "name": "Current",
                                     "description": "Measured Current",
-                                    "type": "int",
+                                    "type": "uint",
                                     "bits": 16,
                                     "count": 1,
-                                    "start_bit": 48,
+                                    "start_bit": 32,
                                     "unit": "A",
-                                    "factor": "0.05",
-                                    "factor_num": 0.05,
+                                    "factor": "0.064",
+                                    "factor_num": 0.064,
                                     "offset": "0",
-                                    "min": "-1638.4",
-                                    "max": "1638.35"
+                                    "min": "0",
+                                    "max": "4194"
                                 }
                             ],
                             "frame_type": "CAN_STD",
                             "id": 1072,
-                            "length": 8,
-                            "received_by": [],
+                            "length": 6,
+                            "received_by": [
+                                "FSE11.DSH"
+                            ],
                             "sent_by": [],
                             "timeout": 60,
                             "tx_period": 20
@@ -8371,7 +8162,9 @@
                                 "D1.XVR",
                                 "FSE09.VDCU"
                             ],
-                            "sent_by": [],
+                            "sent_by": [
+                                "D1.INS_D"
+                            ],
                             "timeout": 25,
                             "tx_period": 5
                         },
@@ -14708,6 +14501,7 @@
                                 "D1.RES"
                             ],
                             "sent_by": [
+                                "D1.EBSS",
                                 "D1.XVR"
                             ],
                             "timeout": null,
@@ -15082,6 +14876,53 @@
                     ],
                     "enum_types": [
                         {
+                            "name": "CalibrationProperty",
+                            "description": "List of properties that can be calibrated by the CalibrationRequest command.",
+                            "items": [
+                                {
+                                    "name": "SteeringCenter",
+                                    "value": 0,
+                                    "description": "Center point of the steering angle"
+                                },
+                                {
+                                    "name": "SteeringLimit_Left",
+                                    "value": 1,
+                                    "description": "Maximal left point of the steering angle"
+                                },
+                                {
+                                    "name": "SteeringLimit_Right",
+                                    "value": 2,
+                                    "description": "Maximal right point of the steering angle"
+                                }
+                            ]
+                        },
+                        {
+                            "name": "CalibrationResult",
+                            "description": "Result of the CalibrationRequest command.",
+                            "items": [
+                                {
+                                    "name": "Success",
+                                    "value": 0,
+                                    "description": "Calibration successful"
+                                },
+                                {
+                                    "name": "Incomplete",
+                                    "value": 1,
+                                    "description": "Additional calibration required"
+                                },
+                                {
+                                    "name": "Ignored",
+                                    "value": 2,
+                                    "description": "Calibration request ignored"
+                                },
+                                {
+                                    "name": "Failed",
+                                    "value": 3,
+                                    "description": "Calibration failed"
+                                }
+                            ]
+                        },
+                        {
                             "name": "ControlMethod",
                             "description": "Control method of DC motor.",
                             "items": [
@@ -15144,6 +14985,27 @@
                             ]
                         },
                         {
+                            "name": "Motor_Direction",
+                            "description": "Current direction of the Steering Actuator motor.",
+                            "items": [
+                                {
+                                    "name": "Forward",
+                                    "value": 0,
+                                    "description": "Going forward (left)"
+                                },
+                                {
+                                    "name": "Backward",
+                                    "value": 1,
+                                    "description": "Going backward (right)"
+                                },
+                                {
+                                    "name": "Break",
+                                    "value": 2,
+                                    "description": "Stopped"
+                                }
+                            ]
+                        },
+                        {
                             "name": "Switching_Frequency",
                             "description": "Switching frequency of DC motor settings",
                             "items": [
@@ -15186,6 +15048,66 @@
                         }
                     ],
                     "messages": [
+                        {
+                            "name": "CalibrationRequest",
+                            "description": "Request internal calibration of the selected property.",
+                            "bus": "D1.CAN1_powertrain",
+                            "fields": [
+                                {
+                                    "name": "Property",
+                                    "description": "Calibrated property",
+                                    "type": "enum SA_CalibrationProperty",
+                                    "bits": 4,
+                                    "count": 1,
+                                    "start_bit": 0,
+                                    "unit": null,
+                                    "factor": null,
+                                    "factor_num": null,
+                                    "offset": null,
+                                    "min": null,
+                                    "max": null
+                                }
+                            ],
+                            "frame_type": "CAN_STD",
+                            "id": 1793,
+                            "length": 1,
+                            "received_by": [
+                                "D1.SA"
+                            ],
+                            "sent_by": [],
+                            "timeout": null,
+                            "tx_period": null
+                        },
+                        {
+                            "name": "CalibrationResponse",
+                            "description": "Result of the calibration request.",
+                            "bus": "D1.CAN1_powertrain",
+                            "fields": [
+                                {
+                                    "name": "Result",
+                                    "description": "Result of the calibration command",
+                                    "type": "enum SA_CalibrationResult",
+                                    "bits": 2,
+                                    "count": 1,
+                                    "start_bit": 0,
+                                    "unit": null,
+                                    "factor": null,
+                                    "factor_num": null,
+                                    "offset": null,
+                                    "min": null,
+                                    "max": null
+                                }
+                            ],
+                            "frame_type": "CAN_STD",
+                            "id": 1794,
+                            "length": 1,
+                            "received_by": [],
+                            "sent_by": [
+                                "D1.SA"
+                            ],
+                            "timeout": null,
+                            "tx_period": null
+                        },
                         {
                             "name": "Control",
                             "description": "Steering control over CAN.",
@@ -15253,9 +15175,9 @@
                                 },
                                 {
                                     "name": "Dir",
-                                    "description": "Motor direction control (TRUE=Left)",
-                                    "type": "bool",
-                                    "bits": 1,
+                                    "description": "Motor direction",
+                                    "type": "enum SA_Motor_Direction",
+                                    "bits": 2,
                                     "count": 1,
                                     "start_bit": 15,
                                     "unit": null,
@@ -15271,13 +15193,13 @@
                                     "type": "uint",
                                     "bits": 12,
                                     "count": 1,
-                                    "start_bit": 16,
+                                    "start_bit": 17,
                                     "unit": null,
                                     "factor": "1",
                                     "factor_num": 1,
                                     "offset": "0",
                                     "min": "0",
-                                    "max": "4096"
+                                    "max": "4095"
                                 },
                                 {
                                     "name": "StopFlagR",
@@ -15285,7 +15207,7 @@
                                     "type": "bool",
                                     "bits": 1,
                                     "count": 1,
-                                    "start_bit": 28,
+                                    "start_bit": 29,
                                     "unit": null,
                                     "factor": null,
                                     "factor_num": null,
@@ -15299,7 +15221,7 @@
                                     "type": "bool",
                                     "bits": 1,
                                     "count": 1,
-                                    "start_bit": 29,
+                                    "start_bit": 30,
                                     "unit": null,
                                     "factor": null,
                                     "factor_num": null,
@@ -15313,7 +15235,7 @@
                                     "type": "enum SA_Switching_Frequency",
                                     "bits": 3,
                                     "count": 1,
-                                    "start_bit": 30,
+                                    "start_bit": 31,
                                     "unit": null,
                                     "factor": null,
                                     "factor_num": null,
@@ -15327,13 +15249,13 @@
                                     "type": "uint",
                                     "bits": 12,
                                     "count": 1,
-                                    "start_bit": 33,
+                                    "start_bit": 34,
                                     "unit": null,
-                                    "factor": null,
-                                    "factor_num": null,
-                                    "offset": null,
-                                    "min": null,
-                                    "max": null
+                                    "factor": "1",
+                                    "factor_num": 1,
+                                    "offset": "0",
+                                    "min": "0",
+                                    "max": "4095"
                                 }
                             ],
                             "frame_type": "CAN_STD",
@@ -15373,11 +15295,11 @@
                                     "count": 1,
                                     "start_bit": 12,
                                     "unit": "raw",
-                                    "factor": "1",
-                                    "factor_num": 1,
+                                    "factor": "0.1",
+                                    "factor_num": 0.1,
                                     "offset": "0",
                                     "min": "0",
-                                    "max": "4095"
+                                    "max": "409.5"
                                 },
                                 {
                                     "name": "D",
@@ -16158,7 +16080,8 @@
                             "id": 34,
                             "length": 1,
                             "received_by": [
-                                "D1.EBSS"
+                                "D1.EBSS",
+                                "Playground.FSB"
                             ],
                             "sent_by": [
                                 "D1.XVR"
@@ -16404,7 +16327,8 @@
                             "received_by": [
                                 "D1.DSH",
                                 "D1.EBSS",
-                                "D1.SA"
+                                "D1.SA",
+                                "Playground.FSB"
                             ],
                             "sent_by": [
                                 "D1.XVR"

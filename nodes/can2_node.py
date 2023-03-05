@@ -15,11 +15,13 @@ class Can2Node(mp.Process):
         self.go_signal_socket = create_publisher_socket(CAN2NodeMsgPorts.GO_SIGNAL)
         self.position_socket = create_publisher_socket(CAN2NodeMsgPorts.POSITION)
         self.euler_socket = create_publisher_socket(CAN2NodeMsgPorts.EULER)
+        self.acceleration_socket = create_publisher_socket(CAN2NodeMsgPorts.ACCELERATION)
 
         self.message_callbacks = {
             self.CAN2.name2id["RES_Status"]: self.receive_RES_Status,
             self.CAN2.name2id["INS_D_EKF_EULER"]: self.receive_INS_D_EKF_EULER,
             self.CAN2.name2id["INS_D_EKF_POS"]: self.receive_INS_D_EKF_POS,
+            self.CAN2.name2id["INS_D_EKF_VEL_BODY"]: self.receive_INS_D_EKF_VEL_BODY
         }
 
     def run(self):
@@ -48,3 +50,7 @@ class Can2Node(mp.Process):
     def receive_INS_D_EKF_EULER(self, values):
         pitch, yaw, roll = values
         publish_data(self.euler_socket, (pitch, yaw, roll))
+
+    def receive_INS_D_EKF_VEL_BODY(self, values):
+        vel_x, vel_y, vel_z = values
+        publish_data(self.acceleration_socket, (vel_x, vel_y, vel_z))

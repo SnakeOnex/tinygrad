@@ -26,6 +26,7 @@ class NodePorts(IntEnum):
 
 class CAN1NodeMsgPorts(IntEnum):
     WHEEL_SPEED = NodePorts.CAN1
+    STEERING_ANGLE = auto()
     MISSION = auto()
     START_BUTTON = auto()
 
@@ -33,6 +34,7 @@ class CAN1NodeMsgPorts(IntEnum):
 class CAN2NodeMsgPorts(IntEnum):
     GO_SIGNAL = NodePorts.CAN2
     POSITION = auto()
+    ACCELERATION = auto()
     EULER = auto()
 
 
