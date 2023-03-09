@@ -30,8 +30,8 @@ class PerfLogNode(mp.Process):
     def initialize(self):
         self.log_opt = log_opt
         self.logger = Logger(
-            log_name=self.log_opt["log_name"], 
-            log_folder_name=self.log_opt["log_folder_name"], 
+            log_name=self.log_opt["log_name"],
+            log_folder_name=self.log_opt["log_folder_name"],
             main_folder_path=self.main_log_folder
         )
 
