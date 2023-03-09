@@ -7,7 +7,6 @@ from multiprocessing import Process
 
 import sys
 sys.path.append('.')
-sys.path.append('..')
 
 import dv_sim
 from dv_sim.sim.simulation import Simulation, MissionValue
