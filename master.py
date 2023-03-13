@@ -34,8 +34,8 @@ def main(mode="SIM"):
     vision_node = VisionNode(main_log_folder=main_log_folder, mode=mode)
 
     # CAN
-    can1_node = Can1Node()
-    can2_node = Can2Node()
+    can1_node = Can1Node(main_log_folder=main_log_folder)
+    can2_node = Can2Node(main_log_folder=main_log_folder)
 
     # MISSIONS
     mission_node = MissionNode(main_log_folder=main_log_folder, mode=mode)

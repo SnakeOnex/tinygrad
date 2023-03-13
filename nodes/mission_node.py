@@ -3,6 +3,7 @@ import numpy as np
 import time
 from enum import IntEnum
 
+from pycandb.can_interface import CanInterface
 from tvojemama.logger import Logger
 
 from missions.acceleration import Acceleration
@@ -14,8 +15,6 @@ from nodes.asm import ASM, AS
 from config import can_config, tcp_config
 from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts
 from config import mission_opt as config
-
-from pycandb.can_interface import CanInterface
 
 from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, publish_data
 

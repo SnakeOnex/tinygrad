@@ -55,6 +55,24 @@ can_config = {
     "CAN_JSON": "data/D1.json"
 }
 
+##############
+# CAN 1 NODE #
+##############
+
+can1_config = {
+    "log_folder_name": "AS",
+    "log_name": "can1"
+}
+
+##############
+# CAN 2 NODE #
+##############
+
+can2_config = {
+    "log_folder_name": "AS",
+    "log_name": "can2"
+}
+
 #######################
 # MISSION NODE CONFIG #
 #######################

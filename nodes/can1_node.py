@@ -1,17 +1,21 @@
 import multiprocessing as mp
 import math
+
+from tvojemama.logger import Logger
 from pycandb.can_interface import CanInterface
+
 from internode_communication import create_publisher_socket, publish_data
 from config import CAN1NodeMsgPorts
-
+from config import can1_config as config
 
 class Can1Node(mp.Process):
-    def __init__(self):
+    def __init__(self, main_log_folder):
         mp.Process.__init__(self)
         self.bus_name = "can1"
-        self.report_rate = 100  # hz
+        self.main_log_folder = main_log_folder
 
     def initialize(self):
+        self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
         self.CAN1 = CanInterface("data/D1.json", 0, False)
 
         self.wheel_speed_socket = create_publisher_socket(CAN1NodeMsgPorts.WHEEL_SPEED)
