@@ -38,6 +38,11 @@ class Can1Node(mp.Process):
             if msg.arbitration_id in self.message_callbacks:
                 values = self.CAN1.read_can_msg(msg)
 
+                # log each message
+                if config["log_messages"]:
+                    msg_name = self.CAN1.id2name[msg.arbitration_id]
+                    self.logger.log(msg_name, values)
+
                 self.message_callbacks[msg.arbitration_id](values)
 
     # CAN MESSAGE RECEIVE CALLBACK FUNCTIONS

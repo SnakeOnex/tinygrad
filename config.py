@@ -61,7 +61,8 @@ can_config = {
 
 can1_config = {
     "log_folder_name": "AS",
-    "log_name": "can1"
+    "log_name": "can1",
+    "log_messages": True
 }
 
 ##############
@@ -70,7 +71,8 @@ can1_config = {
 
 can2_config = {
     "log_folder_name": "AS",
-    "log_name": "can2"
+    "log_name": "can2",
+    "log_messages": True
 }
 
 #######################
@@ -118,7 +120,7 @@ vision_node_config = {
 
 perf_logger_config = {
     "log_name": "computer_status",
-    "log_folder_name": "PC_STAT",
+    "log_folder_name": "AS",
 }
 
 

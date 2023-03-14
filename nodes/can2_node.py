@@ -5,7 +5,7 @@ from pycandb.can_interface import CanInterface
 from internode_communication import create_publisher_socket, publish_data
 
 from config import CAN2NodeMsgPorts
-from config import can1_config as config
+from config import can2_config as config
 
 class Can2Node(mp.Process):
     def __init__(self, main_log_folder):
@@ -37,7 +37,12 @@ class Can2Node(mp.Process):
 
             if msg.arbitration_id in self.message_callbacks:
                 values = self.CAN2.read_can_msg(msg)
-                # print(f"received msg: {self.CAN2.id2name[msg.arbitration_id]} values: {values}")
+
+                # log each message
+                if config["log_messages"]:
+                    msg_name = self.CAN2.id2name[msg.arbitration_id]
+                    self.logger.log(msg_name, values)
+
                 self.message_callbacks[msg.arbitration_id](values)
 
     # CAN MESSAGE RECEIVE CALLBACK FUNCTIONS
