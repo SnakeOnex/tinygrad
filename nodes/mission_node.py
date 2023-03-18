@@ -17,7 +17,7 @@ from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts, Missi
 from config import mission_opt as config
 
 from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, publish_data
-from algorithms.general import get_earth_radius_at_pos, lat_lon_to_meter_x_y
+# from algorithms.general import get_earth_radius_at_pos, lat_lon_to_meter_x_y
 
 
 class MissionValue(IntEnum):
