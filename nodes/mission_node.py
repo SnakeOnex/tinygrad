@@ -118,11 +118,11 @@ class MissionNode(mp.Process):
         self.acceleration = update_subscription_data(self.acceleration_socket, self.acceleration)
         self.euler = update_subscription_data(self.euler_socket, self.euler)
 
-        if self.mode == "RACE":
-            if not self.start_pos.any():
-                self.earth_radius = get_earth_radius_at_pos(self.position[0])
-                self.start_pos = np.array(self.position, dtype=np.float64)
-            self.position = lat_lon_to_meter_x_y(np.array(self.position, dtype=np.float64), self.earth_radius, self.start_pos)
+        # if self.mode == "RACE":
+        #    if not self.start_pos.any():
+        #        self.earth_radius = get_earth_radius_at_pos(self.position[0])
+        #        self.start_pos = np.array(self.position, dtype=np.float64)
+        #    self.position = lat_lon_to_meter_x_y(np.array(self.position, dtype=np.float64), self.earth_radius, self.start_pos)
 
     def run(self):
         self.initialize()
