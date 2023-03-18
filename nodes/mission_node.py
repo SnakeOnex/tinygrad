@@ -17,6 +17,7 @@ from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts, Missi
 from config import mission_opt as config
 
 from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, publish_data
+from algorithms.general import get_earth_radius_at_pos, lat_lon_to_meter_x_y
 
 
 class MissionValue(IntEnum):
@@ -68,6 +69,8 @@ class MissionNode(mp.Process):
         self.position = (None, None)
         self.euler = (None, None, None)
         self.acceleration = (0., 0., 0.)
+        self.start_pos = np.zeros(shape=2)
+        self.earth_radius = 0
 
     def initialize(self):
         self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
@@ -107,12 +110,19 @@ class MissionNode(mp.Process):
         }
 
     def update_data(self):
+
         self.percep_data = update_subscription_data(self.cone_preds_socket, self.percep_data)
         self.wheel_speed = update_subscription_data(self.wheel_speed_socket, self.wheel_speed)
         self.steering_angle = update_subscription_data(self.steering_angle_socket, self.steering_angle)
         self.position = update_subscription_data(self.position_socket, self.position)
         self.acceleration = update_subscription_data(self.acceleration_socket, self.acceleration)
         self.euler = update_subscription_data(self.euler_socket, self.euler)
+
+        if self.mode == "RACE":
+            if not self.start_pos.any():
+                self.earth_radius = get_earth_radius_at_pos(self.position[0])
+                self.start_pos = np.array(self.position, dtype=np.float64)
+            self.position = lat_lon_to_meter_x_y(np.array(self.position, dtype=np.float64), self.earth_radius, self.start_pos)
 
     def run(self):
         self.initialize()
