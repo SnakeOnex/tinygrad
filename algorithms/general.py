@@ -52,3 +52,18 @@ def get_orange_centerline(cone_preds):
     for i in range(0, int(cone_preds.shape[0]/2), 2):
         means.append(np.mean(cone_preds[i:i+2, 0:2], axis=0))
     return np.array(means)
+
+
+def get_earth_radius_at_pos(sea_level: np.float64, lat: np.float64) -> np.float64:
+    # Earth eccentricity e
+    e = np.array(0.0818, dtype=np.float64)
+    # Earth diameter at equator
+    r_equator = np.array(6378000, dtype=np.int64)
+    base_radius = r_equator * np.sqrt((1-(2*e**2-e**4)*np.sin(np.deg2rad(lat))**2)/(1-e**2*np.sin(np.deg2rad(lat))**2))
+    return base_radius + sea_level
+
+
+def lat_lon_to_meter_x_y(lat, lon, earth_radius,lat_origin,lon_origin):
+    meter_x = earth_radius * np.tan(np.deg2rad(lon-lon_origin))
+    meter_y = earth_radius * np.tan(np.deg2rad(lat-lat_origin))
+    return (meter_x, meter_y)
