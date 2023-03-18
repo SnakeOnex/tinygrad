@@ -24,7 +24,6 @@ class PerfLogNode(mp.Process):
             "gpu_info": get_gpu_info() if self.log_gpu else "NO GPU ON SYSTEM",
             # TODO "processses_info": processes_info,
         }
-        # print(log_frame_msg)
         self.logger.log("LOG_NODE_FRAME", log_frame_msg)
 
     def initialize(self):
