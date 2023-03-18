@@ -7,6 +7,7 @@ from internode_communication import create_publisher_socket, publish_data
 from config import CAN2NodeMsgPorts
 from config import can2_config as config
 
+
 class Can2Node(mp.Process):
     def __init__(self, main_log_folder):
         mp.Process.__init__(self)
@@ -58,7 +59,7 @@ class Can2Node(mp.Process):
         publish_data(self.position_socket, (latitude, longitude))
 
     def receive_INS_D_EKF_EULER(self, values):
-        pitch, yaw, roll = values
+        roll, yaw, pitch = values
         publish_data(self.euler_socket, (pitch, yaw, roll))
 
     def receive_INS_D_EKF_VEL_BODY(self, values):
