@@ -13,7 +13,7 @@ from missions.autocross import Autocross
 
 from nodes.asm import ASM, AS
 from config import can_config, tcp_config
-from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts
+from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts, MissionNodeMsgPorts
 from config import mission_opt as config
 
 from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, publish_data
@@ -91,6 +91,11 @@ class MissionNode(mp.Process):
         self.acceleration_socket = create_subscriber_socket(CAN2NodeMsgPorts.ACCELERATION)
         self.euler_socket = create_subscriber_socket(CAN2NodeMsgPorts.EULER)
 
+        # CAN sender node message publishers
+        self.wheel_speed_cmd_socket = create_publisher_socket(MissionNodeMsgPorts.WHEEL_SPEED_CMD)
+        self.steering_angle_cmd_socket = create_publisher_socket(MissionNodeMsgPorts.STEERING_ANGLE_CMD)
+        self.ksicht_status_socket = create_publisher_socket(MissionNodeMsgPorts.KSICHT_STATUS)
+
     def get_mission_kwargs(self):
         return {
             "percep_data": self.percep_data,
@@ -148,8 +153,8 @@ class MissionNode(mp.Process):
                         "mission_id": self.mission.ID,
                         "mission_status": log})
 
-                self.CAN1.send_can_msg([steering_angle], self.CAN1.name2id["XVR_Control"])
-                self.CAN1.send_can_msg([0, 0, 0, 0, speed, 0], self.CAN1.name2id["XVR_SetpointsMotor_A"])
+                publish_data(self.steering_angle_cmd_socket, steering_angle)
+                publish_data(self.wheel_speed_cmd_socket, speed)
             else:
                 self.mission_num = update_subscription_data(self.mission_socket, self.mission_num)
 
@@ -158,7 +163,7 @@ class MissionNode(mp.Process):
                     print(f"mission: {MissionValue(self.mission_num).name}")
 
             # 3. send XVR_STATUS
-            self.CAN1.send_can_msg([self.ASM.AS.value, 0, 0, 0, 0, 0, 0, 0], self.CAN1.name2id["XVR_Status"])
+            publish_data(self.ksicht_status_socket, (self.ASM.AS.value, 0))
             self.logger.log("FRAME", {"finished": self.finished, "mission_kwargs": self.get_mission_kwargs(), "mission_log": self.mission_log})
 
             end_time = time.perf_counter()

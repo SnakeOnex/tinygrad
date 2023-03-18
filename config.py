@@ -22,6 +22,7 @@ class NodePorts(IntEnum):
     CAN1 = 10000
     CAN2 = 20000
     VISION = 30000
+    MISSION = 40000
 
 
 class CAN1NodeMsgPorts(IntEnum):
@@ -37,9 +38,13 @@ class CAN2NodeMsgPorts(IntEnum):
     ACCELERATION = auto()
     EULER = auto()
 
-
 class VisionNodeMsgPorts(IntEnum):
     CONE_PREDS = NodePorts.VISION
+
+class MissionNodeMsgPorts(IntEnum):
+    WHEEL_SPEED_CMD = NodePorts.MISSION
+    STEERING_ANGLE_CMD = auto()
+    KSICHT_STATUS = auto()
 
 tcp_config = {
     "TCP_HOST": 'tcp://127.0.0.1',
@@ -85,6 +90,16 @@ mission_opt = {
     "log_folder_name": "AS"
 }
 
+##########################
+# CAN SENDER NODE CONFIG #
+##########################
+
+can_sender_config = {
+    "log_folder_name": "AS",
+    "log_name": "cansender",
+    "log_messages": True
+}
+
 ######################
 # VISION NODE CONFIG #
 ######################
@@ -117,6 +132,10 @@ vision_node_config = {
     "simulation_mode": True,
     "simulate_images": False
 }
+
+###########################
+# PERF LOGGER NODE CONFIG #
+###########################
 
 perf_logger_config = {
     "log_name": "computer_status",
