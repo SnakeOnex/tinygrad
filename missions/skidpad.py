@@ -61,7 +61,7 @@ class Skidpad():
         wheel_speed = kwargs["wheel_speed"]
 
         self.glob_coords = kwargs["position"]
-        self.heading = kwargs["euler"][2] + 180.
+        self.heading = kwargs["euler"][0] + 180.
 
         if not self.start_time:
             self.start_time = time.time()
@@ -133,7 +133,7 @@ class Skidpad():
         """
         Checks whether car has passed through the center for the map and performs corresponding action
         """
-        map_center = np.sum(self.estimated_cone_centers, axis=0)/2
+        map_center = np.sum(self.estimated_cone_centers, axis=0) / 2
         if np.linalg.norm(self.glob_coords - map_center) <= Skidpad.WAYPOINT_RADIUS_SQ:
             if self.center_pass_counter == 2:
                 self.current_path = self.circles["left"]
@@ -169,14 +169,14 @@ class Skidpad():
             d (float): radius of circles to be generated
         """
         centers = self.estimated_cone_centers
-        a, b = np.sum(centers, axis=0)/2, centers[0]
-        D = np.linalg.norm(a-b)
-        c1 = (1-(d/D)) * a + (d/D)*b
-        c2 = (1+(d/D)) * a - (d/D)*b
+        a, b = np.sum(centers, axis=0) / 2, centers[0]
+        D = np.linalg.norm(a - b)
+        c1 = (1 - (d / D)) * a + (d / D) * b
+        c2 = (1 + (d / D)) * a - (d / D) * b
         circle_centers = np.array([c1, c2])
         local_centers = global_to_local(self.start_position, 90, circle_centers.copy())
         circle_centers = circle_centers[np.lexsort((local_centers[:, 1], local_centers[:, 0]))]
-        left = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + circle_centers[0] for pt in np.linspace(0, 2*np.pi, num=50)])
-        right = np.array([np.array([np.cos(pt)*d, np.sin(pt)*d]) + circle_centers[1] for pt in np.linspace(0, 2*np.pi, num=50)])
+        left = np.array([np.array([np.cos(pt) * d, np.sin(pt) * d]) + circle_centers[0] for pt in np.linspace(0, 2 * np.pi, num=50)])
+        right = np.array([np.array([np.cos(pt) * d, np.sin(pt) * d]) + circle_centers[1] for pt in np.linspace(0, 2 * np.pi, num=50)])
         self.circle_centers = circle_centers
         self.circles = {"right": right, "left": left}
