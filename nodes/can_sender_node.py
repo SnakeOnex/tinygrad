@@ -10,6 +10,7 @@ from config import can_config, tcp_config
 from config import MissionNodeMsgPorts
 from config import can_sender_config as opt
 
+
 class CanSenderNode(mp.Process):
     def __init__(self, main_log_folder):
         mp.Process.__init__(self)
@@ -67,7 +68,8 @@ class CanSenderNode(mp.Process):
                 self.CAN1.send_can_msg(self.ksicht_status_values.copy(), self.CAN1.name2id["XVR_Status"])
                 self.logger.log("XVR_Status", self.ksicht_status_values)
 
-                self.CAN1.send_can_msg(self.motor_setpoints_values.copy(), self.CAN1.name2id["XVR_SetpointsMotor_A"])
+                # Lenze inverters require extended CAN address ID
+                self.CAN1.send_can_msg(self.motor_setpoints_values.copy(), self.CAN1.name2id["XVR_SetpointsMotor_A"], is_extended_id=True)
                 self.logger.log("XVR_SetpointsMotor_A", self.motor_setpoints_values)
 
             # 200 hz messages
