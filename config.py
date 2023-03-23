@@ -38,13 +38,16 @@ class CAN2NodeMsgPorts(IntEnum):
     ACCELERATION = auto()
     EULER = auto()
 
+
 class VisionNodeMsgPorts(IntEnum):
     CONE_PREDS = NodePorts.VISION
+
 
 class MissionNodeMsgPorts(IntEnum):
     WHEEL_SPEED_CMD = NodePorts.MISSION
     STEERING_ANGLE_CMD = auto()
     KSICHT_STATUS = auto()
+
 
 tcp_config = {
     "TCP_HOST": 'tcp://127.0.0.1',
@@ -142,4 +145,12 @@ perf_logger_config = {
     "log_folder_name": "AS",
 }
 
+###########################
+# INSPECTION MISSION CONFIG #
+###########################
 
+inspection_config = {
+    "max_steering_angle": 110,
+    "speed_set_point": 0.5,
+    "duration": 30.
+}

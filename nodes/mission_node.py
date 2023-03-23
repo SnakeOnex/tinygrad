@@ -10,6 +10,7 @@ from missions.acceleration import Acceleration
 from missions.trackdrive import Trackdrive
 from missions.skidpad import Skidpad
 from missions.autocross import Autocross
+from missions.inspection import Inspection
 
 from nodes.asm import ASM, AS
 from config import can_config, tcp_config
@@ -41,6 +42,7 @@ class MissionNode(mp.Process):
         MissionValue.Skidpad: Skidpad,
         MissionValue.Autocross: Autocross,
         MissionValue.Trackdrive: Trackdrive,
+        MissionValue.Inspection: Inspection,
     }
 
     def __init__(self, main_log_folder, mode="RACE"):
