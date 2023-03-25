@@ -13,6 +13,8 @@ from config import vision_node_config as config
 from config import tcp_config as tcp
 from internode_communication import create_publisher_socket, publish_data
 from config import VisionNodeMsgPorts
+import pyzed.sl as sl
+import cv2
 
 
 class VisionNode(mp.Process):
@@ -20,24 +22,25 @@ class VisionNode(mp.Process):
         mp.Process.__init__(self)
         self.main_log_folder = main_log_folder
         self.mode = mode
+        
 
     def initialize(self):
         print("INITTING")
         # zed setup or brosbag setup
         if not config["simulation_mode"]:
-            import pyzed.sl as sl
             self.zed = sl.Camera()
             init_params = sl.InitParameters()
             init_params.camera_resolution = sl.RESOLUTION.HD720
-            init_params.camera_fps = 30
+            init_params.camera_fps = 60
             self.zed_image = sl.Mat()
             self.runtime_parameters = sl.RuntimeParameters()
             self.detector = ConeDetector(config["cone_detector_opt"])
             self.localizer = ConeLocalizer(config["cone_localizer_opt"])
+            self.zed.open()
 
         self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
         self.logger.log("VISION_CONFIGURATION", config)  # log config
-
+    
         self.cone_preds_socket = create_publisher_socket(VisionNodeMsgPorts.CONE_PREDS)
 
     def run(self):
@@ -49,17 +52,23 @@ class VisionNode(mp.Process):
             return
 
         while True:
-            if self.mode == "BROSBAG":
-                image = self.read_log_image()
-            elif self.mode == "CAMERA":
+            if self.mode == "RACE":
                 image = self.read_zed_image()
+            
+            print(image)
+            bbox_preds = self.detector.process_image(image)
+            
+            if bbox_preds is not None:
+                bbox_preds = bbox_preds.cpu().detach().numpy()
+                world_preds = self.localizer.project_bboxes(bbox_preds)
+                cone_classes = bbox_preds[:, 5].astype(int)
+            else:
+                bbox_preds = None
+                world_preds = None
+                cone_classes = None
 
-            bbox_preds = self.detector.process_image(image).cpu().detach().numpy()
-
-            world_preds = self.localizer.project_bboxes(bbox_preds)
-
-            cone_classes = bbox_preds[:, 5].astype(int)
             data = {
+                "image": image,
                 "bboxes": bbox_preds,
                 "world_preds": world_preds,
                 "cone_classes": cone_classes,
@@ -84,10 +93,12 @@ class VisionNode(mp.Process):
 
     def read_zed_image(self):
         if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:
-            self.zed.retrive_image(self.zed_image, sl.VIEW.LEFT)
+            self.zed.retrieve_image(self.zed_image, sl.VIEW.LEFT)
             image = self.zed_image.get_data()
+            #cv2.imshow("lol",image)
+            
             return image
-        raise Exception("COULDN'T RETRIEVE IMAGE")
+        #raise Exception("COULDN'T RETRIEVE IMAGE")
 
     def read_log_image(self):
         msg_t, (msg_type, data) = next(self.brosbag_gen)

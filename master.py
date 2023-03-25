@@ -22,7 +22,7 @@ from nodes.can_sender_node import CanSenderNode
 from nodes.perf_log_node import PerfLogNode
 
 
-def main(mode="SIM"):
+def main(mode="CAMERA"):
     # 0. create a log folder for the run
     main_log_folder = config["main_log_folder"]
     folder_path = main_log_folder / Path(gen_name_with_time('', ''))
