@@ -29,7 +29,7 @@ class TestInspection(unittest.TestCase):
         cls.sim.launch_gui()
 
         # 1.B BROS SETUP
-        cls.bros_process = Process(target=main)
+        cls.bros_process = Process(target=main, args=["SIM"])
         cls.bros_process.start()
         time.sleep(1)
 

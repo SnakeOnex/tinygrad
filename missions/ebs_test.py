@@ -12,7 +12,7 @@ from algorithms.general import get_big_orange_distance
 
 
 class EBSTest():
-    ID = "EBSTest"
+    ID = "EBS Test"
 
     def __init__(self):
         mp.Process.__init__(self)

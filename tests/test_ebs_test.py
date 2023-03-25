@@ -19,19 +19,19 @@ class TestEBSTest(unittest.TestCase):
     def setUp(cls):
         # 1. SETUP SIMULATION && BROS
 
-        ## 1.A SIMULATION SETUP
+        # 1.A SIMULATION SETUP
 
         map_path = Path("dv_sim/maps/acceleration_map.json").resolve()
         cls.sim = Simulation(
-                map_path=map_path,
-                mission=MissionValue.EBS_Test,
-                manual=False,
-                config_json=Path("dv_sim/sim_config.json").resolve()
+            map_path=map_path,
+            mission=MissionValue.EBS_Test,
+            manual=False,
+            config_json=Path("dv_sim/sim_config.json").resolve()
         )
         cls.sim.launch_gui()
 
         # 1.B BROS SETUP
-        cls.bros_process = Process(target=main)
+        cls.bros_process = Process(target=main, args=["SIM"])
         cls.bros_process.start()
         time.sleep(1)
 
@@ -72,6 +72,7 @@ class TestEBSTest(unittest.TestCase):
             self.sim.sleep()
 
         assert test_outcome
+
 
 if __name__ == "__main__":
     unittest.main()

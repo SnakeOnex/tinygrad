@@ -4,11 +4,13 @@ import numpy as np
 import curses
 
 import sys
+sys.path.append(".")
 sys.path.append("..")
 
 from config import MissionNodeMsgPorts
 from config import CAN1NodeMsgPorts
 from config import CAN2NodeMsgPorts
+from nodes.mission_node import MissionNode
 from internode_communication import create_subscriber_socket, get_last_subscription_data
 
 
@@ -46,7 +48,10 @@ def update_data_dict(dest_dict, socket_dict):
     for data_field, socket in socket_dict.items():
         updated_data = get_last_subscription_data(socket)
         if updated_data != None:
-            dest_dict[data_field] = np.array2string(np.array(updated_data), precision=3, suppress_small=False, floatmode="fixed", sign=" ")
+            if data_field == "DSH_Status - MISSION":
+                dest_dict[data_field] = MissionNode.Missions[updated_data].ID
+            else:
+                dest_dict[data_field] = np.array2string(np.array(updated_data), precision=3, suppress_small=False, floatmode="fixed", sign=" ")
 
 
 def data_dict_to_str(data_dict):

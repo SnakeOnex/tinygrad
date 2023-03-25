@@ -13,21 +13,20 @@ from config import vision_node_config as config
 from config import tcp_config as tcp
 from internode_communication import create_publisher_socket, publish_data
 from config import VisionNodeMsgPorts
-import pyzed.sl as sl
 import cv2
 
 
 class VisionNode(mp.Process):
-    def __init__(self, main_log_folder, mode):
+    def __init__(self, main_log_folder, mode="RACE"):
         mp.Process.__init__(self)
         self.main_log_folder = main_log_folder
         self.mode = mode
-        
 
     def initialize(self):
         print("INITTING")
         # zed setup or brosbag setup
-        if not config["simulation_mode"]:
+        if self.mode == "RACE":
+            import pyzed.sl as sl
             self.zed = sl.Camera()
             init_params = sl.InitParameters()
             init_params.camera_resolution = sl.RESOLUTION.HD720
@@ -40,24 +39,24 @@ class VisionNode(mp.Process):
 
         self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
         self.logger.log("VISION_CONFIGURATION", config)  # log config
-    
+
         self.cone_preds_socket = create_publisher_socket(VisionNodeMsgPorts.CONE_PREDS)
 
     def run(self):
         print("STARTING CONE DETECTION")
         self.initialize()
 
-        if config["simulation_mode"]:
+        if self.mode == "SIM":
             self.run_simulation()
             return
 
         while True:
             if self.mode == "RACE":
                 image = self.read_zed_image()
-            
+
             print(image)
             bbox_preds = self.detector.process_image(image)
-            
+
             if bbox_preds is not None:
                 bbox_preds = bbox_preds.cpu().detach().numpy()
                 world_preds = self.localizer.project_bboxes(bbox_preds)
@@ -83,7 +82,7 @@ class VisionNode(mp.Process):
         image = None
 
         if config["simulate_images"]:
-            image = (np.random.rand(720,1280,3) * 255).astype(np.uint8)
+            image = (np.random.rand(720, 1280, 3) * 255).astype(np.uint8)
 
         while True:
             data = socket.recv()
@@ -95,10 +94,10 @@ class VisionNode(mp.Process):
         if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:
             self.zed.retrieve_image(self.zed_image, sl.VIEW.LEFT)
             image = self.zed_image.get_data()
-            #cv2.imshow("lol",image)
-            
+            # cv2.imshow("lol",image)
+
             return image
-        #raise Exception("COULDN'T RETRIEVE IMAGE")
+        # raise Exception("COULDN'T RETRIEVE IMAGE")
 
     def read_log_image(self):
         msg_t, (msg_type, data) = next(self.brosbag_gen)

@@ -14,7 +14,7 @@ from config import can_sender_config as opt
 class CanSenderNode(mp.Process):
     def __init__(self, main_log_folder):
         mp.Process.__init__(self)
-        self.frequency = 200
+        self.frequency = opt["frequency"]
         self.main_log_folder = main_log_folder
         self.CAN1 = CanInterface(can_config["CAN_JSON"], can_config["CAN1_ID"], False)
 

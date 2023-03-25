@@ -13,6 +13,7 @@ from dv_sim.sim.simulation import Simulation, MissionValue
 from nodes.asm import AS
 from master import main
 
+
 class TestAutocross(unittest.TestCase):
 
     def setUp(cls):
@@ -25,15 +26,15 @@ class TestAutocross(unittest.TestCase):
         print(map_path)
         # exit(0)
         cls.sim = Simulation(
-                map_path=map_path,
-                mission=MissionValue.Autocross,
-                manual=False,
-                config_json=Path("dv_sim/sim_config.json").resolve()
+            map_path=map_path,
+            mission=MissionValue.Autocross,
+            manual=False,
+            config_json=Path("dv_sim/sim_config.json").resolve()
         )
         cls.sim.launch_gui()
 
         # 1.B BROS SETUP
-        cls.bros_process = Process(target=main)
+        cls.bros_process = Process(target=main, args=["SIM"])
         cls.bros_process.start()
         time.sleep(1)
 
@@ -64,7 +65,7 @@ class TestAutocross(unittest.TestCase):
             if time_since_start >= 60.:
                 test_outcome = True
                 break
-                
+
             # if state is finished end simulation
             if self.sim.state.AS == AS.FINISHED:
                 test_outcome = True
@@ -73,6 +74,7 @@ class TestAutocross(unittest.TestCase):
             self.sim.sleep()
 
         assert test_outcome
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -13,6 +13,7 @@ class Inspection():
         self.inspection_duration = inspection_config["duration"]
         self.speed_set_point = inspection_config["speed_set_point"]
         self.max_steering_angle = inspection_config["max_steering_angle"]
+        self.n_periods = inspection_config["n_periods"]
         self.finished = False
         self.steering_angle = 0.
 
@@ -33,14 +34,15 @@ class Inspection():
             self.finished = True
         else:
             # else compute the steering angle
-            steering_state = time_since_start * (2 * (2 * np.pi) / self.inspection_duration)
+            steering_state = time_since_start * (self.n_periods * (2 * np.pi) / self.inspection_duration)
             self.steering_angle = np.sin(steering_state) * self.max_steering_angle
 
         debug_dict = {
             "time_since_start": time_since_start,
             "completed %": (time_since_start / self.inspection_duration) * 100,
             "speed_setpoint": self.speed_set_point,
-            "steering_angle": self.steering_angle
+            "steering_angle": self.steering_angle,
+            "steering angular velocity (rad/s)": np.cos(steering_state) * self.max_steering_angle
         }
 
         return self.finished, self.steering_angle, self.speed_set_point, debug_dict, np.array([[0, 0]]), np.array([[0, 0]])

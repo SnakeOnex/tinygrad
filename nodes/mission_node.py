@@ -180,7 +180,6 @@ class MissionNode(mp.Process):
 
                 if self.mission_num != MissionValue.NoValue:
                     self.mission = MissionNode.Missions[self.mission_num]()
-                    print(f"mission: {MissionValue(self.mission_num).name}")
 
             # 3. send XVR_STATUS
 

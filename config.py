@@ -100,7 +100,8 @@ mission_opt = {
 can_sender_config = {
     "log_folder_name": "AS",
     "log_name": "cansender",
-    "log_messages": True
+    "log_messages": True,
+    "frequency": 200
 }
 
 ######################
@@ -132,7 +133,6 @@ vision_node_config = {
     "path_planner_opt": path_planner_opt,
     "log_name": "vision",
     "log_folder_name": "AS",
-    "simulation_mode": False,
     "simulate_images": False
 }
 
@@ -152,5 +152,6 @@ perf_logger_config = {
 inspection_config = {
     "max_steering_angle": 90,
     "speed_set_point": 1.0,
-    "duration": 5.
+    "duration": 25.,
+    "n_periods": 1.
 }
