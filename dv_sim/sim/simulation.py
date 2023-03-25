@@ -76,7 +76,7 @@ class Simulation():
         if not self.manual:
             self.vision_socket = self.context.socket(zmq.PUB)
             self.vision_socket.bind(
-                config["TCP_HOST"]+":"+config["VISION_PORT"])
+                config["TCP_HOST"] + ":" + config["VISION_PORT"])
             self.vision_freq = 60  # Hz
             self.vision_time = 0.  # var for keeping track of last time vision packat has been sent
 
@@ -84,12 +84,12 @@ class Simulation():
         self.gui_state = [0. for _ in range(len(GUIValues))]
         self.gui_socket = self.context.socket(zmq.PUB)
         self.gui_socket.bind(
-            config["TCP_HOST"]+":"+config["GUI_PORT"])
+            config["TCP_HOST"] + ":" + config["GUI_PORT"])
 
         # 2.C receiving controls commands from graphical engine
         self.controls_socket = self.context.socket(zmq.SUB)
         self.controls_socket.connect(
-            config["TCP_HOST"]+":"+config["CONTROLS_PORT"])
+            config["TCP_HOST"] + ":" + config["CONTROLS_PORT"])
         self.controls_socket.setsockopt(zmq.SUBSCRIBE, b"")
         self.controls_poller = zmq.Poller()
         self.controls_poller.register(self.controls_socket, zmq.POLLIN)
@@ -119,9 +119,10 @@ class Simulation():
 
         # 4. send CAN1 & CAN2 messages
         # CAN1 messages
+        # ! DON'T FORGET TO SEND EXTENDED ID FROM MOTOR CONTROLLER
         for msg_name, callback_fn in can1_send_callbacks.items():
             values = callback_fn(self.state)
-            self.CAN1.send_can_msg(values, self.CAN1.name2id[msg_name])
+            self.CAN1.send_can_msg(values, self.CAN1.name2id[msg_name], is_extended_id=(msg_name == "MCR_ActualValues_A"))
 
         # CAN2 messages
         for msg_name, callback_fn in can2_send_callbacks.items():

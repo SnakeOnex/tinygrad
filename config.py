@@ -151,6 +151,6 @@ perf_logger_config = {
 
 inspection_config = {
     "max_steering_angle": 110,
-    "speed_set_point": 0.5,
+    "speed_set_point": 1.0,
     "duration": 30.
 }

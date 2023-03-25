@@ -20,6 +20,7 @@ class Inspection():
         """
         inputs unused, loops 2 times the period of a sine function to steer wheels, motors set at stable m/s
         details in config.inspection_config
+        Implemented based on FSG 2023 official rulebook
         """
 
        #  get current duration of inspection
@@ -32,7 +33,7 @@ class Inspection():
             self.finished = True
         else:
             # else compute the steering angle
-            steering_state = time_since_start * ((4 * np.pi) / self.inspection_duration)
+            steering_state = time_since_start * ((2 * np.pi) / self.inspection_duration)
             self.steering_angle = np.sin(steering_state) * self.max_steering_angle
 
         debug_dict = {
