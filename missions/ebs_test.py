@@ -23,7 +23,7 @@ class EBSTest():
         self.nonlinear_gain = 1.5
         self.path_planner = PathPlanner(path_planner_opt)
 
-        self.speed_set_point = 5.
+        self.speed_set_point = 15.
 
         # mission planning variables
         self.finished = False

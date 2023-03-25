@@ -19,7 +19,7 @@ class State():
 
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
-        self.steering_speed = 70. # degrees per second
+        self.steering_speed = 110. # degrees per second
         self.max_steering_angle = 60. # max and min steering angle
 
         self.max_engine_force = 3000. # nm
@@ -35,6 +35,7 @@ class State():
         ## CAR STATE
         self.tson = True
         self.go_signal = 0
+        self.emergency_signal = 0
         self.AS = AS.OFF
 
         self.speed_set_point = 0.
@@ -53,6 +54,9 @@ class State():
         if self.speed_set_point > self.speed and not self.manual:
             self.forward()
         elif self.speed_set_point == 0. and not self.manual:
+            self.brake()
+
+        if self.emergency_signal == 1:
             self.brake()
 
         if not self.manual:

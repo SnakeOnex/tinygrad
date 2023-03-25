@@ -189,6 +189,9 @@ class Simulation():
     def go_signal(self):
         self.state.go_signal = 1
 
+    def emergency_signal(self):
+        self.state.emergency_signal = 1
+
     def emergency_brake(self):
         raise NotImplementedError
 
