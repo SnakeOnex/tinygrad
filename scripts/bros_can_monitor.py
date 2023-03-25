@@ -12,7 +12,7 @@ from config import CAN2NodeMsgPorts
 from internode_communication import create_subscriber_socket, get_last_subscription_data
 
 
-FPS = 15
+FPS = 30
 
 MSG_FROM_BROS = {
     "XVR_Status": MissionNodeMsgPorts.KSICHT_STATUS,
@@ -23,8 +23,8 @@ MSG_FROM_BROS = {
 MSG_TO_BROS_CAN1 = {
     "MCR_ActualValues_A": CAN1NodeMsgPorts.WHEEL_SPEED,
     "SA_SteeringAngle": CAN1NodeMsgPorts.STEERING_ANGLE,
-    "DSH_Status-MISSION": CAN1NodeMsgPorts.MISSION,
-    "DSH_Status-START_BUTTON": CAN1NodeMsgPorts.START_BUTTON
+    "DSH_Status - MISSION": CAN1NodeMsgPorts.MISSION,
+    "DSH_Status - START_BUTTON": CAN1NodeMsgPorts.START_BUTTON
 }
 
 MSG_TO_BROS_CAN2 = {
@@ -35,65 +35,68 @@ MSG_TO_BROS_CAN2 = {
 }
 
 
-def create_bros_sender_sockets():
-    sender_sockets = {}
-    for key, value in MSG_FROM_BROS.items():
-        sender_sockets[key] = create_subscriber_socket(value)
-    return sender_sockets
+def create_sockets_from_dict(socket_dict):
+    sockets = {}
+    for key, value in socket_dict.items():
+        sockets[key] = create_subscriber_socket(value)
+    return sockets
 
 
-def create_bros_receive_sockets_can1():
-    recv_sockets_can1 = {}
-    for key, value in MSG_TO_BROS_CAN1.items():
-        recv_sockets_can1[key] = create_subscriber_socket(value)
-    return recv_sockets_can1
+def update_data_dict(dest_dict, socket_dict):
+    for data_field, socket in socket_dict.items():
+        updated_data = get_last_subscription_data(socket)
+        if updated_data != None:
+            dest_dict[data_field] = np.array2string(np.array(updated_data), precision=3, suppress_small=False, floatmode="fixed", sign=" ")
 
 
-def create_bros_receive_sockets_can2():
-    recv_sockets_can2 = {}
-    for key, value in MSG_TO_BROS_CAN2.items():
-        recv_sockets_can2[key] = create_subscriber_socket(value)
-    return recv_sockets_can2
+def data_dict_to_str(data_dict):
+    data_str = ""
+    for data_field, data_val in data_dict.items():
+        data_str += f"\n\t{data_field}: {data_val}\n"
+    return data_str
 
 
 def loop(window: curses.window):
     curses.initscr()
     curses.start_color()
-    sender_sockets = create_bros_sender_sockets()
-    recv_sockets_can1 = create_bros_receive_sockets_can1()
-    recv_sockets_can2 = create_bros_receive_sockets_can2()
+
+    sender_sockets = create_sockets_from_dict(MSG_FROM_BROS)
+    recv_sockets_can1 = create_sockets_from_dict(MSG_TO_BROS_CAN1)
+    recv_sockets_can2 = create_sockets_from_dict(MSG_TO_BROS_CAN2)
+
     curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
     curses.init_pair(2, curses.COLOR_YELLOW, curses.COLOR_BLACK)
     curses.init_pair(3, curses.COLOR_CYAN, curses.COLOR_BLACK)
+
+    data_sent = dict.fromkeys(MSG_FROM_BROS.keys(), None)
+    data_recvd_can1 = dict.fromkeys(MSG_TO_BROS_CAN1.keys(), None)
+    data_recvd_can2 = dict.fromkeys(MSG_TO_BROS_CAN2.keys(), None)
+
     while True:
         start = time.perf_counter()
-        window.addstr(0, 0, "BROS CAN COMMUNICATION MONITOR\n", curses.color_pair(1))
-        window.addstr(2, 5, "Sending on CAN1:\n", curses.color_pair(3))
 
-        sender_data = ""
-        for data_sent in MSG_FROM_BROS:
-            sender_data += f"\t{data_sent}: "
-            sender_data += str(get_last_subscription_data(sender_sockets[data_sent])) + "\n"
-        window.addstr(3, 5, sender_data)
+        update_data_dict(data_sent, sender_sockets)
+        update_data_dict(data_recvd_can1, recv_sockets_can1)
+        update_data_dict(data_recvd_can2, recv_sockets_can2)
 
-        window.addstr(8, 5, "Receiving on CAN1:\n", curses.color_pair(2))
+        try:
+            window.addstr(0, 0, "BROS CAN MONITOR\n", curses.color_pair(1))
+            window.addstr(2, 5, "Sending on CAN1:\n", curses.color_pair(3))
+            window.addstr(3, 5, data_dict_to_str(data_sent))
+            window.addstr(11, 5, "Receiving on CAN1:\n", curses.color_pair(2))
+            window.addstr(12, 5, data_dict_to_str(data_recvd_can1))
+            window.addstr(21, 5, "Receiving on CAN2:\n", curses.color_pair(2))
+            window.addstr(22, 5, data_dict_to_str(data_recvd_can2))
 
-        recv_data_can1 = ""
-        for data_recvd in MSG_TO_BROS_CAN1:
-            recv_data_can1 += f"\t{data_recvd}: "
-            recv_data_can1 += str(get_last_subscription_data(recv_sockets_can1[data_recvd])) + "\n"
-        window.addstr(9, 5, recv_data_can1)
+        except Exception as e:
 
-        window.addstr(14, 5, "Receiving on CAN2:\n", curses.color_pair(2))
-
-        recv_data_can2 = ""
-        for data_recvd in MSG_TO_BROS_CAN2:
-            recv_data_can2 += f"\t{data_recvd}: "
-            recv_data_can2 += str(get_last_subscription_data(recv_sockets_can2[data_recvd])) + "\n"
-        window.addstr(15, 5, recv_data_can2)
+            if e == curses.ERR:
+                print("Terminal too small!")
+                sys.exit(1)
 
         delta = time.perf_counter() - start
         window.refresh()
+
         time_to_sleep = (1. / FPS) - delta
         if time_to_sleep > 0.:
             curses.delay_output(int(time_to_sleep * 1000))
