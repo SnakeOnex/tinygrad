@@ -7,10 +7,14 @@ from pycandb.can_interface import CanInterface
 from tvojemama.logger import Logger
 
 from missions.acceleration import Acceleration
+from missions.ebs_test import EBSTest
+from missions.manual import Manual
 from missions.trackdrive import Trackdrive
 from missions.skidpad import Skidpad
 from missions.autocross import Autocross
 from missions.inspection import Inspection
+from missions.disco import Disco
+from missions.donuts import Donuts
 
 from nodes.asm import ASM, AS
 from config import can_config, tcp_config
@@ -42,7 +46,11 @@ class MissionNode(mp.Process):
         MissionValue.Skidpad: Skidpad,
         MissionValue.Autocross: Autocross,
         MissionValue.Trackdrive: Trackdrive,
+        MissionValue.EBS_Test: EBSTest,
         MissionValue.Inspection: Inspection,
+        MissionValue.Manual: Manual,
+        MissionValue.Disco: Disco,
+        MissionValue.Donuts: Donuts
     }
 
     def __init__(self, main_log_folder, mode="RACE"):
@@ -170,12 +178,13 @@ class MissionNode(mp.Process):
             else:
                 self.mission_num = update_subscription_data(self.mission_socket, self.mission_num)
 
-                if self.mission_num != MissionValue.NoValue and self.start_button == 1 and self.mission == None:
+                if self.mission_num != MissionValue.NoValue:
                     self.mission = MissionNode.Missions[self.mission_num]()
                     print(f"mission: {MissionValue(self.mission_num).name}")
 
             # 3. send XVR_STATUS
-            publish_data(self.ksicht_status_socket, (self.ASM.AS.value, 0))
+
+            publish_data(self.ksicht_status_socket, (self.ASM.AS.value, self.mission_num))
             self.logger.log("FRAME", {"finished": self.finished, "mission_kwargs": self.get_mission_kwargs(), "mission_log": self.mission_log})
 
             end_time = time.perf_counter()

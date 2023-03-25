@@ -33,7 +33,7 @@ class Inspection():
             self.finished = True
         else:
             # else compute the steering angle
-            steering_state = time_since_start * ((2 * np.pi) / self.inspection_duration)
+            steering_state = time_since_start * (2 * (2 * np.pi) / self.inspection_duration)
             self.steering_angle = np.sin(steering_state) * self.max_steering_angle
 
         debug_dict = {
