@@ -23,8 +23,8 @@ MSG_FROM_BROS = {
 MSG_TO_BROS_CAN1 = {
     "MCR_ActualValues_A": CAN1NodeMsgPorts.WHEEL_SPEED,
     "SA_SteeringAngle": CAN1NodeMsgPorts.STEERING_ANGLE,
-    "DSH_Status-MISSION": CAN1NodeMsgPorts.MISSION,
-    "DSH_Status-START_BUTTON": CAN1NodeMsgPorts.START_BUTTON
+    "DSH_Status - MISSION": CAN1NodeMsgPorts.MISSION,
+    "DSH_Status - START_BUTTON": CAN1NodeMsgPorts.START_BUTTON
 }
 
 MSG_TO_BROS_CAN2 = {
@@ -46,7 +46,7 @@ def update_data_dict(dest_dict, socket_dict):
     for data_field, socket in socket_dict.items():
         updated_data = get_last_subscription_data(socket)
         if updated_data != None:
-            dest_dict[data_field] = np.array2string(np.array(updated_data), precision=3, suppress_small=False)
+            dest_dict[data_field] = np.array2string(np.array(updated_data), precision=3, suppress_small=False, floatmode="fixed", sign=" ")
 
 
 def data_dict_to_str(data_dict):
@@ -74,6 +74,7 @@ def loop(window: curses.window):
 
     while True:
         start = time.perf_counter()
+
         update_data_dict(data_sent, sender_sockets)
         update_data_dict(data_recvd_can1, recv_sockets_can1)
         update_data_dict(data_recvd_can2, recv_sockets_can2)
@@ -84,8 +85,8 @@ def loop(window: curses.window):
             window.addstr(3, 5, data_dict_to_str(data_sent))
             window.addstr(11, 5, "Receiving on CAN1:\n", curses.color_pair(2))
             window.addstr(12, 5, data_dict_to_str(data_recvd_can1))
-            window.addstr(19, 5, "Receiving on CAN2:\n", curses.color_pair(2))
-            window.addstr(20, 5, data_dict_to_str(data_recvd_can2))
+            window.addstr(21, 5, "Receiving on CAN2:\n", curses.color_pair(2))
+            window.addstr(22, 5, data_dict_to_str(data_recvd_can2))
 
         except Exception as e:
 
