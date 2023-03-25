@@ -132,7 +132,7 @@ vision_node_config = {
     "path_planner_opt": path_planner_opt,
     "log_name": "vision",
     "log_folder_name": "AS",
-    "simulation_mode": True,
+    "simulation_mode": False,
     "simulate_images": False
 }
 
