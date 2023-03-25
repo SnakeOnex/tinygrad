@@ -31,8 +31,8 @@ MSG_TO_BROS_CAN1 = {
 
 MSG_TO_BROS_CAN2 = {
     "RES_Status": CAN2NodeMsgPorts.GO_SIGNAL,
-    "INS_D_EKF_EULER": CAN2NodeMsgPorts.POSITION,
-    "INS_D_EKF_POS": CAN2NodeMsgPorts.EULER,
+    "INS_D_EKF_EULER": CAN2NodeMsgPorts.EULER,
+    "INS_D_EKF_POS": CAN2NodeMsgPorts.POSITION,
     "INS_D_EKF_VEL_BODY": CAN2NodeMsgPorts.ACCELERATION
 }
 

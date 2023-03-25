@@ -10,6 +10,7 @@ sys.path.append('.')
 from dv_sim.sim.simulation import Simulation, MissionValue
 from nodes.asm import AS
 from master import main
+from config import inspection_config
 
 
 class TestInspection(unittest.TestCase):
@@ -55,7 +56,7 @@ class TestInspection(unittest.TestCase):
                 self.sim.go_signal()
 
             # after max seconds end and return TRUE
-            if time_since_start >= 36.:
+            if time_since_start >= inspection_config["duration"] + 6.:
                 test_outcome = False
                 break
 

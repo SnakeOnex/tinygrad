@@ -41,8 +41,7 @@ class Inspection():
             "time_since_start": time_since_start,
             "completed %": (time_since_start / self.inspection_duration) * 100,
             "speed_setpoint": self.speed_set_point,
-            "steering_angle": self.steering_angle,
-            "steering angular velocity (rad/s)": np.cos(steering_state) * self.max_steering_angle
+            "steering_angle": self.steering_angle
         }
 
         return self.finished, self.steering_angle, self.speed_set_point, debug_dict, np.array([[0, 0]]), np.array([[0, 0]])
