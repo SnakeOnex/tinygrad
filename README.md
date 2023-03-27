@@ -19,7 +19,6 @@ Better Robot Operating System. This repository contains the autonomous system, w
 ``` 
 git clone git@eforce1.feld.cvut.cz:eforce-driveless/bros.git &&
 cd bros &&
-git submodule update --init --recursive
 ./install.sh
 ```
 
@@ -36,6 +35,7 @@ cd dv_sim && python run_simulation.py --gui --manual --map maps/skidpad_map.json
 
 **Run tests:**
 ```
+./dv_sim/setup_can.sh  # sets up virtual can buses
 python -m pytest
 ```
 
