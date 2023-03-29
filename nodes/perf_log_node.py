@@ -7,22 +7,22 @@ from tvojemama.computer_status import get_cpu_info, get_memory_info, get_ssd_inf
 
 
 class PerfLogNode(mp.Process):
-    def __init__(self, main_log_folder, frequency=10):
+    def __init__(self, main_log_folder, process_pids, frequency=10):
         mp.Process.__init__(self)
         self.frequency = frequency
         self.main_log_folder = main_log_folder
+        self.process_pids = process_pids
 
         # END OF PERFLOGGER SETUP
 
     def log_computer_state(self):
-        # TODO implement process info for vision, slam, lidar, mission node
 
         log_frame_msg = {
             "cpu_info": get_cpu_info(),
             "mem_info": get_memory_info(),
             "ssd_info": get_ssd_info(),
             "gpu_info": get_gpu_info() if self.log_gpu else "NO GPU ON SYSTEM",
-            # TODO "processses_info": processes_info,
+            "process_stats": get_process_info(self.process_pids, self.log_gpu)
         }
         self.logger.log("LOG_NODE_FRAME", log_frame_msg)
 

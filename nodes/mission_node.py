@@ -22,7 +22,7 @@ from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts, Missi
 from config import mission_opt as config
 
 from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, publish_data
-# from algorithms.general import get_earth_radius_at_pos, lat_lon_to_meter_x_y
+from algorithms.unit_conversions import get_earth_radius_at_pos, lat_lon_to_meter_x_y
 
 
 class MissionValue(IntEnum):
@@ -124,15 +124,19 @@ class MissionNode(mp.Process):
         self.percep_data = update_subscription_data(self.cone_preds_socket, self.percep_data)
         self.wheel_speed = update_subscription_data(self.wheel_speed_socket, self.wheel_speed)
         self.steering_angle = update_subscription_data(self.steering_angle_socket, self.steering_angle)
-        self.position = update_subscription_data(self.position_socket, self.position)
         self.acceleration = update_subscription_data(self.acceleration_socket, self.acceleration)
         self.euler = update_subscription_data(self.euler_socket, self.euler)
 
-        # if self.mode == "RACE":
-        #    if not self.start_pos.any():
-        #        self.earth_radius = get_earth_radius_at_pos(self.position[0])
-        #        self.start_pos = np.array(self.position, dtype=np.float64)
-        #    self.position = lat_lon_to_meter_x_y(np.array(self.position, dtype=np.float64), self.earth_radius, self.start_pos)
+        current_position = update_subscription_data(self.position_socket, self.position)
+
+        # Convert geographical lat, lon to planar x,y in meters
+        if self.mode == "RACE" and current_position != None:
+            if not self.start_pos.any():
+                self.earth_radius = get_earth_radius_at_pos(current_position[0])
+                self.start_pos = np.array(current_position, dtype=np.float64)
+            self.position = lat_lon_to_meter_x_y(np.array(current_position, dtype=np.float64), self.earth_radius, self.start_pos)
+        else:
+            self.position = current_position
 
     def run(self):
         self.initialize()

@@ -44,13 +44,9 @@ def main(mode="RACE"):
 
     # ASM
 
-    # LOG
-    # perf_log_node = PerfLogNode(main_log_folder=main_log_folder)
-
     # 2. start the processes
     vision_node.start()
     print("VISION NODE STARTED")
-    # time.sleep(4)
     can1_node.start()
     print("CAN1 NODE STARTED")
     can2_node.start()
@@ -59,8 +55,20 @@ def main(mode="RACE"):
     print("MISSION NODE STARTED")
     can_sender_node.start()
     print("CAN SENDER NODE STARTED")
-    # perf_log_node.start()
-    # print("PERF LOG NODE STARTED")
+
+    # START LOGGER NODE WITH GIVEN PIDS TO MONITOR ALL BROS PROCESSES
+
+    process_pids = {
+        str(vision_node.pid): 'VISION NODE',
+        str(can1_node.pid): 'CAN1 NODE',
+        str(can2_node.pid): 'CAN2 NODE',
+        str(mission_node.pid): 'MISSION NODE',
+        str(can_sender_node.pid): 'CAN SENDER'
+    }
+    
+    perf_log_node = PerfLogNode(main_log_folder=main_log_folder, process_pids=process_pids)
+    perf_log_node.start()
+    print("PERF LOG NODE STARTED")
     time.sleep(1)
 
     def handler(sig, frame):
@@ -69,7 +77,7 @@ def main(mode="RACE"):
         can2_node.terminate()
         mission_node.terminate()
         can_sender_node.terminate()
-        # perf_log_node.terminate()
+        perf_log_node.terminate()
         print("BROS: TERMINATED ALL CHILD PROCESSES")
         sys.exit(0)
 

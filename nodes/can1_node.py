@@ -8,6 +8,7 @@ from internode_communication import create_publisher_socket, publish_data
 from config import CAN1NodeMsgPorts
 from config import can1_config as config
 
+
 class Can1Node(mp.Process):
     def __init__(self, main_log_folder):
         mp.Process.__init__(self)
