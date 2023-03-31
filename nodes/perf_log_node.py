@@ -3,7 +3,7 @@ import subprocess
 from config import perf_logger_config as log_opt
 import time
 from tvojemama.logger import Logger
-from tvojemama.computer_status import get_cpu_info, get_memory_info, get_ssd_info, get_process_info, get_gpu_info
+from tvojemama.computer_status import *
 
 
 class PerfLogNode(mp.Process):
@@ -12,6 +12,7 @@ class PerfLogNode(mp.Process):
         self.frequency = frequency
         self.main_log_folder = main_log_folder
         self.process_pids = process_pids
+        self.gpu_pids = {key: value for key, value in process_pids.items() if value in log_opt["gpu_processes"]}
 
         # END OF PERFLOGGER SETUP
 
@@ -22,8 +23,10 @@ class PerfLogNode(mp.Process):
             "mem_info": get_memory_info(),
             "ssd_info": get_ssd_info(),
             "gpu_info": get_gpu_info() if self.log_gpu else "NO GPU ON SYSTEM",
-            "process_stats": get_process_info(self.process_pids, self.log_gpu)
+            "process_stats": get_cpu_mem_process_info(self.process_pids),
+            "gpu_process_stats": get_gpu_process_info() if self.log_gpu else "NO GPU ON SYSTEM"
         }
+
         self.logger.log("LOG_NODE_FRAME", log_frame_msg)
 
     def initialize(self):
@@ -42,6 +45,9 @@ class PerfLogNode(mp.Process):
         except Exception:
             print("NO GPU DETECTED ON SYSTEM")
             self.log_gpu = False
+
+        # Add self to the tracked processes
+        self.process_pids[str(self.pid)] = "PERF_LOGGER_NODE"
 
     def run(self):
         self.initialize()

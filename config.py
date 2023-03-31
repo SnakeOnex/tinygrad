@@ -143,6 +143,11 @@ vision_node_config = {
 perf_logger_config = {
     "log_name": "computer_status",
     "log_folder_name": "AS",
+    "gpu_processes": [
+        "SLAM_NODE",
+        "VISION_NODE",
+        "LIDAR_NODE"
+    ]
 }
 
 ###########################

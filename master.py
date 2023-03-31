@@ -57,15 +57,14 @@ def main(mode="RACE"):
     print("CAN SENDER NODE STARTED")
 
     # START LOGGER NODE WITH GIVEN PIDS TO MONITOR ALL BROS PROCESSES
-
     process_pids = {
-        str(vision_node.pid): 'VISION NODE',
-        str(can1_node.pid): 'CAN1 NODE',
-        str(can2_node.pid): 'CAN2 NODE',
-        str(mission_node.pid): 'MISSION NODE',
-        str(can_sender_node.pid): 'CAN SENDER'
+        str(vision_node.pid): 'VISION_NODE',
+        str(can1_node.pid): 'CAN1_NODE',
+        str(can2_node.pid): 'CAN2_NODE',
+        str(mission_node.pid): 'MISSION_NODE',
+        str(can_sender_node.pid): 'CAN_SENDER'
     }
-    
+
     perf_log_node = PerfLogNode(main_log_folder=main_log_folder, process_pids=process_pids)
     perf_log_node.start()
     print("PERF LOG NODE STARTED")
@@ -88,8 +87,6 @@ def main(mode="RACE"):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--brosbag_folder', type=str, default=None)
-    parser.add_argument('--tcp', type=bool, default=False)
     parser.add_argument('--mode', type=str, default="RACE")
     args = parser.parse_args()
 
