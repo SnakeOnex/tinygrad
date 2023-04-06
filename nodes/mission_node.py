@@ -135,7 +135,7 @@ class MissionNode(mp.Process):
                 self.earth_radius = get_earth_radius_at_pos(current_position[0])
                 self.start_pos = np.array(current_position, dtype=np.float64)
             self.position = lat_lon_to_meter_x_y(np.array(current_position, dtype=np.float64), self.earth_radius, self.start_pos)
-        else:
+        elif self.mode == "SIM":
             self.position = current_position
 
     def run(self):

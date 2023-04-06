@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def get_earth_radius_at_pos(lat: np.float64, sea_level: np.float64 = 0.0, ) -> np.float64:
+def get_earth_radius_at_pos(lat, sea_level=0.0):
     """
     Calculate the earth radius at the current origin given by latitude
 
@@ -19,7 +19,7 @@ def get_earth_radius_at_pos(lat: np.float64, sea_level: np.float64 = 0.0, ) -> n
     return base_radius + sea_level
 
 
-def lat_lon_to_meter_x_y(lat_lon_arr: np.ndarray[np.float64, np.float64], earth_radius: np.float64, lat_lon_origin: np.ndarray[np.float64, np.float64]) -> np.ndarray[np.float64, np.float64]:
+def lat_lon_to_meter_x_y(lat_lon_arr, earth_radius, lat_lon_origin):
     """
     Converts the current position in degrees to position in meters based on origin array and earth radius at origin
     Args:

@@ -24,7 +24,7 @@ class PerfLogNode(mp.Process):
             "ssd_info": get_ssd_info(),
             "gpu_info": get_gpu_info() if self.log_gpu else "NO GPU ON SYSTEM",
             "process_stats": get_cpu_mem_process_info(self.process_pids),
-            "gpu_process_stats": get_gpu_process_info() if self.log_gpu else "NO GPU ON SYSTEM"
+            "gpu_process_stats": get_gpu_process_info(self.gpu_pids) if self.log_gpu else "NO GPU ON SYSTEM"
         }
 
         self.logger.log("LOG_NODE_FRAME", log_frame_msg)

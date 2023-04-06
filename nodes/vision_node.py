@@ -6,6 +6,11 @@ import sys
 import zmq
 import pickle
 
+try:
+    import pyzed.sl as sl
+except:
+    print("No ZED SDK")
+
 from cones.cone_detector import ConeDetector
 from cones.cone_localizer import ConeLocalizer
 from tvojemama.logger import Logger, LogReader, name_to_log
@@ -26,7 +31,6 @@ class VisionNode(mp.Process):
         print("INITTING")
         # zed setup or brosbag setup
         if self.mode == "RACE":
-            import pyzed.sl as sl
             self.zed = sl.Camera()
             init_params = sl.InitParameters()
             init_params.camera_resolution = sl.RESOLUTION.HD720
