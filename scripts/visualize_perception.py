@@ -52,7 +52,7 @@ def main():
                 bbox_preds = bbox_preds.cpu().detach().numpy()
 
                 if show_bboxes:
-                    draw_bboxes_from_preds(image, bbox_preds)
+                    image = draw_bboxes_from_preds(image, bbox_preds)
 
                 if draw_path:
                     world_preds = localizer.project_bboxes(bbox_preds)
