@@ -54,7 +54,6 @@ class VisionNode(mp.Process):
             if self.mode == "RACE":
                 image = self.read_zed_image()
 
-            print(image)
             bbox_preds = self.detector.process_image(image)
 
             if bbox_preds is not None:
