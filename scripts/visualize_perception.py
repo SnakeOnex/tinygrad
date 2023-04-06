@@ -20,10 +20,12 @@ from config import cone_localizer_opt
 from config import path_planner_opt
 
 
-def main(args):
+def main():
     cv2.namedWindow("Perception")
     show_bboxes = False
     draw_path = False
+    views = [sl.VIEW.LEFT, sl.VIEW.RIGHT]
+    view = 0
     # init zed
     zed = sl.Camera()
     init_params = sl.InitParameters()
@@ -41,7 +43,7 @@ def main(args):
 
     while True:
         if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
-            zed.retrieve_image(zed_image, sl.VIEW.LEFT)
+            zed.retrieve_image(zed_image, views[view])
             image = zed_image.get_data()
 
             bbox_preds = detector.process_image(image)
@@ -57,7 +59,7 @@ def main(args):
                     path = path_planner.find_path(world_preds)
                     path_image = homography_reject(cone_localizer_opt["hom_mat"], path)
                     for i in range(path_image.shape[0] - 1):
-                        image = cv2.line(image, tuple(path_image[i].astype(int)), tuple(path_image[i + 1].astype(int)), (255, 0, 0), 4)
+                        image = cv2.line(image, tuple(path_image[i].astype(int)), tuple(path_image[i + 1].astype(int)), (0, 255, 0), 4)
 
             cv2.imshow('Perception', image)
             key = cv2.waitKey(5)
@@ -67,9 +69,11 @@ def main(args):
                 show_bboxes = not show_bboxes
             elif key == ord("p"):
                 draw_path = not draw_path
-
+            elif key == ord("l"):
+                view = 0
+            elif key == ord("r"):
+                view = 1
     cv2.destroyAllWindows()
-
     zed.close()
 
 
