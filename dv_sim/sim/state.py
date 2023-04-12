@@ -1,7 +1,8 @@
 import numpy as np
 import json
 from enum import IntEnum
-
+from scipy.integrate import odeint
+from .physics_models import kinematic_model
 from .math_helpers import angle_to_vector, global_to_local, rotate_around_point, filter_occluded_cones
 # from cones.geometry_functions import filter_occluded_cones
 
@@ -19,8 +20,8 @@ class State():
 
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
-        self.steering_speed = 110. # degrees per second
-        self.max_steering_angle = 60. # max and min steering angle
+        self.steering_speed = 300. # degrees per second
+        self.max_steering_angle = 25. # max and min steering angle
 
         self.max_engine_force = 3000. # nm
         self.max_brake_force = 400. # nm
@@ -72,28 +73,22 @@ class State():
         F_drag = -self.drag_coef * self.speed**2 # air resistance
         F_rr = -self.rr_coef * self.speed # rolling resistance
         F_long = F_traction + F_drag + F_rr # longitudinal force
-        self.car_pos -= self.rotation_vector
+        
         acc = F_long / self.mass # acceleration
-        self.speed += acc * timedelta
 
-        ## LATERAL
-        turn_radius = self.wheel_base / np.sin(np.deg2rad(self.steering_angle))
-        rotation = self.speed / (turn_radius * 2.6) # "seems better with * 3."
-        self.heading += timedelta * np.rad2deg(rotation)
-        # self.rotation_vector = rotate_around_point(self.heading,(0,0),(-self.wheel_base,0))
-        # TODO: get the rotate_around_point function back in
+        self.speed += acc * timedelta
+        states = [self.car_pos[0],self.car_pos[1],np.deg2rad(self.heading)]
+        tspan = [0.0,timedelta]
+        out = odeint(kinematic_model,states,tspan,args=(self.speed,np.deg2rad(self.steering_angle)))
+
+        self.car_pos[0] = out[1][0]
+        self.car_pos[1] = out[1][1]
+        self.heading = np.rad2deg(out[1][2])
 
         if self.heading >= 360.:
             self.heading -= 360
         if self.heading < 0.:
             self.heading += 360
-
-        heading_vec = angle_to_vector(self.heading)
-        self.velocity = heading_vec * self.speed
-        # print(self.velocity)
-        # print(np.linalg.norm(self.velocity))
-        # self.car_pos += self.rotation_vector
-        self.car_pos += timedelta * self.velocity
 
     def handle_controls(self, timedelta):
         if self.steering_control == "LEFT":
@@ -108,9 +103,9 @@ class State():
                 self.steering_angle = -self.max_steering_angle
 
         elif self.steering_control == "NEUTRAL":
-            if self.steering_angle > 0.15:
+            if self.steering_angle - timedelta * self.steering_speed > 0.001:
                 self.steering_angle -= timedelta * self.steering_speed
-            elif self.steering_angle < -0.15 :
+            elif self.steering_angle + timedelta * self.steering_speed < -0.001 :
                 self.steering_angle += timedelta * self.steering_speed
             else:
                 self.steering_angle = 0
