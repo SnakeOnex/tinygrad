@@ -12,4 +12,9 @@ if __name__ == '__main__':
 
     for log_folder in bros_data_path.iterdir():
         AS_folder = Path(log_folder) / Path("AS")
-        log_to_chart(AS_folder, show=False)
+
+        try:
+            log_to_chart(AS_folder, show=False)
+        except e:
+            print("log error")
+            print(e)
