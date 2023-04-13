@@ -2,7 +2,7 @@ import numpy as np
 import json
 from enum import IntEnum
 from scipy.integrate import odeint
-from .physics_models import kinematic_model
+from .physics_models import kinematic_model, single_track_model
 from .math_helpers import angle_to_vector, global_to_local, rotate_around_point, filter_occluded_cones
 # from cones.geometry_functions import filter_occluded_cones
 
@@ -16,6 +16,11 @@ class AS(IntEnum):
 class State():
     def __init__(self, mission, map_filepath):
 
+        self.heading = None
+        self.dotPsi = None
+        self.dRhoF = None
+        self.dRhoR = None
+        self.beta = None
         self.manual = False
 
         ## CAR PARAMS
@@ -76,14 +81,32 @@ class State():
         
         acc = F_long / self.mass # acceleration
 
-        self.speed += acc * timedelta
-        states = [self.car_pos[0],self.car_pos[1],np.deg2rad(self.heading)]
-        tspan = [0.0,timedelta]
-        out = odeint(kinematic_model,states,tspan,args=(self.speed,np.deg2rad(self.steering_angle)))
+        if self.speed < 1:
+            self.speed += acc * timedelta
+            states = [self.car_pos[0],self.car_pos[1],np.deg2rad(self.heading)]
+            tspan = [0.0,timedelta]
+            out = odeint(kinematic_model,states,tspan,args=(self.speed,np.deg2rad(self.steering_angle)))
+            self.car_pos[0] = out[1][0]
+            self.car_pos[1] = out[1][1]
+            self.heading = np.rad2deg(out[1][2])
+        else:
+            z0 = [self.speed, self.beta, self.dRhoR, self.dRhoF, self.dotPsi, np.deg2rad(self.heading),
+                  self.car_pos[0], self.car_pos[1]]
+            tspan = [0.0, timedelta]
 
-        self.car_pos[0] = out[1][0]
-        self.car_pos[1] = out[1][1]
-        self.heading = np.rad2deg(out[1][2])
+            z = odeint(single_track_model, z0, tspan, args=(np.deg2rad(self.steering_angle), self.tauF, self.tauR))
+
+            self.velocity = z[1][0]
+            self.beta = z[1][1]
+            self.dRhoR = z[1][2]
+            self.dRhoF = z[1][3]
+            self.dotPsi = z[1][4]
+            self.heading = np.rad2deg(z[1][5])
+            x = z[1][6]
+            y = z[1][7]
+            self.car_pos = np.array([x, y])
+
+
 
         if self.heading >= 360.:
             self.heading -= 360
@@ -113,9 +136,12 @@ class State():
         # print(self.traction_control)
         if self.traction_control == "FORWARD":
             self.engine_force = self.max_engine_force
+            self.tauF = 10
+            self.tauR = 10
         elif self.traction_control == "BRAKE":
             self.engine_force = -self.max_brake_force
-
+            self.tauF = -10
+            self.tauR = -10
             if self.speed <= 0.1:
                 self.speed = 0.
                 self.engine_force = 0.
