@@ -16,13 +16,12 @@ class AS(IntEnum):
 class State():
     def __init__(self, mission, map_filepath):
 
-        self.heading = None
-        self.dotPsi = None
-        self.dRhoF = None
-        self.dRhoR = None
-        self.beta = None
+        self.dotPsi = 0.0
+        self.dRhoF = 0.0
+        self.dRhoR = 0.0
+        self.beta = 0.0
         self.manual = False
-
+        self.heading = 0.0
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
         self.steering_speed = 300. # degrees per second
@@ -43,7 +42,7 @@ class State():
         self.go_signal = 0
         self.emergency_signal = 0
         self.AS = AS.OFF
-
+        self.model_switched = False
         self.speed_set_point = 0.
         self.steering_angle_set_point = 0.
         self.velocity = np.array([0., 0.])
@@ -81,7 +80,7 @@ class State():
         
         acc = F_long / self.mass # acceleration
 
-        if self.speed < 1:
+        if self.speed < 5:
             self.speed += acc * timedelta
             states = [self.car_pos[0],self.car_pos[1],np.deg2rad(self.heading)]
             tspan = [0.0,timedelta]
@@ -89,14 +88,18 @@ class State():
             self.car_pos[0] = out[1][0]
             self.car_pos[1] = out[1][1]
             self.heading = np.rad2deg(out[1][2])
+            self.model_switched = True
         else:
+            if self.model_switched:
+                self.dRhoF = self.speed*0.2
+                self.dRhoR = self.speed*0.2
+                self.model_switched = False
             z0 = [self.speed, self.beta, self.dRhoR, self.dRhoF, self.dotPsi, np.deg2rad(self.heading),
                   self.car_pos[0], self.car_pos[1]]
             tspan = [0.0, timedelta]
-
+            #print(self.tauF,self.tauR)
             z = odeint(single_track_model, z0, tspan, args=(np.deg2rad(self.steering_angle), self.tauF, self.tauR))
-
-            self.velocity = z[1][0]
+            self.speed = z[1][0]
             self.beta = z[1][1]
             self.dRhoR = z[1][2]
             self.dRhoF = z[1][3]
