@@ -47,11 +47,11 @@ def single_track_model(z, t, u1, u2, u3):
     Jr = 0.019
     Jf = 0.019
     Iz = 100
-    D = 1.4*2
-    B = 0.184/2
-    C = 1.45/2
-    E = -0.3*2
-    Dx = 1.0*2
+    D = 1.4
+    B = 0.184
+    C = 1.45
+    E = -0.3
+    Dx = 1.0
     Bx = 4
     Cx = 1.4
     Ex = 0.1
@@ -170,14 +170,10 @@ def single_track_model(z, t, u1, u2, u3):
     tauR = (u3) * 13.23
     ddRhoF = 0.0
     ddRhoR = 0.0
-    if tauR > 0:
-        ddRhoR = (tauR - Rr * Fxr - 5 * v) / Jr
-    elif tauR < 0:
-        ddRhoR = (-Rr * Fxr - 5 * v - np.sign(dRhoR) * tauR) / Jr
-    if tauF > 0:
-        ddRhoF = (tauF - Rf * Fxf - 5 * v) / Jf
-    elif tauF < 0:
-        ddRhoF = (-Rf * Fxf - 5 * v - np.sign(dRhoF) * tauF) / Jf
+    ddRhoR = (tauR -Rr * Fxr - 5 * v) / Jr
+    ddRhoF = (tauF - Rf * Fxf - 5 * v) / Jf
+
+    
     dzdt = [dv, dbeta, ddRhoR, ddRhoF, ddotPsi, dotPsi, v_glob_x, v_glob_y]
 
     return dzdt

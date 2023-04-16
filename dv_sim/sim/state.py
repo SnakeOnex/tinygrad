@@ -80,7 +80,7 @@ class State():
         
         acc = F_long / self.mass # acceleration
 
-        if self.speed < 5:
+        if self.speed < 0.5:
             self.speed += acc * timedelta
             states = [self.car_pos[0],self.car_pos[1],np.deg2rad(self.heading)]
             tspan = [0.0,timedelta]
@@ -91,8 +91,8 @@ class State():
             self.model_switched = True
         else:
             if self.model_switched:
-                self.dRhoF = self.speed*0.2
-                self.dRhoR = self.speed*0.2
+                self.dRhoF = self.speed/0.2
+                self.dRhoR = self.speed/0.2
                 self.model_switched = False
             z0 = [self.speed, self.beta, self.dRhoR, self.dRhoF, self.dotPsi, np.deg2rad(self.heading),
                   self.car_pos[0], self.car_pos[1]]
@@ -151,7 +151,8 @@ class State():
 
         elif self.traction_control == "NEUTRAL":
             self.engine_force = 0.
-
+            self.tauF = 0
+            self.tauR = 0
         self.steering_control = "NEUTRAL"
         self.traction_control = "NEUTRAL"
 

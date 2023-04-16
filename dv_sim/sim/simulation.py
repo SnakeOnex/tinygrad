@@ -127,6 +127,7 @@ class Simulation():
         # CAN2 messages
         for msg_name, callback_fn in can2_send_callbacks.items():
             values = callback_fn(self.state)
+
             self.CAN2.send_can_msg(values, self.CAN2.name2id[msg_name])
 
         # 5. receive CAN1 messages
