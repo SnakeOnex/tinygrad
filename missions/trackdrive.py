@@ -9,6 +9,7 @@ from config import path_planner_opt
 from algorithms.steering import stanley_steering
 from algorithms.path_planning import PathPlanner
 from algorithms.general import get_big_orange_distance
+from algorithms.speed_profile import SpeedProfile
 
 
 class Trackdrive():
@@ -22,7 +23,9 @@ class Trackdrive():
         self.linear_gain = 2.05
         self.nonlinear_gain = 1.5
         self.path_planner = PathPlanner(path_planner_opt)
+        self.speed_profile = SpeedProfile()
 
+        self.use_speed_profile = True
         self.speed_set_point = 6.
 
         # mission planning variables
@@ -59,6 +62,10 @@ class Trackdrive():
 
         # 1. receive perception data
         path = self.path_planner.find_path(percep_data)
+
+        # Speed profile
+        if self.speed_profile and len(path) > 2:
+            self.speed_set_point, speed_arr = self.speed_profile.compute_speed(path, init_speed=wheel_speed)
 
         # 2. planning
         # if have been driving for more than 3 seconds since passing start/finish, start looking for it again
