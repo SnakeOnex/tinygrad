@@ -7,10 +7,11 @@ import multiprocessing as mp
 from config import path_planner_opt
 
 from algorithms.steering import stanley_steering
-from algorithms.path_planning import PathPlanner
+from algorithms.old_path_planning import OldPathPlanner
 from algorithms.general import get_big_orange_distance
-from algorithms.speed_profile import SpeedProfile
 
+from algorithms.speed_profile import SpeedProfile
+from algorithms.path_planning import PathPlanner    
 
 class Trackdrive():
     ID = "Trackdrive"
@@ -22,10 +23,13 @@ class Trackdrive():
         self.lookahead_dist = 3.3
         self.linear_gain = 2.05
         self.nonlinear_gain = 1.5
-        self.path_planner = PathPlanner(path_planner_opt)
+        self.old_path_planner = OldPathPlanner(path_planner_opt)
+
+        self.path_planner = PathPlanner()
         self.speed_profile = SpeedProfile()
 
         self.use_speed_profile = True
+        self.use_new_path_planning = True
         self.speed_set_point = 6.
 
         # mission planning variables
@@ -36,7 +40,7 @@ class Trackdrive():
         self.finish_time = float('inf')
         self.stopped_time = None
 
-        self.laps_to_drive = 1
+        self.laps_to_drive = 2
         self.laps_driven = 0
 
     def loop(self, **kwargs):
@@ -61,11 +65,18 @@ class Trackdrive():
         time_since_last_lap = time_since_start - self.last_lap_time
 
         # 1. receive perception data
-        path = self.path_planner.find_path(percep_data)
+        if self.use_new_path_planning:
+            path = self.path_planner.find_path([percep_data])
+        else:
+            path = self.old_path_planner.find_path(percep_data)
+
 
         # Speed profile
-        if self.speed_profile and len(path) > 2:
+        if self.use_speed_profile and len(path) > 2:
             self.speed_set_point, speed_arr = self.speed_profile.compute_speed(path, init_speed=wheel_speed)
+        
+        # print("Set speed from speed profile:", self.speed_set_point)
+        # print("Wheel speed 1:", wheel_speed)
 
         # 2. planning
         # if have been driving for more than 3 seconds since passing start/finish, start looking for it again

@@ -180,8 +180,8 @@ class SpeedProfile():
 
         my_speed_profile = my_speed_profile.numpy()
 
-        # ret_speed = my_speed_profile[1] if len(my_speed_profile) > 1 else SAFE_SPEED ### 
-        ret_speed = np.max(my_speed_profile) # quite aggressive?
+        ret_speed = my_speed_profile[1] if len(my_speed_profile) > 1 else SAFE_SPEED ### 
+        # ret_speed = np.max(my_speed_profile) # quite aggressive?
 
 
         if math.isnan(ret_speed):
