@@ -19,7 +19,7 @@ from nodes.can1_node import Can1Node
 from nodes.can2_node import Can2Node
 from nodes.mission_node import MissionNode
 from nodes.can_sender_node import CanSenderNode
-# from nodes.perf_log_node import PerfLogNode
+from nodes.perf_log_node import PerfLogNode
 
 
 def main(mode="RACE"):
