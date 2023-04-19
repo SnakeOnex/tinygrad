@@ -35,7 +35,7 @@ class CAN1NodeMsgPorts(IntEnum):
 class CAN2NodeMsgPorts(IntEnum):
     GO_SIGNAL = NodePorts.CAN2
     POSITION = auto()
-    ACCELERATION = auto()
+    VELOCITY = auto()
     EULER = auto()
 
 

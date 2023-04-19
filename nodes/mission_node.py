@@ -78,7 +78,7 @@ class MissionNode(mp.Process):
         self.go_signal = 0
         self.position = (None, None)
         self.euler = (None, None, None)
-        self.acceleration = (0., 0., 0.)
+        self.velocity = (0., 0., 0.)
         self.start_pos = np.zeros(shape=2)
         self.earth_radius = 0
 
@@ -101,7 +101,7 @@ class MissionNode(mp.Process):
         # CAN2 node message subscriptions
         self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
         self.position_socket = create_subscriber_socket(CAN2NodeMsgPorts.POSITION)
-        self.acceleration_socket = create_subscriber_socket(CAN2NodeMsgPorts.ACCELERATION)
+        self.velocity_socket = create_subscriber_socket(CAN2NodeMsgPorts.VELOCITY)
         self.euler_socket = create_subscriber_socket(CAN2NodeMsgPorts.EULER)
 
         # CAN sender node message publishers
@@ -115,7 +115,7 @@ class MissionNode(mp.Process):
             "wheel_speed": self.wheel_speed,
             "steering_angle": self.steering_angle,
             "position": np.array(self.position),
-            "acceleration": self.acceleration,
+            "velocity": self.velocity,
             "euler": np.array(self.euler)
         }
 
@@ -124,7 +124,8 @@ class MissionNode(mp.Process):
         self.percep_data = update_subscription_data(self.cone_preds_socket, self.percep_data)
         self.wheel_speed = update_subscription_data(self.wheel_speed_socket, self.wheel_speed)
         self.steering_angle = update_subscription_data(self.steering_angle_socket, self.steering_angle)
-        self.acceleration = update_subscription_data(self.acceleration_socket, self.acceleration)
+        self.position = update_subscription_data(self.position_socket, self.position)
+        self.velocity = update_subscription_data(self.velocity_socket, self.velocity)
         self.euler = update_subscription_data(self.euler_socket, self.euler)
 
         current_position = update_subscription_data(self.position_socket, self.position)

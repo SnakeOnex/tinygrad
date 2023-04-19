@@ -15,6 +15,5 @@ if __name__ == '__main__':
 
         try:
             log_to_chart(AS_folder, show=False)
-        except e:
+        except:
             print("log error")
-            print(e)
