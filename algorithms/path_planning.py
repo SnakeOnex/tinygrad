@@ -649,29 +649,23 @@ class PathPlanner():
         self.planner = None
 
 
-    
-    def find_path(self, args):
+    def find_path(self, cones):
         self.planner = PathPlanning()
 
-        # print(len(args))
-        # print(args)
-
-        if len(args) == 1:
-            cones = args[0]
+        if cones is None:
+            blue_cones = np.zeros((0,3))
+            yellow_cones = np.zeros((0,3))
+        else:
             yellow_cones = cones[cones[:, 2] == 0, :2]
             blue_cones = cones[cones[:, 2] == 1, :2]
             orange_cones = cones[cones[:, 2] == 3, :2]
-        elif len(args) == 2:
-            blue_cones, yellow_cones = args
-            orange_cones = []
-        else:
-            raise ValueError("Len (args) > 2")
 
-        # try:
-        path = self.planner.find_path(blue_cones, yellow_cones, O_cones=orange_cones)
-        path = self.planner.stanley_smooth_path(path)
-        # except:
-        #     path = np.array([[0., 0.]])
+        try:
+            path = self.planner.find_path(blue_cones, yellow_cones, O_cones=orange_cones)
+            path = self.planner.stanley_smooth_path(path)
+        except Exception as e:
+            print(f"path_planning {type(e)} occured: {e}")
+            path = np.array([[0., 0.]])
 
         return path
 

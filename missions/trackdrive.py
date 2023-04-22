@@ -66,7 +66,7 @@ class Trackdrive():
 
         # 1. receive perception data
         if self.use_new_path_planning:
-            path = self.path_planner.find_path([percep_data])
+            path = self.path_planner.find_path(percep_data)
         else:
             path = self.old_path_planner.find_path(percep_data)
 
