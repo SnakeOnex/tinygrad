@@ -24,7 +24,7 @@ class State():
         self.heading = 0.0
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
-        self.steering_speed = 300. # degrees per second
+        self.steering_speed = 90 # degrees per second
         self.max_steering_angle = 25. # max and min steering angle
 
         self.max_engine_force = 3000. # nm

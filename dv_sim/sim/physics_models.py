@@ -2,26 +2,19 @@ import numpy as np
 
 
 def kinematic_model(states, t, velocity, delta_f):
-    lf = 0.665 * 1.525
-    lr = (1 - 0.665) * 1.525
-    lenght = lf + lr
-
+    lf = 0.51 * 1.525
+    lr = (1 - 0.51) * 1.525
+    length = 1.525
     x = states[0]
     y = states[1]
     yaw = states[2]
-    # velocity = states[3]
-    # delta_f = states[4]
-    beta = np.arctan(lf * np.tan(delta_f) / lenght)
-    vc = velocity * (np.cos(delta_f) / np.cos(beta))
-    d_yaw = vc * (np.sin(delta_f) / (lenght))
-    dx = vc * np.cos(beta + yaw)
-    dy = vc * np.sin(beta + yaw)
-
-    vx = vc * np.cos(beta)
-    vy = vc * np.sin(beta)
-
+    beta = np.arctan(lr * np.tan(delta_f) / length)
+    d_yaw = velocity * (np.tan(delta_f) * np.cos(beta) / length)
+    dx = velocity * np.cos(beta + yaw)
+    dy = velocity * np.sin(beta + yaw)
     der = [dx, dy, d_yaw]
     return der
+
 
 def single_track_model(z, t, u1, u2, u3):
     mass = 200
@@ -170,12 +163,9 @@ def single_track_model(z, t, u1, u2, u3):
     tauR = (u3) * 13.23
     ddRhoF = 0.0
     ddRhoR = 0.0
-    ddRhoR = (tauR -Rr * Fxr - 5 * v) / Jr
+    ddRhoR = (tauR - Rr * Fxr - 5 * v) / Jr
     ddRhoF = (tauF - Rf * Fxf - 5 * v) / Jf
 
-    
     dzdt = [dv, dbeta, ddRhoR, ddRhoF, ddotPsi, dotPsi, v_glob_x, v_glob_y]
 
     return dzdt
-
-
