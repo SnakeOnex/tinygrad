@@ -55,9 +55,8 @@ class VisionNode(mp.Process):
             return
 
         while True:
-            if self.mode == "RACE":
-                image = self.read_zed_image()
 
+            image = self.read_zed_image()
             bbox_preds = self.detector.process_image(image)
 
             if bbox_preds is not None:
@@ -76,6 +75,7 @@ class VisionNode(mp.Process):
                 "cone_classes": cone_classes,
             }
             self.logger.log("CONE_DETECTOR_FRAME", data)
+            publish_data(self.cone_preds_socket, world_preds)
 
     def run_simulation(self):
         context = zmq.Context()

@@ -46,9 +46,9 @@ def publish_data(socket, data):
     socket.send(pickle.dumps(data))
 
 
-def get_last_subscription_data(socket):
+def get_last_subscription_data(socket, timeoutseconds=0.):
     data = None
-    while socket.poll(0.):
+    while socket.poll(timeoutseconds):
         data = socket.recv()
 
     if data is not None:
