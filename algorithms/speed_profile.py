@@ -151,7 +151,7 @@ class SpeedProfile():
             c = np.linalg.norm(destination - origin )
             
             q = (a ** 2 + b ** 2 - c ** 2) / (2 * a * b)
-            return (2 * np.sqrt(1 - q**2)) / c
+            return (2 * np.sqrt(max(0., 1 - q**2))) / c
         
         segment_curvature = torch.zeros((path.shape[0], ))
 
@@ -167,7 +167,7 @@ class SpeedProfile():
         #     curvature(path[i-1, :], path[i, :], path[(i+1) % path.shape[0], :]) for i in range( len(path) )
         # ])
 
-        return segment_curvature + 0.0001 # the 1/10000 hack which just might save my thesis
+        return segment_curvature + 0.001 # the 1/10000 hack which just might save my thesis
 
     def compute_speed(self, path, init_speed, const_speed=False):
         # print("Path: ", path)
@@ -228,10 +228,10 @@ class SpeedProfile():
                 return third_pass
             
             # constants figuring in friction ellipse
-            CAR_MU = 0.8
+            CAR_MU = 0.5
             GRAVITY = 9.8
-            MAX_ACCELERATION = 2    # TODO: ask for better values
-            MAX_BRAKING = 4       # this is actually F on the left side, F = m*a where m is the weight of car
+            MAX_ACCELERATION = 3    # TODO: ask for better values
+            MAX_BRAKING = 6       # this is actually F on the left side, F = m*a where m is the weight of car
 
             first  = first_pass()
             second = second_pass(first)

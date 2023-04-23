@@ -3,6 +3,70 @@ import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 from scipy.interpolate import splprep, splev
 
+# According to Stanley paper
+def stanley_smooth_path(path):
+
+    def normalize(v):
+        norm = np.linalg.norm(v,axis=0) + 0.00001
+        return v / norm.reshape(1, v.shape[1])
+
+    def curvature(waypoints):
+        '''
+        Curvature as  the sum of the normalized dot product between the way elements
+        Implement second term of the smoothing objective.
+
+        args: 
+            waypoints [2, num_waypoints] !!!!!
+        '''
+        shift_left  = np.roll(waypoints, shift=-1, axis=1)
+        shift_right = np.roll(waypoints, shift=1,  axis=1)
+
+        left_half   = normalize(shift_left - waypoints)
+        right_half  = normalize(waypoints  - shift_right)
+
+        segment     = np.array([np.dot(l, r) for l, r in zip(left_half.T, right_half.T)])
+
+        segment[0]  = 0 # right half of this connects first to last waypoint, delete
+        segment[-1] = 0 # left  half of this connects first to last waypoint, delete
+
+        return np.sum(segment)
+    
+    def smoothing_objective(waypoints, waypoints_center, weight_curvature=16): #weight_curvature=128
+        '''
+        Objective for path smoothing
+
+        args:
+            waypoints [2 * num_waypoints] !!!!!
+            waypoints_center [2 * num_waypoints] !!!!!
+            weight_curvature (default=40)
+        '''
+        waypoints = waypoints.reshape(-1, 2)
+        waypoints_center = waypoints_center.reshape(-1, 2)
+
+        # mean least square error between waypoint and way point center
+        ls_tocenter = np.sum(np.abs(waypoints_center - waypoints)**2)
+
+        # derive curvature
+        ls_curvature = curvature(waypoints.T)
+
+        boundary_penalty = 0 #boundary_func(waypoints)        
+
+        return ls_tocenter - weight_curvature * ls_curvature + boundary_penalty
+        # return ls_tocenter - weight_curvature * ls_curvature + boundary_penalty + np.linalg.norm(path[0,:] - waypoints[0, :])
+
+    opts = {"maxiter": 1, "disp": False}
+
+    add_more_points_to_path = False
+
+    way_points = minimize(smoothing_objective, (path), tol=0.5, args=path, options=opts)
+
+    way_points = way_points["x"]
+
+    smooth_path = way_points.reshape(-1, 2)
+    smooth_path[0] = [0., 0.]
+
+    return smooth_path
+
 
 class PathPlanning:
 
@@ -89,139 +153,6 @@ class PathPlanning:
     def calculate_center(self, pointB, pointY):
         return np.array([(pointB[0]-pointY[0])/2 + pointY[0], (pointB[1]-pointY[1])/2 + pointY[1]])
     
-    # According to Stanley paper
-    def stanley_smooth_path(self, path):
-
-        def normalize(v):
-            norm = np.linalg.norm(v,axis=0) + 0.00001
-            return v / norm.reshape(1, v.shape[1])
-
-        def curvature(waypoints):
-            '''
-            Curvature as  the sum of the normalized dot product between the way elements
-            Implement second term of the smoothing objective.
-
-            args: 
-                waypoints [2, num_waypoints] !!!!!
-            '''
-            shift_left  = np.roll(waypoints, shift=-1, axis=1)
-            shift_right = np.roll(waypoints, shift=1,  axis=1)
-
-            left_half   = normalize(shift_left - waypoints)
-            right_half  = normalize(waypoints  - shift_right)
-
-            segment     = np.array([np.dot(l, r) for l, r in zip(left_half.T, right_half.T)])
-
-            segment[0]  = 0 # right half of this connects first to last waypoint, delete
-            segment[-1] = 0 # left  half of this connects first to last waypoint, delete
-
-            return np.sum(segment)
-        
-        def boundary_func(X):
-            #? REDO: make spline and find the len of projection (dist to track boundary)
-
-            dist_to_boundary = []
-
-            B = self.used_blue_cones
-            Y = self.used_yellow_cones
-
-            # cones = np.vstack((B, Y))
-
-            for x in X:
-                closest_blue_cone = self.sort_points(B, x)[0]
-                closest_yellow_cone = self.sort_points(Y, x)[0]
-
-                dist_to_blue_cone = np.linalg.norm(x-closest_blue_cone)
-                dist_to_yellow_cone = np.linalg.norm(x-closest_yellow_cone)
-
-                dist_to_boundary.append(max(dist_to_blue_cone, dist_to_yellow_cone))
-            
-            return sum(dist_to_boundary)
-
-
-
-        def smoothing_objective(waypoints, waypoints_center, weight_curvature=16): #weight_curvature=128
-            '''
-            Objective for path smoothing
-
-            args:
-                waypoints [2 * num_waypoints] !!!!!
-                waypoints_center [2 * num_waypoints] !!!!!
-                weight_curvature (default=40)
-            '''
-            waypoints = waypoints.reshape(-1, 2)
-            waypoints_center = waypoints_center.reshape(-1, 2)
-
-
-
-            # mean least square error between waypoint and way point center
-            ls_tocenter = np.sum(np.abs(waypoints_center - waypoints)**2)
-
-            # derive curvature
-            ls_curvature = curvature(waypoints.T)
-
-            boundary_penalty = 0 #boundary_func(waypoints)        
-
-            return ls_tocenter - weight_curvature * ls_curvature + boundary_penalty
-            # return ls_tocenter - weight_curvature * ls_curvature + boundary_penalty + np.linalg.norm(path[0,:] - waypoints[0, :])
-
-
-        # increase amount of points on the path
-        # (first step in stanley alg)
-
-
-        # TODO initialize to previous path previous path -> (path)
-
-        # constraints_dict = (
-        #     {"type": 'ineq', "fun": lambda x: x[0] - path[0]},
-        #     {"type": 'ineq', "fun": lambda x: x[1] - path[1]},
-        #     {"type": 'ineq', "fun": lambda x: -x[0] + path[0]},
-        #     {"type": 'ineq', "fun": lambda x: -x[1] + path[1]}
-        # )
-
-        opts = {"maxiter": 3, "disp": False}
-        # opts = {"maxiter": 3, "disp": True}
-
-
-        # constraints_dict = (
-        #     {"type": 'eq', "fun": lambda x: x[0] - path[0]},
-        #     {"type": 'eq', "fun": lambda x: x[1] - path[1]}
-        # )
-
-        add_more_points_to_path = False
-
-        if add_more_points_to_path:
-            if len(path) > 3:
-                spline_smoothness = 10
-                spl_path, _ = splprep((path[:,0], path[:, 1]), s=spline_smoothness)
-                # create spline arguments
-                num_waypoints = 13 # 15
-                t = np.linspace(0, 1, num_waypoints)
-                # derive roadside points from spline
-                new_path = np.array(splev(t, spl_path)).T
-            else:
-                new_path = path
-
-            way_points = minimize(smoothing_objective, (new_path), args=new_path, options=opts)
-        else:
-            way_points = minimize(smoothing_objective, (path), args=path, options=opts)
-
-
-
-        # way_points = minimize(smoothing_objective, (path), args=path, constraints=constraints_dict)
-        
-        
-        # way_points = minimize(smoothing_objective, (path), args=path)
-
-        # print("way points:")
-        # print(way_points)
-        
-        way_points = way_points["x"]
-
-        smooth_path = way_points.reshape(-1, 2)
-        smooth_path[0] = [0., 0.]
-
-        return smooth_path
     
     def is_new_center_ok(self, new_center):
         def compute_angle_between_vectors(vector_1, vector_2):
@@ -661,7 +592,7 @@ class PathPlanner():
 
         try:
             path = self.planner.find_path(blue_cones, yellow_cones, O_cones=orange_cones)
-            path = self.planner.stanley_smooth_path(path)
+            # path = stanley_smooth_path(path)
         except Exception as e:
             print(f"path_planning {type(e)} occured: {e}")
             path = np.array([[0., 0.]])

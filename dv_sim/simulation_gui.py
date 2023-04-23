@@ -26,7 +26,7 @@ from sim.math_helpers import angle_to_vector, vec_to_3d, rotate_around_point, lo
 from sim.simulation import GUIValues, ControlsValues
 from rendering_helpers import render_world, render_cones, render_car, cone_pos_to_mesh
 
-MAX_PATH_LEN = 40
+MAX_PATH_LEN = 15
 
 class CameraMode(IntEnum):
     WORLD = 0
@@ -242,9 +242,8 @@ if __name__ == '__main__':
             path, target, cones = compute_as_state(as_debug_data["perception"], as_debug_data["path"], as_debug_data["target"], app.visual_state)
 
             if len(path) > 1:
-                # app.path_entity.model = Mesh(vertices=path[:2], mode='line', thickness=10)
+                app.path_entity.model = Mesh(vertices=path[:2], mode='line', thickness=10)
                 for i in range(MAX_PATH_LEN):
-                    # print(f"{i=}")
                     if i <= len(path) - 2:
                         app.path_entities[i].color = color.rgb(i*25, 0, 0)
                         app.path_entities[i].model = Mesh(vertices=path[i:i+2], mode='line', thickness=10)

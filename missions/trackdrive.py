@@ -12,6 +12,7 @@ from algorithms.general import get_big_orange_distance
 
 from algorithms.speed_profile import SpeedProfile
 from algorithms.path_planning import PathPlanner    
+from algorithms.path_planning import stanley_smooth_path    
 
 class Trackdrive():
     ID = "Trackdrive"
@@ -28,7 +29,7 @@ class Trackdrive():
         self.path_planner = PathPlanner()
         self.speed_profile = SpeedProfile()
 
-        self.use_speed_profile = False
+        self.use_speed_profile = True
         self.use_new_path_planning = False
         self.speed_set_point = 6.
 
@@ -66,19 +67,26 @@ class Trackdrive():
 
         # 1. receive perception data
         if self.use_new_path_planning:
+            start_time = time.perf_counter()
             path = self.path_planner.find_path(percep_data)
+            path = stanley_smooth_path(path)
+            # print("new took: ", time.perf_counter() - start_time)
+            # start_time = time.perf_counter()
+            # path = self.old_path_planner.find_path(percep_data)
+            # print("old took: ", time.perf_counter() - start_time)
         else:
             path = self.old_path_planner.find_path(percep_data)
+            path = stanley_smooth_path(path)
 
 
         # Speed profile
-        # if self.use_speed_profile and len(path) > 2:
-        if self.use_speed_profile:
+        if self.use_speed_profile and len(path) > 2:
+        # if self.use_speed_profile:
             # self.speed_set_point, speed_arr = self.speed_profile.michals_profile(path, init_speed=wheel_speed)
             speed_arr = self.speed_profile.michals_profile(path, wheel_speed)
             self.speed_set_point = speed_arr[1]
-        print(f"{speed_arr.shape=}")
-        print(f"{path.shape=}")
+        # print(f"{speed_arr.shape=}")
+        # print(f"{path.shape=}")
         
         # print("Set speed from speed profile:", self.speed_set_point)
         # print("Wheel speed 1:", wheel_speed)
