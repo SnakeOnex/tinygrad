@@ -648,7 +648,6 @@ class PathPlanner():
         self.debug = debug
         self.planner = None
 
-
     def find_path(self, cones):
         self.planner = PathPlanning()
 

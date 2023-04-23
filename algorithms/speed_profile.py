@@ -42,7 +42,8 @@ class SpeedProfile():
             def pass_2(first_phase):
                 if initial_speed == 0:
                     return second_pass(first_phase)
-                else: return first_phase
+                else: 
+                    return first_phase
 
             first_phase = pass_1()
             second_phase = pass_2(first_phase)
@@ -191,7 +192,7 @@ class SpeedProfile():
 
         return round(ret_speed, 2), my_speed_profile
 
-    def michals_profile(self, path):
+    def michals_profile(self, path, initial_speed=0.):
         # Computes speed profile for a path using the algorithm described in the stanford Ph.D. thesis
         def stanford_profile(seglengths, segcurvatures, initial_speed = None):
             # The Michal's function
@@ -237,4 +238,4 @@ class SpeedProfile():
             third  = third_pass(second)
             return third
 
-        return stanford_profile(self.lengths(path), self.curvatures(path), initial_speed=0).numpy()
+        return stanford_profile(self.lengths(path), self.curvatures(path), initial_speed=initial_speed).numpy()

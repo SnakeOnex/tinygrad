@@ -80,7 +80,7 @@ class State():
         
         acc = F_long / self.mass # acceleration
 
-        if self.speed < 0.5:
+        if self.speed < 20.5:
             self.speed += acc * timedelta
             states = [self.car_pos[0],self.car_pos[1],np.deg2rad(self.heading)]
             tspan = [0.0,timedelta]

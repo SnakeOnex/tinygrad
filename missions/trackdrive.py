@@ -20,16 +20,16 @@ class Trackdrive():
         mp.Process.__init__(self)
 
         # CONTROLS CONFIGURATION
-        self.lookahead_dist = 3.3
-        self.linear_gain = 2.05
-        self.nonlinear_gain = 1.5
+        self.lookahead_dist = 1.7
+        self.linear_gain = 0.5
+        self.nonlinear_gain = .2
         self.old_path_planner = OldPathPlanner(path_planner_opt)
 
         self.path_planner = PathPlanner()
         self.speed_profile = SpeedProfile()
 
-        self.use_speed_profile = True
-        self.use_new_path_planning = True
+        self.use_speed_profile = False
+        self.use_new_path_planning = False
         self.speed_set_point = 6.
 
         # mission planning variables
@@ -72,8 +72,13 @@ class Trackdrive():
 
 
         # Speed profile
-        if self.use_speed_profile and len(path) > 2:
-            self.speed_set_point, speed_arr = self.speed_profile.compute_speed(path, init_speed=wheel_speed)
+        # if self.use_speed_profile and len(path) > 2:
+        if self.use_speed_profile:
+            # self.speed_set_point, speed_arr = self.speed_profile.michals_profile(path, init_speed=wheel_speed)
+            speed_arr = self.speed_profile.michals_profile(path, wheel_speed)
+            self.speed_set_point = speed_arr[1]
+        print(f"{speed_arr.shape=}")
+        print(f"{path.shape=}")
         
         # print("Set speed from speed profile:", self.speed_set_point)
         # print("Wheel speed 1:", wheel_speed)
