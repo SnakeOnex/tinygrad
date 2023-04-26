@@ -11,8 +11,9 @@ from algorithms.old_path_planning import OldPathPlanner
 from algorithms.general import get_big_orange_distance
 
 from algorithms.speed_profile import SpeedProfile
-from algorithms.path_planning import PathPlanner    
-from algorithms.path_planning import stanley_smooth_path    
+from algorithms.path_planning import PathPlanner
+from algorithms.path_planning import stanley_smooth_path
+
 
 class Trackdrive():
     ID = "Trackdrive"
@@ -30,7 +31,7 @@ class Trackdrive():
         self.speed_profile = SpeedProfile()
 
         self.use_speed_profile = True
-        self.use_new_path_planning = False
+        self.use_new_path_planning = True
         self.speed_set_point = 6.
 
         # mission planning variables
@@ -78,16 +79,15 @@ class Trackdrive():
             path = self.old_path_planner.find_path(percep_data)
             path = stanley_smooth_path(path)
 
-
         # Speed profile
         if self.use_speed_profile and len(path) > 2:
-        # if self.use_speed_profile:
+            # if self.use_speed_profile:
             # self.speed_set_point, speed_arr = self.speed_profile.michals_profile(path, init_speed=wheel_speed)
             speed_arr = self.speed_profile.michals_profile(path, wheel_speed)
             self.speed_set_point = speed_arr[1]
         # print(f"{speed_arr.shape=}")
         # print(f"{path.shape=}")
-        
+
         # print("Set speed from speed profile:", self.speed_set_point)
         # print("Wheel speed 1:", wheel_speed)
 

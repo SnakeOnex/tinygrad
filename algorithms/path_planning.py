@@ -242,6 +242,7 @@ class PathPlanning:
             return np.array([])  # ?shouldn't happen
 
     def find_blue_and_yellow_cone(self, B_points, Y_points):
+        # ? consider interpolating the end of the path if there are more cones of one color
         # TODO: redo the function
 
         sorted_B_points = self.sort_points(B_points, self.path[-1])  # is neccessary to sort here?
@@ -462,14 +463,14 @@ class PathPlanning:
                     vec = np.array([[np.cos(-angle), -np.sin(-angle)], [np.sin(-angle), np.cos(-angle)]]) @ vec2
 
             to_fill = np.vstack((to_fill, full[idx, :] + vec * self.FILLING_CONE_DIST))
-            filled_cones = np.vstack((filled_cones, full[idx, :] + vec * self.FILLING_CONE_DIST))
+            # filled_cones = np.vstack((filled_cones, full[idx, :] + vec * self.FILLING_CONE_DIST))
 
         self.log[self.str_step]["fill missing cones"] = True
         if yellow:
-            self.log[self.str_step]["filled blue cones"] = filled_cones
+            # self.log[self.str_step]["filled blue cones"] = filled_cones
             return to_fill, full
         else:
-            self.log[self.str_step]["filled yellow cones"] = filled_cones
+            # self.log[self.str_step]["filled yellow cones"] = filled_cones
             return full, to_fill
 
     def find_path(self, B_cones, Y_cones, O_cones=[]) -> np.array:
@@ -495,11 +496,17 @@ class PathPlanning:
 
         # fill missing cones (it's case with a turn)
         if len(B_cones) == 0 or len(Y_cones) == 0:
-            B_cones, Y_cones = self.fill_missing_cones(B_cones, Y_cones)
-
-            if len(B_cones) == 0 or len(Y_cones) == 0:
+            # ? if no cones are found, return empty path
+            if len(B_cones) == 0 and len(Y_cones) == 0:
+                print("ERROR: not enough Blue/Yellow cones after fill missing")
                 self.log[self.str_step]["info"] = "ERROR: not enough Blue/Yellow cones after fill missing"
                 return self.path
+            else:
+                B_cones, Y_cones = self.fill_missing_cones(B_cones, Y_cones)
+
+            # if len(B_cones) == 0 or len(Y_cones) == 0:
+            #     self.log[self.str_step]["info"] = "ERROR: not enough Blue/Yellow cones after fill missing"
+            #     return self.path
 
         # use Orange cones to plan a path
         if len(O_cones) > 1:
@@ -534,8 +541,9 @@ class PathPlanning:
             self.log[self.str_step]["b"], self.log[self.str_step]["y"] = b, y
             self.used_blue_cones = np.vstack((self.used_blue_cones, b))
             self.used_yellow_cones = np.vstack((self.used_yellow_cones, y))
-
-            center = self.calculate_center(b, y)
+            # np.array([(pointB[0] - pointY[0]) / 2 + pointY[0], (pointB[1] - pointY[1]) / 2 + pointY[1]])
+            center = (b - y) / 2 + y
+            # center = self.calculate_center(b, y)
             self.log[self.str_step]["center"] = center
 
             if self.is_already_added(center, self.path):
