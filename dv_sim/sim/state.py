@@ -98,7 +98,7 @@ class State():
                   self.car_pos[0], self.car_pos[1]]
             tspan = [0.0, timedelta]
             #print(self.tauF,self.tauR)
-            z = odeint(single_track_model, z0, tspan, args=(np.deg2rad(self.steering_angle), self.tauF, self.tauR))
+            z = odeint(single_track_model, z0, tspan, args=(np.deg2rad(self.steering_angle), self.tauF, self.tauR,self.speed_set_point-self.speed))
             self.speed = z[1][0]
             self.beta = z[1][1]
             self.dRhoR = z[1][2]

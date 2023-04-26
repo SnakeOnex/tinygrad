@@ -16,7 +16,7 @@ def kinematic_model(states, t, velocity, delta_f):
     return der
 
 
-def single_track_model(z, t, u1, u2, u3):
+def single_track_model(z, t, u1, u2, u3,speed_error):
     mass = 200
     v = z[0]
     beta = z[1]
@@ -163,8 +163,9 @@ def single_track_model(z, t, u1, u2, u3):
     tauR = (u3) * 13.23
     ddRhoF = 0.0
     ddRhoR = 0.0
-    ddRhoR = (tauR - Rr * Fxr - 5 * v) / Jr
-    ddRhoF = (tauF - Rf * Fxf - 5 * v) / Jf
+    if abs(speed_error) > 0.1:
+        ddRhoR = (tauR - Rr * Fxr - 5 * v) / Jr
+        ddRhoF = (tauF - Rf * Fxf - 5 * v) / Jf
 
     dzdt = [dv, dbeta, ddRhoR, ddRhoF, ddotPsi, dotPsi, v_glob_x, v_glob_y]
 
