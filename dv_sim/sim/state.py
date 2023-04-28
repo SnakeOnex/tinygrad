@@ -1,6 +1,7 @@
 import numpy as np
 import json
 from enum import IntEnum
+import time
 from scipy.integrate import odeint
 from .physics_models import kinematic_model, single_track_model
 from .math_helpers import angle_to_vector, global_to_local, rotate_around_point, filter_occluded_cones
@@ -80,7 +81,7 @@ class State():
         
         acc = F_long / self.mass # acceleration
 
-        if self.speed < 20.5:
+        if self.speed < .5:
             self.speed += acc * timedelta
             states = [self.car_pos[0],self.car_pos[1],np.deg2rad(self.heading)]
             tspan = [0.0,timedelta]
@@ -90,17 +91,22 @@ class State():
             self.heading = np.rad2deg(out[1][2])
             self.model_switched = True
         else:
+            start = time.perf_counter()
             if self.model_switched:
                 self.dRhoF = self.speed/0.2
                 self.dRhoR = self.speed/0.2
                 self.model_switched = False
-            z0 = [self.speed, self.beta, self.dRhoR, self.dRhoF, self.dotPsi, np.deg2rad(self.heading),
+                self.long_v = self.speed
+                self.lat_v = 0
+            
+            z0 = [self.long_v, self.lat_v, self.dRhoR, self.dRhoF, self.dotPsi, np.deg2rad(self.heading),
                   self.car_pos[0], self.car_pos[1]]
             tspan = [0.0, timedelta]
-            #print(self.tauF,self.tauR)
-            z = odeint(single_track_model, z0, tspan, args=(np.deg2rad(self.steering_angle), self.tauF, self.tauR,self.speed_set_point-self.speed))
-            self.speed = z[1][0]
-            self.beta = z[1][1]
+            z = odeint(single_track_model, z0, tspan, args=(np.deg2rad(self.steering_angle), self.tauF, self.tauR,self.speed_set_point-self.speed,self.beta), rtol=1e-3, atol=1e-3)
+            self.long_v = z[1][0]
+            self.lat_v = z[1][1]
+            self.speed = np.sqrt(self.long_v**2+self.lat_v**2)
+            self.beta = np.arctan2(self.lat_v,self.long_v)
             self.dRhoR = z[1][2]
             self.dRhoF = z[1][3]
             self.dotPsi = z[1][4]
@@ -108,6 +114,8 @@ class State():
             x = z[1][6]
             y = z[1][7]
             self.car_pos = np.array([x, y])
+            print((time.perf_counter()-start)*1000) 
+            
 
 
 
