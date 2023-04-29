@@ -17,12 +17,14 @@ class AS(IntEnum):
 class State():
     def __init__(self, mission, map_filepath):
 
+        self.enable_physics = False
         self.dotPsi = 0.0
         self.dRhoF = 0.0
         self.dRhoR = 0.0
         self.beta = 0.0
         self.manual = False
         self.heading = 0.0
+
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
         self.steering_speed = 90 # degrees per second
@@ -81,7 +83,7 @@ class State():
         
         acc = F_long / self.mass # acceleration
 
-        if self.speed < .5:
+        if self.speed < .5 or self.enable_physics == False:
             self.speed += acc * timedelta
             states = [self.car_pos[0],self.car_pos[1],np.deg2rad(self.heading)]
             tspan = [0.0,timedelta]

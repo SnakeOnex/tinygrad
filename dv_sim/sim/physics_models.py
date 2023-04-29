@@ -32,8 +32,8 @@ def single_track_model(z, t, u1, u2, u3,speed_error,beta):
     v_glob_x = np.cos(psi) * long_v - np.sin(psi) * lat_v
     v_glob_y = np.sin(psi) * long_v + np.cos(psi) * lat_v
 
-    lf = 0.665 * 1.525
-    lr = (1 - 0.665) * 1.525
+    lf = 0.51 * 1.525
+    lr = (1 - 0.51) * 1.525
     dr = 0
     df = u1
     Rf = 0.20
