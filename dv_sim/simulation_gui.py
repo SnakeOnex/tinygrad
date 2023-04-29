@@ -252,8 +252,8 @@ if __name__ == '__main__':
                             app.path_entities[i].model.vertices[1]=[0., 0., 0.]
                             app.path_entities[i].model.generate()
 
-            else:
-                app.path_entity.model = Mesh()
+            # else:
+            #     app.path_entity.model = Mesh()
 
             # render target
             app.target.position = target
