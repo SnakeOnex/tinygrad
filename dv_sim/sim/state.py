@@ -87,10 +87,11 @@ class State():
             self.speed += acc * timedelta
             states = [self.car_pos[0],self.car_pos[1],np.deg2rad(self.heading)]
             tspan = [0.0,timedelta]
-            out = odeint(kinematic_model,states,tspan,args=(self.speed,np.deg2rad(self.steering_angle)))
-            self.car_pos[0] = out[1][0]
-            self.car_pos[1] = out[1][1]
-            self.heading = np.rad2deg(out[1][2])
+            out = kinematic_model(states,self.speed,np.deg2rad(self.steering_angle))
+            #out = odeint(kinematic_model,states,tspan,args=(self.speed,np.deg2rad(self.steering_angle)))
+            self.car_pos[0] += out[0]*timedelta
+            self.car_pos[1] += out[1]*timedelta
+            self.heading += np.rad2deg(out[2]*timedelta)
             self.model_switched = True
         else:
             start = time.perf_counter()

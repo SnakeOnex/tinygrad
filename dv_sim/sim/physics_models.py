@@ -1,7 +1,7 @@
 import numpy as np
 from time import perf_counter
 
-def kinematic_model(states, t, velocity, delta_f):
+def kinematic_model(states, velocity, delta_f):
     lf = 0.51 * 1.525
     lr = (1 - 0.51) * 1.525
     length = 1.525
