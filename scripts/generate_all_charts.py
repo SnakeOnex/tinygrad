@@ -13,7 +13,9 @@ if __name__ == '__main__':
     for log_folder in bros_data_path.iterdir():
         AS_folder = Path(log_folder) / Path("AS")
 
-        try:
+        if ".jpg" not in [file.suffix for file in AS_folder.iterdir()]:
+            print(f"processing {log_folder}")
             log_to_chart(AS_folder, show=False)
-        except:
-            print("log error")
+        else:
+            print(f"skipping {log_folder}")
+
