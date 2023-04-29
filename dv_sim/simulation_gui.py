@@ -137,18 +137,15 @@ if __name__ == '__main__':
     app.cam_mode = CameraMode.FIRST_PERSON
 
     # AS debug init (creating empty path and cone mesh objects)
-    car_rect = Entity(model='cube', color=color.black, position=Vec3(
-        state.car_pos[0], 0., state.car_pos[1]), scale=Vec3(3, 1.5, 0.3))
-    app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.rgb(0,255,0), model=Mesh(
-        vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line'))
+    car_rect = Entity(model='cube', color=color.black, position=Vec3(state.car_pos[0], 0., state.car_pos[1]), scale=Vec3(3, 1.5, 0.3))
+    app.path_entity = Entity(shader=lit_with_shadows_shader, color=color.rgb(0,255,0), model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line'))
 
-    app.path_entities = [Entity(shader=lit_with_shadows_shader, color=color.rgb(0,255,0), model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line')) for _ in range(MAX_PATH_LEN)]
+    app.path_entities = [Entity(shader=lit_with_shadows_shader, color=color.rgb(0,255,0), model=Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line', thickness=8)) for _ in range(MAX_PATH_LEN)]
 
     app.target = Entity(model='cube', scale=0.2, color=color.green)
 
     for _ in range(cone_count):
-        cone_detections.append(Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(
-            vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line')))
+        cone_detections.append(Entity(shader=lit_with_shadows_shader, color=color.red, model=Mesh(vertices=[[0.,0.,0.] for _ in range(16)], mode='line', thickness=3)))
 
     # 2. setup communication interfaces
 
@@ -242,13 +239,19 @@ if __name__ == '__main__':
             path, target, cones = compute_as_state(as_debug_data["perception"], as_debug_data["path"], as_debug_data["target"], app.visual_state)
 
             if len(path) > 1:
-                app.path_entity.model = Mesh(vertices=path[:2], mode='line', thickness=10)
                 for i in range(MAX_PATH_LEN):
                     if i <= len(path) - 2:
                         app.path_entities[i].color = color.rgb(i*25, 0, 0)
-                        app.path_entities[i].model = Mesh(vertices=path[i:i+2], mode='line', thickness=10)
+                        app.path_entities[i].model.vertices[0]=path[i:i+2][0]
+                        app.path_entities[i].model.vertices[1]=path[i:i+2][1]
+                        app.path_entities[i].model.generate()
                     else:
-                        app.path_entities[i].model = Mesh(vertices=[[0., 0., 0.], [0., 0., 0.]], mode='line', thickness=10)
+
+                        if app.path_entities[i].model.vertices[0] != [0., 0., 0.]:
+                            app.path_entities[i].model.vertices[0]=[0., 0., 0.]
+                            app.path_entities[i].model.vertices[1]=[0., 0., 0.]
+                            app.path_entities[i].model.generate()
+
             else:
                 app.path_entity.model = Mesh()
 
@@ -271,12 +274,15 @@ if __name__ == '__main__':
                         cone_color = color.red
 
                     if cones[i, 2] == 3:
-                        cone_detection.model = Mesh(vertices=cone_pos_to_mesh(
-                            cones[i, :2], width=0.3, height=0.6), mode='line', thickness=3)
+                        cone_verts = cone_pos_to_mesh(cones[i, :2], width=0.3, height=0.6)
+                        for j in range(len(cone_verts)):
+                            cone_detection.model.vertices[j]=cone_verts[j]
                     else:
-                        cone_detection.model = Mesh(vertices=cone_pos_to_mesh(
-                            cones[i, :2], width=0.3, height=0.4), mode='line', thickness=3)
+                        cone_verts = cone_pos_to_mesh(cones[i, :2], width=0.3, height=0.4)
+                        for j in range(len(cone_verts)):
+                            cone_detection.model.vertices[j]=cone_verts[j]
 
+                    cone_detection.model.generate()
                     cone_detection.color = cone_color
 
             app.mission_status_text.text = create_mission_string(as_debug_data["mission_id"], as_debug_data["mission_status"])
