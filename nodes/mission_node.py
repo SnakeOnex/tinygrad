@@ -131,7 +131,7 @@ class MissionNode(mp.Process):
         current_position = update_subscription_data(self.position_socket, self.position)
 
         # Convert geographical lat, lon to planar x,y in meters
-        if self.mode == "RACE" and current_position != None:
+        if self.mode == "RACE" and current_position is not None:
             if not self.start_pos.any():
                 self.earth_radius = get_earth_radius_at_pos(current_position[0])
                 self.start_pos = np.array(current_position, dtype=np.float64)
@@ -151,15 +151,14 @@ class MissionNode(mp.Process):
             # 1. update AS State
             # TODO: change start_button to tson_button
             self.ASM.update(start_button=self.start_button,
-                            go_signal=self.go_signal,
+                            go_signal=self.start_button,
                             finished=self.finished)
 
             if self.ASM.AS == AS.DRIVING:
 
                 self.update_data()
-
                 self.finished, steering_angle, speed, log, path, target = self.mission.loop(**self.get_mission_kwargs())
-
+                print(self.mission_num)
                 self.mission_log = {
                     "steering_angle": steering_angle,
                     "speed": speed,
