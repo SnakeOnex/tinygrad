@@ -42,6 +42,8 @@ class VisionNode(mp.Process):
             self.zed.open()
 
         self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
+        
+        config["start_time"] = time.time() # adding start global time to config
         self.logger.log("VISION_CONFIGURATION", config)  # log config
 
         self.cone_preds_socket = create_publisher_socket(VisionNodeMsgPorts.CONE_PREDS)
