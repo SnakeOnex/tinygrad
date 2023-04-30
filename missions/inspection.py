@@ -26,7 +26,6 @@ class Inspection():
 
        #  get current duration of inspection
         time_since_start = time.perf_counter() - self.start_timestamp
-
         # finish if reached goal time
         if time_since_start >= self.inspection_duration:
             self.steering_angle = 0.
