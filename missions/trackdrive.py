@@ -13,6 +13,7 @@ from algorithms.general import get_big_orange_distance
 from algorithms.speed_profile import SpeedProfile
 from algorithms.path_planning import PathPlanner
 from algorithms.path_planning import stanley_smooth_path
+from algorithms.optimized_path_planning import PathPlanner as OptimizedPathPlanner
 
 
 class Trackdrive():
@@ -29,6 +30,8 @@ class Trackdrive():
 
         self.path_planner = PathPlanner()
         self.speed_profile = SpeedProfile()
+
+        self.optimized_path_planner = OptimizedPathPlanner()
 
         self.use_speed_profile = True
         self.use_new_path_planning = True
@@ -68,8 +71,9 @@ class Trackdrive():
 
         # 1. receive perception data
         if self.use_new_path_planning:
-            start_time = time.perf_counter()
-            path = self.path_planner.find_path(percep_data)
+            # start_time = time.perf_counter()
+            # path = self.path_planner.find_path(percep_data)
+            path = self.optimized_path_planner.find_path(percep_data)
             path = stanley_smooth_path(path)
             # print("new took: ", time.perf_counter() - start_time)
             # start_time = time.perf_counter()
