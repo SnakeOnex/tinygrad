@@ -78,6 +78,9 @@ class Trackdrive():
             path = stanley_smooth_path(path)
             
             # path = optimized_smooth_path(path) # minimize func
+            
+            # add more path points (+3?)
+            # path = optimized_smooth_path(path, use_spline_as_smoother=False, add_more_points_to_path=True) # a liitle bit slower, but same problems as with spline...
             # path = optimized_smooth_path(path, use_spline_as_smoother=True) # only spline
 
             # print("new took: ", time.perf_counter() - start_time)

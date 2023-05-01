@@ -396,7 +396,8 @@ class PathPlanning():
         return self.path
 
 # According to Stanley paper
-def stanley_smooth_path(path, use_spline_as_smoother=False):
+# According to Stanley article
+def stanley_smooth_path(path, use_spline_as_smoother=False, add_more_points_to_path = False):
 
     def normalize(v):
         norm = np.linalg.norm(v,axis=0) + 0.00001
@@ -470,15 +471,14 @@ def stanley_smooth_path(path, use_spline_as_smoother=False):
         {"type": 'ineq', "fun": lambda x: -x[1] + path[1]}
     )
 
-    opts = {"maxiter": 3, "disp": False}
+    # opts = {"maxiter": 3, "disp": False}
+    opts = {"maxiter": 1, "disp": False}
     # opts = {"maxiter": 3, "disp": True}
 
     # constraints_dict = (
     #     {"type": 'eq', "fun": lambda x: x[0] - path[0]},
     #     {"type": 'eq', "fun": lambda x: x[1] - path[1]}
     # )
-
-    add_more_points_to_path = False
 
     if use_spline_as_smoother:
         add_more_points_to_path = True
@@ -489,7 +489,9 @@ def stanley_smooth_path(path, use_spline_as_smoother=False):
             spline_smoothness = 10
             spl_path, _ = splprep((path[:,0], path[:, 1]), s=spline_smoothness)
             # create spline arguments
-            num_waypoints = 5 #8 #13 # 15
+            # num_waypoints = 10 #5 #8 #13 # 15
+            num_waypoints = len(path) + 3
+
             t = np.linspace(0, 1, num_waypoints)
             # derive roadside points from spline
             new_path = np.array(splev(t, spl_path)).T
@@ -500,6 +502,7 @@ def stanley_smooth_path(path, use_spline_as_smoother=False):
 
         start = time.time()
         if use_spline_as_smoother:
+            # spline is faster, but there are problems in the turns
             return new_path
         else:
             way_points = minimize(smoothing_objective, (new_path), args=new_path, options=opts)
@@ -510,8 +513,11 @@ def stanley_smooth_path(path, use_spline_as_smoother=False):
     else:
         start = time.time()
         way_points = minimize(smoothing_objective, (path), args=path, options=opts)
+
         # way_points = minimize(smoothing_objective, (path), args=path, constraints=constraints_dict) # so slow
         # way_points = minimize(smoothing_objective, (path), args=path)
+
+        # way_points = minimize(smoothing_objective, (path), tol=0.5, args=path, options=opts) # no visual differences
 
         end = time.time()
         # print(f"Minimize took: {round((end-start)*1000, 4)} ms")
@@ -526,6 +532,7 @@ def stanley_smooth_path(path, use_spline_as_smoother=False):
     smooth_path[0] = [0., 0.] # TODO:Fix this ?add constraint to minimize?
 
     return smooth_path
+
 
                  
 def closest_point(arr, point):
