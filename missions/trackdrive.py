@@ -14,6 +14,7 @@ from algorithms.speed_profile import SpeedProfile
 from algorithms.path_planning import PathPlanner
 from algorithms.path_planning import stanley_smooth_path
 from algorithms.optimized_path_planning import PathPlanner as OptimizedPathPlanner
+from algorithms.optimized_path_planning import stanley_smooth_path as optimized_smooth_path
 
 
 class Trackdrive():
@@ -75,6 +76,10 @@ class Trackdrive():
             # path = self.path_planner.find_path(percep_data)
             path = self.optimized_path_planner.find_path(percep_data)
             path = stanley_smooth_path(path)
+            
+            # path = optimized_smooth_path(path) # minimize func
+            # path = optimized_smooth_path(path, use_spline_as_smoother=True) # only spline
+
             # print("new took: ", time.perf_counter() - start_time)
             # start_time = time.perf_counter()
             # path = self.old_path_planner.find_path(percep_data)

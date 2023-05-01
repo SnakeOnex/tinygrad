@@ -3,6 +3,9 @@ import matplotlib.pyplot as plt
 import time
 import pandas as pd
 
+from scipy.optimize import minimize
+from scipy.interpolate import splprep, splev
+
 class PathPlanning():
     def __init__(self, n_steps=None, debug=False):
         self.used_blue_cones = np.reshape([], (-1,2))  # only for debugging purpose?
@@ -191,8 +194,12 @@ class PathPlanning():
     
     def find_blue_and_yellow_cone(self, B_hat, Y_hat):
         # take the closest blue and yellow cones to the last point of path
-        b, b_idx = closest_point(B_hat, self.path[-1])
-        y, y_idx = closest_point(Y_hat, self.path[-1])
+        # b, b_idx = closest_point(B_hat, self.path[-1])
+        # y, y_idx = closest_point(Y_hat, self.path[-1])
+
+        # B_hat and Y_hat are already sorted
+        b = B_hat[0]
+        y = Y_hat[0]
         self.log[self.str_step]["b"], self.log[self.str_step]["y"] = b, y
 
         return b, y
@@ -387,6 +394,139 @@ class PathPlanning():
 
         self.log["planned path"] = self.path
         return self.path
+
+# According to Stanley paper
+def stanley_smooth_path(path, use_spline_as_smoother=False):
+
+    def normalize(v):
+        norm = np.linalg.norm(v,axis=0) + 0.00001
+        return v / norm.reshape(1, v.shape[1])
+
+    def curvature(waypoints):
+        '''
+        Curvature as  the sum of the normalized dot product between the way elements
+        Implement second term of the smoothing objective.
+
+        args: 
+            waypoints [2, num_waypoints] !!!!!
+        '''
+        shift_left  = np.roll(waypoints, shift=-1, axis=1)
+        shift_right = np.roll(waypoints, shift=1,  axis=1)
+
+        left_half   = normalize(shift_left - waypoints)
+        right_half  = normalize(waypoints  - shift_right)
+
+        segment     = np.array([np.dot(l, r) for l, r in zip(left_half.T, right_half.T)])
+
+        segment[0]  = 0 # right half of this connects first to last waypoint, delete
+        segment[-1] = 0 # left  half of this connects first to last waypoint, delete
+
+        return np.sum(segment)
+    
+    def smoothing_objective(waypoints, waypoints_center, weight_curvature=16): #weight_curvature=128
+        '''
+        Objective for path smoothing
+
+        args:
+            waypoints [2 * num_waypoints] !!!!!
+            waypoints_center [2 * num_waypoints] !!!!!
+            weight_curvature (default=40)
+        '''
+        waypoints = waypoints.reshape(-1, 2)
+        waypoints_center = waypoints_center.reshape(-1, 2)
+
+        # time perfomance: (one step/iteration?; so many steps)
+        # ls to center took: 0.0412 ms
+        # ls curveture took: 0.433 ms
+
+        # mean least square error between waypoint and way point center
+        start = time.time()
+        ls_tocenter = np.sum(np.abs(waypoints_center - waypoints)**2)
+        end = time.time()
+        # print(f"ls to center took: {round((end-start)*1000, 4)} ms")
+
+        # derive curvature
+        start = time.time()
+        ls_curvature = curvature(waypoints.T)
+        end = time.time()
+        # print(f"ls curveture took: {round((end-start)*1000, 4)} ms")
+        # print("---")
+        
+
+        boundary_penalty = 0 # ? TODO? F_rddf in Stanley paper     
+
+        return ls_tocenter - weight_curvature * ls_curvature + boundary_penalty
+
+    # increase amount of points on the path
+    # (first step in stanley alg)
+
+
+    # TODO initialize to previous path previous path -> (path)
+
+    constraints_dict = (
+        {"type": 'ineq', "fun": lambda x: x[0] - path[0]},
+        {"type": 'ineq', "fun": lambda x: x[1] - path[1]},
+        {"type": 'ineq', "fun": lambda x: -x[0] + path[0]},
+        {"type": 'ineq', "fun": lambda x: -x[1] + path[1]}
+    )
+
+    opts = {"maxiter": 3, "disp": False}
+    # opts = {"maxiter": 3, "disp": True}
+
+    # constraints_dict = (
+    #     {"type": 'eq', "fun": lambda x: x[0] - path[0]},
+    #     {"type": 'eq', "fun": lambda x: x[1] - path[1]}
+    # )
+
+    add_more_points_to_path = False
+
+    if use_spline_as_smoother:
+        add_more_points_to_path = True
+
+    if add_more_points_to_path:
+        if len(path) > 3:
+            start = time.time()
+            spline_smoothness = 10
+            spl_path, _ = splprep((path[:,0], path[:, 1]), s=spline_smoothness)
+            # create spline arguments
+            num_waypoints = 5 #8 #13 # 15
+            t = np.linspace(0, 1, num_waypoints)
+            # derive roadside points from spline
+            new_path = np.array(splev(t, spl_path)).T
+            end = time.time()
+            # print(f"Add more point to path took: {round((end-start)*1000, 4)} ms")
+        else:
+            new_path = path
+
+        start = time.time()
+        if use_spline_as_smoother:
+            return new_path
+        else:
+            way_points = minimize(smoothing_objective, (new_path), args=new_path, options=opts)
+
+        end = time.time()
+        # print(f"Minimize took: {round((end-start)*1000, 4)} ms")
+        # print()
+    else:
+        start = time.time()
+        way_points = minimize(smoothing_objective, (path), args=path, options=opts)
+        # way_points = minimize(smoothing_objective, (path), args=path, constraints=constraints_dict) # so slow
+        # way_points = minimize(smoothing_objective, (path), args=path)
+
+        end = time.time()
+        # print(f"Minimize took: {round((end-start)*1000, 4)} ms")
+        # print()
+       
+        
+    # way_points = minimize(smoothing_objective, (path), args=path)
+    
+    way_points = way_points["x"]
+
+    smooth_path = way_points.reshape(-1, 2)
+    smooth_path[0] = [0., 0.] # TODO:Fix this ?add constraint to minimize?
+
+    return smooth_path
+
                  
 def closest_point(arr, point):
     dist = (arr[:, 0] - point[0])**2 + (arr[:, 1] - point[1])**2
