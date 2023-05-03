@@ -158,7 +158,6 @@ class MissionNode(mp.Process):
 
                 self.update_data()
                 self.finished, steering_angle, speed, log, path, target = self.mission.loop(**self.get_mission_kwargs())
-                print(self.mission_num)
                 self.mission_log = {
                     "steering_angle": steering_angle,
                     "speed": speed,
