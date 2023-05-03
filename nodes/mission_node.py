@@ -165,7 +165,6 @@ class MissionNode(mp.Process):
                     "target": target,
                     "log": log
                 }
-
                 if self.mode == "SIM":
                     publish_data(self.debug_socket, {
                         "perception": self.percep_data,
