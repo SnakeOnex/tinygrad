@@ -172,7 +172,8 @@ class OldPathPlanning(object):
             except ValueError as err:
                 # catching specific error
                 if str(err) == "attempt to get argmin of an empty sequence":
-                    warnings.warn("Too many iteration and not enough cones!")
+                    # warnings.warn("Too many iteration and not enough cones!")
+                    pass
                 else:
                     raise ValueError(str(err))
         # every other step
@@ -183,7 +184,7 @@ class OldPathPlanning(object):
                 except ValueError as err:
                     # catching specific error
                     if str(err) == "attempt to get argmin of an empty sequence":
-                        warnings.warn("Too many iteration! (n_step > 2)")
+                    #     warnings.warn("Too many iteration! (n_step > 2)")
                         break
                     else:
                         raise ValueError(str(err))

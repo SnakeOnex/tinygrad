@@ -11,8 +11,7 @@ from algorithms.old_path_planning import OldPathPlanner
 from algorithms.general import get_big_orange_distance
 
 from algorithms.speed_profile import SpeedProfile
-from algorithms.path_planning import PathPlanner
-from algorithms.path_planning import stanley_smooth_path
+from algorithms.path_planning import PathPlanner, stanley_smooth_path
 from algorithms.optimized_path_planning import PathPlanner as OptimizedPathPlanner
 from algorithms.optimized_path_planning import stanley_smooth_path as optimized_smooth_path
 
