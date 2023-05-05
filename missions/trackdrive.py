@@ -14,6 +14,8 @@ from algorithms.speed_profile import SpeedProfile
 from algorithms.path_planning import PathPlanner, stanley_smooth_path
 from algorithms.optimized_path_planning import PathPlanner as OptimizedPathPlanner
 from algorithms.optimized_path_planning import stanley_smooth_path as optimized_smooth_path
+from algorithms.david_planning import torch_smooth, PathPlanner as DavidPathPlanner, stanley_smooth_path as david_smooth
+
 
 
 class Trackdrive():
@@ -27,6 +29,7 @@ class Trackdrive():
         self.linear_gain = 0.5
         self.nonlinear_gain = .2
         self.old_path_planner = OldPathPlanner(path_planner_opt)
+        self.david_path_planner = DavidPathPlanner()
 
         self.path_planner = PathPlanner()
         self.speed_profile = SpeedProfile()
@@ -34,7 +37,7 @@ class Trackdrive():
         self.optimized_path_planner = OptimizedPathPlanner()
 
         self.use_speed_profile = True
-        self.use_new_path_planning = True
+        self.use_new_path_planning = False
         self.speed_set_point = 6.
 
         # mission planning variables
@@ -87,8 +90,11 @@ class Trackdrive():
             # path = self.old_path_planner.find_path(percep_data)
             # print("old took: ", time.perf_counter() - start_time)
         else:
-            path = self.old_path_planner.find_path(percep_data)
-            path = stanley_smooth_path(path)
+            # path = self.old_path_planner.find_path(percep_data)
+            # path = stanley_smooth_path(path)
+
+            path = self.david_path_planner.find_path(percep_data)
+            path = torch_smooth(path).astype(np.float64)
 
         # Speed profile
         if self.use_speed_profile and len(path) > 2:
