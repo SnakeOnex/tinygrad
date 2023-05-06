@@ -17,6 +17,7 @@ class CanSenderNode(mp.Process):
         self.frequency = opt["frequency"]
         self.main_log_folder = main_log_folder
         self.CAN1 = CanInterface(can_config["CAN_JSON"], can_config["CAN1_ID"], False)
+        self.CAN2 = CanInterface(can_config["CAN_JSON"], can_config["CAN2_ID"], False)
 
         self.loop_counter = 0
 
@@ -40,6 +41,7 @@ class CanSenderNode(mp.Process):
         self.wheel_speed_cmd_socket = create_subscriber_socket(MissionNodeMsgPorts.WHEEL_SPEED_CMD)
         self.steering_angle_cmd_socket = create_subscriber_socket(MissionNodeMsgPorts.STEERING_ANGLE_CMD)
         self.ksicht_status_socket = create_subscriber_socket(MissionNodeMsgPorts.KSICHT_STATUS)
+        self.init_res()
 
     def update_data(self):
         self.wheel_speed_cmd = update_subscription_data(self.wheel_speed_cmd_socket, self.wheel_speed_cmd)
@@ -82,3 +84,8 @@ class CanSenderNode(mp.Process):
             time_to_sleep = (1. / self.frequency) - (end_time - start_time)
             if time_to_sleep > 0.:
                 time.sleep(time_to_sleep)
+
+    def init_res(self):
+        data = [0x01, 0]
+        self.CAN2.send_can_msg(data.copy(), self.CAN2.name2id["RES_NMT_Mode_Control"])
+
