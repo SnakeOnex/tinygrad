@@ -27,6 +27,7 @@ class VisionNode(mp.Process):
         self.main_log_folder = main_log_folder
         self.mode = mode
         self.go_signal = 0
+        self.log_images = False
 
     def initialize(self):
         print("INITTING")
