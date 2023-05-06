@@ -1,7 +1,9 @@
 import numpy as np
 import json
 from enum import IntEnum
-
+import time
+from scipy.integrate import odeint
+from .physics_models import kinematic_model, single_track_model
 from .math_helpers import angle_to_vector, global_to_local, rotate_around_point, filter_occluded_cones
 # from cones.geometry_functions import filter_occluded_cones
 
@@ -15,12 +17,18 @@ class AS(IntEnum):
 class State():
     def __init__(self, mission, map_filepath):
 
+        self.enable_physics = False
+        self.dotPsi = 0.0
+        self.dRhoF = 0.0
+        self.dRhoR = 0.0
+        self.beta = 0.0
         self.manual = False
+        self.heading = 0.0
 
         ## CAR PARAMS
         self.wheel_base = 1.5 # meters
-        self.steering_speed = 110. # degrees per second
-        self.max_steering_angle = 60. # max and min steering angle
+        self.steering_speed = 90 # degrees per second
+        self.max_steering_angle = 25. # max and min steering angle
 
         self.max_engine_force = 3000. # nm
         self.max_brake_force = 400. # nm
@@ -37,7 +45,7 @@ class State():
         self.go_signal = 0
         self.emergency_signal = 0
         self.AS = AS.OFF
-
+        self.model_switched = False
         self.speed_set_point = 0.
         self.steering_angle_set_point = 0.
         self.velocity = np.array([0., 0.])
@@ -72,28 +80,52 @@ class State():
         F_drag = -self.drag_coef * self.speed**2 # air resistance
         F_rr = -self.rr_coef * self.speed # rolling resistance
         F_long = F_traction + F_drag + F_rr # longitudinal force
-        self.car_pos -= self.rotation_vector
+        
         acc = F_long / self.mass # acceleration
-        self.speed += acc * timedelta
 
-        ## LATERAL
-        turn_radius = self.wheel_base / np.sin(np.deg2rad(self.steering_angle))
-        rotation = self.speed / (turn_radius * 2.6) # "seems better with * 3."
-        self.heading += timedelta * np.rad2deg(rotation)
-        # self.rotation_vector = rotate_around_point(self.heading,(0,0),(-self.wheel_base,0))
-        # TODO: get the rotate_around_point function back in
+        if self.speed < .5 or self.enable_physics == False:
+            self.speed += acc * timedelta
+            states = [self.car_pos[0],self.car_pos[1],np.deg2rad(self.heading)]
+            tspan = [0.0,timedelta]
+            out = kinematic_model(states,self.speed,np.deg2rad(self.steering_angle))
+            #out = odeint(kinematic_model,states,tspan,args=(self.speed,np.deg2rad(self.steering_angle)))
+            self.car_pos[0] += out[0]*timedelta
+            self.car_pos[1] += out[1]*timedelta
+            self.heading += np.rad2deg(out[2]*timedelta)
+            self.model_switched = True
+        else:
+            start = time.perf_counter()
+            if self.model_switched:
+                self.dRhoF = self.speed/0.2
+                self.dRhoR = self.speed/0.2
+                self.model_switched = False
+                self.long_v = self.speed
+                self.lat_v = 0
+            
+            z0 = [self.long_v, self.lat_v, self.dRhoR, self.dRhoF, self.dotPsi, np.deg2rad(self.heading),
+                  self.car_pos[0], self.car_pos[1]]
+            tspan = [0.0, timedelta]
+            z = odeint(single_track_model, z0, tspan, args=(np.deg2rad(self.steering_angle), self.tauF, self.tauR,self.speed_set_point-self.speed,self.beta), rtol=1e-3, atol=1e-3)
+            self.long_v = z[1][0]
+            self.lat_v = z[1][1]
+            self.speed = np.sqrt(self.long_v**2+self.lat_v**2)
+            self.beta = np.arctan2(self.lat_v,self.long_v)
+            self.dRhoR = z[1][2]
+            self.dRhoF = z[1][3]
+            self.dotPsi = z[1][4]
+            self.heading = np.rad2deg(z[1][5])
+            x = z[1][6]
+            y = z[1][7]
+            self.car_pos = np.array([x, y])
+            print((time.perf_counter()-start)*1000) 
+            
+
+
 
         if self.heading >= 360.:
             self.heading -= 360
         if self.heading < 0.:
             self.heading += 360
-
-        heading_vec = angle_to_vector(self.heading)
-        self.velocity = heading_vec * self.speed
-        # print(self.velocity)
-        # print(np.linalg.norm(self.velocity))
-        # self.car_pos += self.rotation_vector
-        self.car_pos += timedelta * self.velocity
 
     def handle_controls(self, timedelta):
         if self.steering_control == "LEFT":
@@ -108,9 +140,9 @@ class State():
                 self.steering_angle = -self.max_steering_angle
 
         elif self.steering_control == "NEUTRAL":
-            if self.steering_angle > 0.15:
+            if self.steering_angle - timedelta * self.steering_speed > 0.001:
                 self.steering_angle -= timedelta * self.steering_speed
-            elif self.steering_angle < -0.15 :
+            elif self.steering_angle + timedelta * self.steering_speed < -0.001 :
                 self.steering_angle += timedelta * self.steering_speed
             else:
                 self.steering_angle = 0
@@ -118,16 +150,20 @@ class State():
         # print(self.traction_control)
         if self.traction_control == "FORWARD":
             self.engine_force = self.max_engine_force
+            self.tauF = 10
+            self.tauR = 10
         elif self.traction_control == "BRAKE":
             self.engine_force = -self.max_brake_force
-
+            self.tauF = -10
+            self.tauR = -10
             if self.speed <= 0.1:
                 self.speed = 0.
                 self.engine_force = 0.
 
         elif self.traction_control == "NEUTRAL":
             self.engine_force = 0.
-
+            self.tauF = 0
+            self.tauR = 0
         self.steering_control = "NEUTRAL"
         self.traction_control = "NEUTRAL"
 

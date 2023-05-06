@@ -20,7 +20,7 @@ class TestTrackdrive(unittest.TestCase):
 
         ## 1.A SIMULATION SETUP
 
-        map_path = Path("dv_sim/maps/trackdrive_ugly.json").resolve()
+        map_path = Path("dv_sim/maps/trackdrive_pretty.json").resolve()
         cls.sim = Simulation(
                 map_path=map_path,
                 mission=MissionValue.Trackdrive,

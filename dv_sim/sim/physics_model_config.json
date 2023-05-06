@@ -1,0 +1,20 @@
+{
+    "MASS" :200,
+    "lf" : 1.014125,
+    "lr" : 0.510875,
+    "wheel_radius" : 0.2,
+    "wheel_inertia" : 0.02,
+    "car_inertia" : 100.0,
+    "Dy" : 1.4,
+    "By" : 0.184,
+    "Cy" : 1.45,
+    "Ey" : -0.3,
+    "Dx" : 1.0,
+    "Bx" : 4.0,
+    "Cx" : 1.4,
+    "Ex" : 0.1,
+    "p_dyn" : 0.5625,
+    "aero" : -3.6816,
+    "mass_front" : 67,
+    "mass_rear" : 133
+}

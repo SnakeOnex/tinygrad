@@ -16,8 +16,8 @@ from cones.cone_localizer import ConeLocalizer
 from tvojemama.logger import Logger, LogReader, name_to_log
 from config import vision_node_config as config
 from config import tcp_config as tcp
-from internode_communication import create_publisher_socket, publish_data
-from config import VisionNodeMsgPorts
+from internode_communication import create_publisher_socket, publish_data, create_subscriber_socket, update_subscription_data
+from config import VisionNodeMsgPorts, CAN2NodeMsgPorts
 import cv2
 
 
@@ -26,6 +26,7 @@ class VisionNode(mp.Process):
         mp.Process.__init__(self)
         self.main_log_folder = main_log_folder
         self.mode = mode
+        self.go_signal = 0
 
     def initialize(self):
         print("INITTING")
@@ -46,7 +47,11 @@ class VisionNode(mp.Process):
         config["start_time"] = time.time() # adding start global time to config
         self.logger.log("VISION_CONFIGURATION", config)  # log config
 
+        # publisher sockets
         self.cone_preds_socket = create_publisher_socket(VisionNodeMsgPorts.CONE_PREDS)
+
+        # subscriber sockets
+        self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
 
     def run(self):
         print("STARTING CONE DETECTION")
@@ -58,7 +63,13 @@ class VisionNode(mp.Process):
 
         while True:
 
+            if self.log_images == False:
+                self.go_signal = update_subscription_data(self.go_signal_socket, self.go_signal)
+                if self.go_signal == 1:
+                    self.log_images = True
+
             image = self.read_zed_image()
+
             bbox_preds = self.detector.process_image(image)
 
             if bbox_preds is not None:
@@ -71,11 +82,14 @@ class VisionNode(mp.Process):
                 cone_classes = None
 
             data = {
-                "image": image,
                 "bboxes": bbox_preds,
                 "world_preds": world_preds,
                 "cone_classes": cone_classes,
             }
+
+            if self.log_images:
+                data["image"] = image
+
             self.logger.log("CONE_DETECTOR_FRAME", data)
             publish_data(self.cone_preds_socket, world_preds)
 

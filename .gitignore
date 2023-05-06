@@ -5,3 +5,4 @@ missions/__init__.py
 missions/trackdrive/__init__.py
 *.pkl
 .DS_Store
+.ipynb_checkpoints/
