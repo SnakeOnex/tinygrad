@@ -87,5 +87,5 @@ class CanSenderNode(mp.Process):
 
     def init_res(self):
         data = [0x01, 0]
-        self.CAN2.send_can_msg(data.copy(), self.CAN2.name2id["RES_NMT_Mode_Control"])
+        self.CAN2.send_can_msg(data.copy(), self.CAN2.name2id["XVR_NMT_Mode_Control"])
 
