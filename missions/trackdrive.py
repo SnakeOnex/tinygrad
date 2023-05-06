@@ -6,7 +6,7 @@ import multiprocessing as mp
 
 from config import path_planner_opt
 
-from algorithms.steering import stanley_steering
+from algorithms.path_tracking import stanley_steering
 from algorithms.old_path_planning import OldPathPlanner
 from algorithms.general import get_big_orange_distance
 

@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.cluster import KMeans
 
 from config import path_planner_opt
-from algorithms.steering import stanley_steering
+from algorithms.path_tracking import stanley_steering
 from algorithms.path_planning import PathPlanner
 from algorithms.general import get_big_orange_distance, get_orange_centerline, local_to_global, global_to_local
 from algorithms.skidpad_utils import *
