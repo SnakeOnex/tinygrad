@@ -88,7 +88,7 @@ can2_config = {
 #######################
 
 mission_opt = {
-    "frequency": 80,
+    "frequency": 30,
     "log_name": "mission",
     "log_folder_name": "AS"
 }

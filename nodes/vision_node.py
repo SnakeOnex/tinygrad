@@ -105,10 +105,22 @@ class VisionNode(mp.Process):
             image = (np.random.rand(720, 1280, 3) * 255).astype(np.uint8)
 
         while True:
+            if self.log_images == False:
+                self.go_signal = update_subscription_data(self.go_signal_socket, self.go_signal)
+                if self.go_signal == 1:
+                    self.log_images = True
             data = socket.recv()
             world_preds = pickle.loads(data)
+
+            data = {
+                "world_preds": world_preds,
+            }
+
+            if self.log_images:
+                data["image"] = image
+                
+            self.logger.log("CONE_DETECTOR_FRAME", data)
             publish_data(self.cone_preds_socket, world_preds)
-            self.logger.log("CONE_DETECTOR_FRAME", {"image": image, "world_preds": world_preds})
 
     def read_zed_image(self):
         if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:
