@@ -15,19 +15,32 @@ class Can2Node(mp.Process):
         self.main_log_folder = main_log_folder
 
     def initialize(self):
-        self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
+        self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"],
+                             main_folder_path=self.main_log_folder)
         self.CAN2 = CanInterface("data/D1.json", 1, False)
 
         self.go_signal_socket = create_publisher_socket(CAN2NodeMsgPorts.GO_SIGNAL)
+        self.emergency_signal_socket = create_publisher_socket(CAN2NodeMsgPorts.EMERGENCY_SIGNAL)
+        self.switch_signal_socket = create_publisher_socket(CAN2NodeMsgPorts.SWITCH_SIGNAL)
         self.position_socket = create_publisher_socket(CAN2NodeMsgPorts.POSITION)
         self.euler_socket = create_publisher_socket(CAN2NodeMsgPorts.EULER)
         self.velocity_socket = create_publisher_socket(CAN2NodeMsgPorts.VELOCITY)
+        self.ins_satatus_socket = create_publisher_socket(CAN2NodeMsgPorts.INS_STATUS)
+        self.accel_socket = create_publisher_socket(CAN2NodeMsgPorts.ACCELERATION)
+        self.orientation_acc_socket = create_publisher_socket(CAN2NodeMsgPorts.EULER_ACCURACY)
+        self.position_acc_socket = create_publisher_socket(CAN2NodeMsgPorts.POSITION_ACCURACY)
+        self.velocity_acc_socket = create_publisher_socket(CAN2NodeMsgPorts.VELOCITY_ACCURACY)
 
         self.message_callbacks = {
             self.CAN2.name2id["RES_Status"]: self.receive_RES_Status,
             self.CAN2.name2id["INS_D_EKF_EULER"]: self.receive_INS_D_EKF_EULER,
             self.CAN2.name2id["INS_D_EKF_POS"]: self.receive_INS_D_EKF_POS,
-            self.CAN2.name2id["INS_D_EKF_VEL_BODY"]: self.receive_INS_D_EKF_VEL_BODY
+            self.CAN2.name2id["INS_D_EKF_VEL_BODY"]: self.receive_INS_D_EKF_VEL_BODY,
+            self.CAN2.name2id["INS_D_STATUS_03"]: self.receive_INS_D_STATUS_03,
+            self.CAN2.name2id["INS_D_IMU_ACCEL"]: self.receive_INS_D_IMU_ACCEL,
+            self.CAN2.name2id["INS_D_EKF_ORIENT_ACC"]: self.receive_INS_D_EKF_ORIENT_ACC,
+            self.CAN2.name2id["INS_D_EKF_POS_ACC"]: self.receive_INS_D_EKF_POS_ACC,
+            self.CAN2.name2id["INS_D_EKF_VEL_ACC"]: self.receive_INS_D_EKF_VEL_ACC,
         }
 
     def run(self):
@@ -48,10 +61,13 @@ class Can2Node(mp.Process):
 
     # CAN MESSAGE RECEIVE CALLBACK FUNCTIONS
     def receive_RES_Status(self, values):
-        # print(f"received RES status, values: ", values)
+        emergency_signal = values[0]
+        switch_signal = values[1]
         go_signal = values[2]
-        # print("go_signal: ", go_signal)
+        radio_quality = values[10]
         publish_data(self.go_signal_socket, go_signal)
+        publish_data(self.emergency_signal_socket, emergency_signal)
+        publish_data(self.switch_signal_socket, switch_signal)
 
     def receive_INS_D_EKF_POS(self, values):
         latitude = values[0]
@@ -65,3 +81,25 @@ class Can2Node(mp.Process):
     def receive_INS_D_EKF_VEL_BODY(self, values):
         vel_x, vel_y, vel_z = values
         publish_data(self.velocity_socket, (vel_x, vel_y, vel_z))
+
+    def receive_INS_D_STATUS_03(self, values):
+        heading_valid = values[2]
+        velocity_valid = values[3]
+        position_valid = values[4]
+        publish_data(self.ins_satatus_socket, (heading_valid, velocity_valid, position_valid))
+
+    def receive_INS_D_IMU_ACCEL(self, values):
+        accel_x, accel_y, accel_z = values
+        publish_data(self.accel_socket, (accel_x, accel_y, accel_z))
+
+    def receive_INS_D_EKF_ORIENT_ACC(self, values):
+        roll_acc, pitch_acc, yaw_acc = values
+        publish_data(self.orientation_acc_socket, (roll_acc, pitch_acc, yaw_acc))
+
+    def receive_INS_D_EKF_POS_ACC(self, values):
+        lat_acc, long_acc, alt_acc = values
+        publish_data(self.position_acc_socket, (lat_acc, long_acc, alt_acc))
+
+    def receive_INS_D_EKF_VEL_ACC(self, values):
+        vel_x_acc, vel_y_acc, vel_z_acc = values
+        publish_data(self.velocity_acc_socket, (vel_x_acc, vel_y_acc, vel_z_acc))
