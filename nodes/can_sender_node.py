@@ -23,7 +23,7 @@ class CanSenderNode(mp.Process):
 
         self.wheel_speed_cmd = 0.
         self.steering_angle_cmd = 0.
-        self.ksicht_status = (0, 0)
+        self.ksicht_status = (0,0,0,0,0,0,0,0)
 
         # CAN msgs values
         self.ksicht_status_values = [self.ksicht_status[0], self.ksicht_status[1], 0, 0, 0, 0, 0, 0]
@@ -49,9 +49,7 @@ class CanSenderNode(mp.Process):
         self.ksicht_status = update_subscription_data(self.ksicht_status_socket, self.ksicht_status)
 
         # # update values list for the CAN messages
-        AS, mission_engaged = self.ksicht_status
-        self.ksicht_status_values[0] = AS
-        self.ksicht_status_values[1] = mission_engaged
+        self.ksicht_status_values = list(self.ksicht_status)
 
         self.motor_setpoints_values[4] = self.wheel_speed_cmd
         self.steering_control_values[0] = self.steering_angle_cmd
@@ -66,7 +64,6 @@ class CanSenderNode(mp.Process):
 
             # 10 hz messages
             if self.loop_counter % 20 == 0:
-                AS, mission_engaged = self.ksicht_status
                 self.CAN1.send_can_msg(self.ksicht_status_values.copy(), self.CAN1.name2id["XVR_Status"])
                 self.logger.log("XVR_Status", self.ksicht_status_values)
 
