@@ -21,7 +21,8 @@ from config import can_config, tcp_config
 from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts, MissionNodeMsgPorts
 from config import mission_opt as config
 
-from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, publish_data
+from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, \
+    publish_data
 from algorithms.unit_conversions import get_earth_radius_at_pos, lat_lon_to_meter_x_y
 
 
@@ -39,7 +40,6 @@ class MissionValue(IntEnum):
 
 
 class MissionNode(mp.Process):
-
     Missions = {
         MissionValue.NoValue: None,
         MissionValue.Acceleration: Acceleration,
@@ -79,11 +79,14 @@ class MissionNode(mp.Process):
         self.position = (None, None)
         self.euler = (None, None, None)
         self.velocity = (0., 0., 0.)
+        self.ins_status = (0, 0, 0)
         self.start_pos = np.zeros(shape=2)
         self.earth_radius = 0
+        self.switch = 0
 
     def initialize(self):
-        self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
+        self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"],
+                             main_folder_path=self.main_log_folder)
         self.CAN1 = CanInterface(can_config["CAN_JSON"], can_config["CAN1_ID"], False)
 
         if self.mode == "SIM":
@@ -100,9 +103,11 @@ class MissionNode(mp.Process):
 
         # CAN2 node message subscriptions
         self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
+        self.switch_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.SWITCH_SIGNAL)
         self.position_socket = create_subscriber_socket(CAN2NodeMsgPorts.POSITION)
         self.velocity_socket = create_subscriber_socket(CAN2NodeMsgPorts.VELOCITY)
         self.euler_socket = create_subscriber_socket(CAN2NodeMsgPorts.EULER)
+        self.ins_status_socket = create_subscriber_socket(CAN2NodeMsgPorts.INS_STATUS)
 
         # CAN sender node message publishers
         self.wheel_speed_cmd_socket = create_publisher_socket(MissionNodeMsgPorts.WHEEL_SPEED_CMD)
@@ -127,6 +132,8 @@ class MissionNode(mp.Process):
         self.position = update_subscription_data(self.position_socket, self.position)
         self.velocity = update_subscription_data(self.velocity_socket, self.velocity)
         self.euler = update_subscription_data(self.euler_socket, self.euler)
+        self.ins_status = update_subscription_data(self.ins_status_socket, self.ins_status)
+
 
         current_position = update_subscription_data(self.position_socket, self.position)
 
@@ -135,7 +142,8 @@ class MissionNode(mp.Process):
             if not self.start_pos.any():
                 self.earth_radius = get_earth_radius_at_pos(current_position[0])
                 self.start_pos = np.array(current_position, dtype=np.float64)
-            self.position = lat_lon_to_meter_x_y(np.array(current_position, dtype=np.float64), self.earth_radius, self.start_pos)
+            self.position = lat_lon_to_meter_x_y(np.array(current_position, dtype=np.float64), self.earth_radius,
+                                                 self.start_pos)
         elif self.mode == "SIM":
             self.position = current_position
 
@@ -147,7 +155,8 @@ class MissionNode(mp.Process):
 
             self.start_button = update_subscription_data(self.start_button_socket, self.start_button)
             self.go_signal = update_subscription_data(self.go_signal_socket, self.go_signal)
-
+            self.ins_status = update_subscription_data(self.ins_status_socket, self.ins_status)
+            self.switch = update_subscription_data(self.switch_signal_socket, self.switch)
             # 1. update AS State
             # TODO: change start_button to tson_button
             self.ASM.update(start_button=self.start_button,
@@ -185,8 +194,11 @@ class MissionNode(mp.Process):
 
             # 3. send XVR_STATUS
 
-            publish_data(self.ksicht_status_socket, (self.ASM.AS.value, self.mission_num))
-            self.logger.log("FRAME", {"finished": self.finished, "mission_kwargs": self.get_mission_kwargs(), "mission_log": self.mission_log})
+            publish_data(self.ksicht_status_socket, (
+            self.ASM.AS.value, self.mission_num, 0, 0, self.ins_status[0], self.ins_status[1], self.ins_status[2], self.switch))
+
+            self.logger.log("FRAME", {"finished": self.finished, "mission_kwargs": self.get_mission_kwargs(),
+                                      "mission_log": self.mission_log})
 
             end_time = time.perf_counter()
 
