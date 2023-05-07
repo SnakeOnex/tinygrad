@@ -49,7 +49,7 @@ class CanSenderNode(mp.Process):
         self.ksicht_status = update_subscription_data(self.ksicht_status_socket, self.ksicht_status)
 
         # # update values list for the CAN messages
-        self.ksicht_status_values = self.ksicht_status
+        self.ksicht_status_values = list(self.ksicht_status)
 
         self.motor_setpoints_values[4] = self.wheel_speed_cmd
         self.steering_control_values[0] = self.steering_angle_cmd

@@ -159,7 +159,7 @@ class MissionNode(mp.Process):
             self.switch = update_subscription_data(self.switch_signal_socket, self.switch)
             # 1. update AS State
             # TODO: change start_button to tson_button
-            self.ASM.update(start_button=self.start_button,
+            self.ASM.update(start_button=self.go_signal,
                             go_signal=self.start_button,
                             finished=self.finished)
 
@@ -194,8 +194,8 @@ class MissionNode(mp.Process):
 
             # 3. send XVR_STATUS
 
-            publish_data(self.ksicht_status_socket, (
-            self.ASM.AS.value, self.mission_num, 0, 0, self.ins_status[0], self.ins_status[1], self.ins_status[2], self.switch))
+            publish_data(self.ksicht_status_socket, [
+            self.ASM.AS.value, self.mission_num, 0, self.switch, self.ins_status[0], self.ins_status[1], 0,0])
 
             self.logger.log("FRAME", {"finished": self.finished, "mission_kwargs": self.get_mission_kwargs(),
                                       "mission_log": self.mission_log})
