@@ -48,7 +48,7 @@ class Trackdrive():
         self.finish_time = float('inf')
         self.stopped_time = None
 
-        self.laps_to_drive = 2
+        self.laps_to_drive = 1
         self.laps_driven = 0
 
     def loop(self, **kwargs):
@@ -97,7 +97,7 @@ class Trackdrive():
             path = torch_smooth(path).astype(np.float64)
 
         # Speed profile
-        if self.use_speed_profile and len(path) > 2:
+        if self.use_speed_profile and len(path) > 2 and self.speed_set_point > 0.:
             # if self.use_speed_profile:
             # self.speed_set_point, speed_arr = self.speed_profile.michals_profile(path, init_speed=wheel_speed)
             speed_arr = self.speed_profile.michals_profile(path, wheel_speed)

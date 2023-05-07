@@ -159,8 +159,8 @@ class MissionNode(mp.Process):
             self.switch = update_subscription_data(self.switch_signal_socket, self.switch)
             # 1. update AS State
             # TODO: change start_button to tson_button
-            self.ASM.update(start_button=self.go_signal,
-                            go_signal=self.start_button,
+            self.ASM.update(start_button=self.start_button,
+                            go_signal=self.go_signal,
                             finished=self.finished)
 
             if self.ASM.AS == AS.DRIVING:
@@ -202,7 +202,9 @@ class MissionNode(mp.Process):
 
             end_time = time.perf_counter()
 
+            # print(f"took: {(end_time - start_time) * 1000}")
             time_to_sleep = (1. / self.frequency) - (end_time - start_time)
+            # time_to_sleep = (1. / self.frequency)
 
             if time_to_sleep > 0.:
                 time.sleep(time_to_sleep)
