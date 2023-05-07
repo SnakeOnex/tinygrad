@@ -11,7 +11,6 @@ from config import MissionNodeMsgPorts
 from config import can_sender_config as opt
 
 
-
 class CanSenderNode(mp.Process):
     def __init__(self, main_log_folder):
         mp.Process.__init__(self)
@@ -85,5 +84,5 @@ class CanSenderNode(mp.Process):
 
     def init_res(self):
         data = [0x01, 0]
-        self.CAN2.send_can_msg(data.copy(), self.CAN2.name2id["NMT_Mode_Control"])
+        self.CAN2.send_can_msg(data.copy(), self.CAN2.name2id["XVR_NMT_Mode_Control"])
 
