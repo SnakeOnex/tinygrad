@@ -301,7 +301,7 @@ class PathPlanning():
 # According to Stanley paper
 # According to Stanley article
 
-def torch_smooth(path, use_spline_as_smoother=False, add_more_points_to_path=False):
+def torch_smooth(path):
 
     def normalize(v):
         # norm = np.linalg.norm(v, axis=0) + 0.00001
@@ -343,26 +343,29 @@ def torch_smooth(path, use_spline_as_smoother=False, add_more_points_to_path=Fal
     initial_trajectory = torch.tensor(path, dtype=torch.float32, requires_grad=True)
     initial_trajectory_gt = initial_trajectory.clone()
     
-#     optimizer = optim.Adam([initial_trajectory], lr=0.1)
-    optimizer = optim.SGD([initial_trajectory], lr=0.01)
-    num_iterations = 3
-    # print("ne")
-    
+    optimizer = optim.SGD([initial_trajectory], lr=0.005)
+    num_iterations = 5
+    best_cost = float('inf')
+    best_trajectory = initial_trajectory
+
     for i in range(num_iterations):
         optimizer.zero_grad()
         
         cost = smoothing_objective(initial_trajectory, initial_trajectory_gt)
+
+        if cost.item() < best_cost:
+            best_cost = cost.item()
+            best_trajectory = initial_trajectory.clone()
         
         cost.backward()
         optimizer.step()
 
-    optimized_trajectory = initial_trajectory.detach().numpy()
-
-    # optimized_trajectory = initial_trajectory
+    optimized_trajectory = best_trajectory.detach().numpy()
     smooth_path = optimized_trajectory.reshape(-1, 2)
-    # smooth_path[0] = [0., 0.]  # TODO:Fix this ?add constraint to minimize?
     smooth_path[0][0] = 0.  # TODO:Fix this ?add constraint to minimize?
     smooth_path[0][0] = 0.  # TODO:Fix this ?add constraint to minimize?
+    
+    # return smooth_path, cost.item()
     return smooth_path
 
 
