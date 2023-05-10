@@ -15,7 +15,7 @@ from algorithms.path_planning import PathPlanner, stanley_smooth_path
 from algorithms.optimized_path_planning import PathPlanner as OptimizedPathPlanner
 from algorithms.optimized_path_planning import stanley_smooth_path as optimized_smooth_path
 from algorithms.david_planning import torch_smooth, PathPlanner as DavidPathPlanner, stanley_smooth_path as david_smooth
-
+from algorithms.pathplanning_morepoints_lessbloat import PathPlanner as PathPlannerMorePoints
 
 
 class Trackdrive():
@@ -33,8 +33,8 @@ class Trackdrive():
 
         self.path_planner = PathPlanner()
         self.speed_profile = SpeedProfile()
-
         self.optimized_path_planner = OptimizedPathPlanner()
+        self.more_points_path_planner = PathPlannerMorePoints()
 
         self.use_speed_profile = True
         self.use_new_path_planning = False
@@ -78,9 +78,9 @@ class Trackdrive():
             # path = self.path_planner.find_path(percep_data)
             path = self.optimized_path_planner.find_path(percep_data)
             path = stanley_smooth_path(path)
-            
+
             # path = optimized_smooth_path(path) # minimize func
-            
+
             # add more path points (+3?)
             # path = optimized_smooth_path(path, use_spline_as_smoother=False, add_more_points_to_path=True) # a liitle bit slower, but same problems as with spline...
             # path = optimized_smooth_path(path, use_spline_as_smoother=True) # only spline
@@ -92,8 +92,8 @@ class Trackdrive():
         else:
             # path = self.old_path_planner.find_path(percep_data)
             # path = stanley_smooth_path(path)
-
-            path = self.david_path_planner.find_path(percep_data)
+            path = self.more_points_path_planner.find_path(percep_data)
+            # path = self.david_path_planner.find_path(percep_data)
             path = torch_smooth(path).astype(np.float64)
 
         # Speed profile
