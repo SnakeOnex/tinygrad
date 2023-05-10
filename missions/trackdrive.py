@@ -30,7 +30,6 @@ class Trackdrive():
         self.nonlinear_gain = .2
         self.old_path_planner = OldPathPlanner(path_planner_opt)
         self.david_path_planner = DavidPathPlanner()
-
         self.path_planner = PathPlanner()
         self.speed_profile = SpeedProfile()
         self.optimized_path_planner = OptimizedPathPlanner()
@@ -92,8 +91,8 @@ class Trackdrive():
         else:
             # path = self.old_path_planner.find_path(percep_data)
             # path = stanley_smooth_path(path)
-            path = self.more_points_path_planner.find_path(percep_data)
-            # path = self.david_path_planner.find_path(percep_data)
+            # path = self.more_points_path_planner.find_path(percep_data)
+            path = self.david_path_planner.find_path(percep_data)
             path = torch_smooth(path).astype(np.float64)
 
         # Speed profile

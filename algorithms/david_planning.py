@@ -301,6 +301,7 @@ class PathPlanning():
 # According to Stanley paper
 # According to Stanley article
 
+
 def torch_smooth(path):
 
     def normalize(v):
@@ -342,7 +343,7 @@ def torch_smooth(path):
 
     initial_trajectory = torch.tensor(path, dtype=torch.float32, requires_grad=True)
     initial_trajectory_gt = initial_trajectory.clone()
-    
+
     optimizer = optim.SGD([initial_trajectory], lr=0.005)
     num_iterations = 5
     best_cost = float('inf')
@@ -350,22 +351,19 @@ def torch_smooth(path):
 
     for i in range(num_iterations):
         optimizer.zero_grad()
-        
+
         cost = smoothing_objective(initial_trajectory, initial_trajectory_gt)
 
         if cost.item() < best_cost:
             best_cost = cost.item()
             best_trajectory = initial_trajectory.clone()
-        
+
         cost.backward()
         optimizer.step()
 
     optimized_trajectory = best_trajectory.detach().numpy()
     smooth_path = optimized_trajectory.reshape(-1, 2)
-    smooth_path[0][0] = 0.  # TODO:Fix this ?add constraint to minimize?
-    smooth_path[0][0] = 0.  # TODO:Fix this ?add constraint to minimize?
-    
-    # return smooth_path, cost.item()
+    smooth_path[0, :] = 0.  # TODO:Fix this ?add constraint to minimize?
     return smooth_path
 
 
