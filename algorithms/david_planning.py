@@ -11,8 +11,10 @@ from torch import optim
 
 class PathPlanning():
     def __init__(self, n_steps=None, debug=False):
-        self.used_blue_cones = np.reshape([], (-1, 2))  # only for debugging purpose?
-        self.used_yellow_cones = np.reshape([], (-1, 2))  # only for debugging purpose?
+        self.used_blue_cones = np.reshape(
+            [], (-1, 2))  # only for debugging purpose?
+        self.used_yellow_cones = np.reshape(
+            [], (-1, 2))  # only for debugging purpose?
         self.FILLING_CONE_DIST = 3.5        # is used to fill missing cones
         self.MAX_PATH_LENGTH = 20.          # can be used to stop path planning
         self.MAX_DIST_TO_FIRST_CONE = 10.   # is used in filtering cones #? delete
@@ -26,8 +28,10 @@ class PathPlanning():
 
     def reset(self):
         # reset some variables for the next find_path() call
-        self.used_blue_cones = np.reshape([], (-1, 2))  # only for debugging purpose?
-        self.used_yellow_cones = np.reshape([], (-1, 2))  # only for debugging purpose?
+        self.used_blue_cones = np.reshape(
+            [], (-1, 2))  # only for debugging purpose?
+        self.used_yellow_cones = np.reshape(
+            [], (-1, 2))  # only for debugging purpose?
         self.path = np.array([[0., 0.]])
         self.path_length = 0.
         self.step = 0
@@ -57,13 +61,15 @@ class PathPlanning():
         shifted_cones = np.vstack((np.array([0., 0.]), cones))[0:-1]
         distances = np.linalg.norm(cones - shifted_cones, axis=1)
         # compensate for the larger permitted distance to the first cone
-        distances[0] -= self.MAX_DIST_TO_FIRST_CONE + self.MAX_DIST_BETWEEN_CONES
+        distances[0] -= self.MAX_DIST_TO_FIRST_CONE + \
+            self.MAX_DIST_BETWEEN_CONES
 
         # stop until one distance is larger than permitted
         # thelarge distance can mean that the next part of track is far away or parallel
         # slice_until = np.argmax(distances > self.MAX_DIST_BETWEEN_CONES)
         larger_distance = np.where(distances > self.MAX_DIST_BETWEEN_CONES)[0]
-        slice_until = larger_distance[0] if len(larger_distance) > 0 else len(cones)
+        slice_until = larger_distance[0] if len(
+            larger_distance) > 0 else len(cones)
 
         return cones[0:slice_until]
 
@@ -95,11 +101,14 @@ class PathPlanning():
                 angle = np.arccos(np.dot(vec1, vec2)) / 2
 
                 if full_yellow:
-                    vec = np.array([[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]) @ vec2
+                    vec = np.array(
+                        [[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]]) @ vec2
                 else:
-                    vec = np.array([[np.cos(-angle), -np.sin(-angle)], [np.sin(-angle), np.cos(-angle)]]) @ vec2
+                    vec = np.array(
+                        [[np.cos(-angle), -np.sin(-angle)], [np.sin(-angle), np.cos(-angle)]]) @ vec2
 
-            to_fill = np.vstack((to_fill, full[idx, :] + vec * self.FILLING_CONE_DIST))
+            to_fill = np.vstack(
+                (to_fill, full[idx, :] + vec * self.FILLING_CONE_DIST))
 
         if full_yellow:
             return to_fill, full
@@ -126,22 +135,26 @@ class PathPlanning():
             if dist[0] < dist[1]:
                 if y_count == 2:
                     # recolor to blue because yellows are enough
-                    recolored_to_blue = np.vstack((recolored_to_blue, O_cones[distances.index(dist)]))
+                    recolored_to_blue = np.vstack(
+                        (recolored_to_blue, O_cones[distances.index(dist)]))
                     b_count += 1
                     continue
 
                 # recolor to yellow
-                recolored_to_yellow = np.vstack((recolored_to_yellow, O_cones[distances.index(dist)]))
+                recolored_to_yellow = np.vstack(
+                    (recolored_to_yellow, O_cones[distances.index(dist)]))
                 y_count += 1
             else:
                 if b_count == 2:
                     # recolor to yellow because blues are enough
-                    recolored_to_yellow = np.vstack((recolored_to_yellow, O_cones[distances.index(dist)]))
+                    recolored_to_yellow = np.vstack(
+                        (recolored_to_yellow, O_cones[distances.index(dist)]))
                     y_count += 1
                     continue
 
                 # recolor to blue
-                recolored_to_blue = np.vstack((recolored_to_blue, O_cones[distances.index(dist)]))
+                recolored_to_blue = np.vstack(
+                    (recolored_to_blue, O_cones[distances.index(dist)]))
                 b_count += 1
 
         B = np.vstack((B_cones, recolored_to_blue))
@@ -257,7 +270,8 @@ class PathPlanning():
 
         # Recolor/assign big orange cones
         if len(O_cones) > 0:
-            B_cones, Y_cones = self.recolor_orange_cones(B_cones, Y_cones, O_cones)
+            B_cones, Y_cones = self.recolor_orange_cones(
+                B_cones, Y_cones, O_cones)
 
         # Sort cones
         B_cones, Y_cones = self.sort_cones(B_cones), self.sort_cones(Y_cones)
@@ -325,7 +339,8 @@ def torch_smooth(path):
         segment = torch.sum(mul, dim=0)
         return torch.sum(segment[1:-1])
 
-    def smoothing_objective(waypoints, waypoints_center, weight_curvature=16):  # weight_curvature=128
+    # weight_curvature=128
+    def smoothing_objective(waypoints, waypoints_center, weight_curvature=16):
         '''
         Objective for path smoothing
 
@@ -341,23 +356,20 @@ def torch_smooth(path):
         boundary_penalty = 0  # ? TODO? F_rddf in Stanley paper
         return ls_tocenter - weight_curvature * ls_curvature + boundary_penalty
 
-    initial_trajectory = torch.tensor(path, dtype=torch.float32, requires_grad=True)
+    initial_trajectory = torch.tensor(
+        path, dtype=torch.float32, requires_grad=True)
     initial_trajectory_gt = initial_trajectory.clone()
 
-    optimizer = optim.SGD([initial_trajectory], lr=0.005)
+    optimizer = optim.ASGD([initial_trajectory], lr=0.005)
     num_iterations = 5
     best_cost = float('inf')
     best_trajectory = initial_trajectory
-
     for i in range(num_iterations):
         optimizer.zero_grad()
-
         cost = smoothing_objective(initial_trajectory, initial_trajectory_gt)
-
         if cost.item() < best_cost:
             best_cost = cost.item()
             best_trajectory = initial_trajectory.clone()
-
         cost.backward()
         optimizer.step()
 
@@ -385,13 +397,12 @@ def stanley_smooth_path(path, use_spline_as_smoother=False, add_more_points_to_p
         shift_right = np.roll(waypoints, shift=1, axis=1)
         left_half = normalize(shift_left - waypoints)
         right_half = normalize(waypoints - shift_right)
-
         mul = left_half * right_half
         segment = np.sum(mul, axis=0)
-
         return np.sum(segment[1:-1])
 
-    def smoothing_objective(waypoints, waypoints_center, weight_curvature=16):  # weight_curvature=128
+    # weight_curvature=128
+    def smoothing_objective(waypoints, waypoints_center, weight_curvature=16):
         '''
         Objective for path smoothing
 
@@ -440,7 +451,8 @@ def stanley_smooth_path(path, use_spline_as_smoother=False, add_more_points_to_p
     if add_more_points_to_path:
         if len(path) > 3:
             spline_smoothness = 10
-            spl_path, _ = splprep((path[:, 0], path[:, 1]), s=spline_smoothness)
+            spl_path, _ = splprep(
+                (path[:, 0], path[:, 1]), s=spline_smoothness)
             # create spline arguments
             # num_waypoints = 10 #5 #8 #13 # 15
             num_waypoints = len(path) + 3
@@ -457,14 +469,16 @@ def stanley_smooth_path(path, use_spline_as_smoother=False, add_more_points_to_p
             # spline is faster, but there are problems in the turns
             return new_path
         else:
-            way_points = minimize(smoothing_objective, (new_path), args=new_path, options=opts)
+            way_points = minimize(smoothing_objective,
+                                  (new_path), args=new_path, options=opts)
 
         # end = time.time()
         # print(f"Minimize took: {round((end-start)*1000, 4)} ms")
         # print()
     else:
         # start = time.time()
-        way_points = minimize(smoothing_objective, (path), args=path, options=opts)
+        way_points = minimize(smoothing_objective, (path),
+                              args=path, options=opts)
 
         # way_points = minimize(smoothing_objective, (path), args=path, constraints=constraints_dict) # so slow
         # way_points = minimize(smoothing_objective, (path), args=path)
@@ -500,9 +514,11 @@ def plot_path(path, B_cones, Y_cones, BIG_ORANGE_cones=[], b_bound=[], y_bound=[
     if len(B_cones) > 0:
         axe.plot(B_cones[:, 0], B_cones[:, 1], "o", color="blue", mec="black")
     if len(Y_cones) > 0:
-        axe.plot(Y_cones[:, 0], Y_cones[:, 1], "o", color="yellow", mec="black")
+        axe.plot(Y_cones[:, 0], Y_cones[:, 1],
+                 "o", color="yellow", mec="black")
     if len(BIG_ORANGE_cones) > 0:
-        axe.plot(BIG_ORANGE_cones[:, 0], BIG_ORANGE_cones[:, 1], "o", color="orange", mec="black")
+        axe.plot(BIG_ORANGE_cones[:, 0], BIG_ORANGE_cones[:,
+                 1], "o", color="orange", mec="black")
 
     if len(b_bound) > 0:
         axe.plot(b_bound[:, 0], b_bound[:, 1], color="blue")
@@ -547,7 +563,8 @@ class PathPlanner():
 
         try:
             self.planner.reset()
-            path = self.planner.find_path(blue_cones, yellow_cones, O_cones=orange_cones)
+            path = self.planner.find_path(
+                blue_cones, yellow_cones, O_cones=orange_cones)
             # print(f"Path planning took: {self.path_planning_time} ms")
 
             # start_path_smoothing_time = time.time()
