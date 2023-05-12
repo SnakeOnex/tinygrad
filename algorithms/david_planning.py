@@ -376,7 +376,7 @@ def torch_smooth(path):
     optimized_trajectory = best_trajectory.detach().numpy()
     smooth_path = optimized_trajectory.reshape(-1, 2)
     smooth_path[0, :] = 0.  # TODO:Fix this ?add constraint to minimize?
-    return smooth_path
+    return smooth_path, best_cost
 
 
 def stanley_smooth_path(path, use_spline_as_smoother=False, add_more_points_to_path=False):
