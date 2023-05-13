@@ -43,16 +43,20 @@ class VisionNode(mp.Process):
             self.localizer = ConeLocalizer(config["cone_localizer_opt"])
             self.zed.open()
 
-        self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
-        
-        config["start_time"] = time.time() # adding start global time to config
+        self.logger = Logger(
+            log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
+
+        # adding start global time to config
+        config["start_time"] = time.time()
         self.logger.log("VISION_CONFIGURATION", config)  # log config
 
         # publisher sockets
-        self.cone_preds_socket = create_publisher_socket(VisionNodeMsgPorts.CONE_PREDS)
+        self.cone_preds_socket = create_publisher_socket(
+            VisionNodeMsgPorts.CONE_PREDS)
 
         # subscriber sockets
-        self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
+        self.go_signal_socket = create_subscriber_socket(
+            CAN2NodeMsgPorts.GO_SIGNAL)
 
     def run(self):
         print("STARTING CONE DETECTION")
@@ -65,7 +69,8 @@ class VisionNode(mp.Process):
         while True:
 
             if self.log_images == False:
-                self.go_signal = update_subscription_data(self.go_signal_socket, self.go_signal)
+                self.go_signal = update_subscription_data(
+                    self.go_signal_socket, self.go_signal)
                 if self.go_signal == 1:
                     self.log_images = True
 
@@ -91,8 +96,8 @@ class VisionNode(mp.Process):
             if self.log_images:
                 data["image"] = image
 
-            self.logger.log("CONE_DETECTOR_FRAME", data)
             publish_data(self.cone_preds_socket, world_preds)
+            self.logger.log("CONE_DETECTOR_FRAME", data)
 
     def run_simulation(self):
         context = zmq.Context()
@@ -106,7 +111,8 @@ class VisionNode(mp.Process):
 
         while True:
             if self.log_images == False:
-                self.go_signal = update_subscription_data(self.go_signal_socket, self.go_signal)
+                self.go_signal = update_subscription_data(
+                    self.go_signal_socket, self.go_signal)
                 if self.go_signal == 1:
                     self.log_images = True
             data = socket.recv()
@@ -118,7 +124,7 @@ class VisionNode(mp.Process):
 
             if self.log_images:
                 data["image"] = image
-                
+
             self.logger.log("CONE_DETECTOR_FRAME", data)
             publish_data(self.cone_preds_socket, world_preds)
 

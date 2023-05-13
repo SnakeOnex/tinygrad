@@ -46,7 +46,6 @@ class CAN2NodeMsgPorts(IntEnum):
     VELOCITY_ACCURACY = auto()
 
 
-
 class VisionNodeMsgPorts(IntEnum):
     CONE_PREDS = NodePorts.VISION
 
@@ -55,6 +54,19 @@ class MissionNodeMsgPorts(IntEnum):
     WHEEL_SPEED_CMD = NodePorts.MISSION
     STEERING_ANGLE_CMD = auto()
     KSICHT_STATUS = auto()
+
+
+class MissionValue(IntEnum):
+    NoValue = 0,
+    Acceleration = 1,
+    Skidpad = 2,
+    Autocross = 3,
+    Trackdrive = 4,
+    EBS_Test = 5,
+    Inspection = 6,
+    Manual = 7,
+    Disco = 8,
+    Donuts = 9
 
 
 tcp_config = {

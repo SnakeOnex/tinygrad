@@ -14,8 +14,9 @@ from algorithms.speed_profile import SpeedProfile
 from algorithms.path_planning import PathPlanner, stanley_smooth_path
 from algorithms.optimized_path_planning import PathPlanner as OptimizedPathPlanner
 from algorithms.optimized_path_planning import stanley_smooth_path as optimized_smooth_path
-from algorithms.david_planning import torch_smooth, PathPlanner as DavidPathPlanner, stanley_smooth_path as david_smooth
-from algorithms.pathplanning_morepoints_lessbloat import PathPlanner as PathPlannerMorePoints
+from algorithms.david_planning import PathPlanner as DavidPathPlanner
+from algorithms.path_planning_more_points import PathPlanner as PathPlannerMorePoints
+from algorithms.path_smoothing import PathSmoothing
 
 
 class Trackdrive():
@@ -28,12 +29,14 @@ class Trackdrive():
         self.lookahead_dist = 1.7
         self.linear_gain = 0.5
         self.nonlinear_gain = .2
+
         self.old_path_planner = OldPathPlanner(path_planner_opt)
         self.david_path_planner = DavidPathPlanner()
         self.path_planner = PathPlanner()
         self.speed_profile = SpeedProfile()
         self.optimized_path_planner = OptimizedPathPlanner()
         self.more_points_path_planner = PathPlannerMorePoints()
+        self.path_smoothing = PathSmoothing()
 
         self.use_speed_profile = True
         self.use_new_path_planning = False
@@ -93,7 +96,8 @@ class Trackdrive():
             # path = stanley_smooth_path(path)
             # path = self.more_points_path_planner.find_path(percep_data)
             path = self.david_path_planner.find_path(percep_data)
-            path = torch_smooth(path).astype(np.float64)
+            # path, _ = self.path_smoothing.torch_smooth(path)
+            path, _ = self.path_smoothing.scipy_smooth(path)
 
         # Speed profile
         if self.use_speed_profile and len(path) > 2 and self.speed_set_point > 0.:
@@ -110,7 +114,8 @@ class Trackdrive():
         # 2. planning
         # if have been driving for more than 3 seconds since passing start/finish, start looking for it again
         if time_since_last_lap > 3.:
-            dist_to_finish = get_big_orange_distance(cone_preds=percep_data, min_big_cones=1)
+            dist_to_finish = get_big_orange_distance(
+                cone_preds=percep_data, min_big_cones=1)
 
             if dist_to_finish is not None:
                 finish_in = dist_to_finish / wheel_speed
@@ -132,7 +137,8 @@ class Trackdrive():
             self.finished = True
 
         # 2. controls
-        delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
+        delta, controller_log = stanley_steering(
+            path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
 
         debug_dict = {
             "time_since_start": time_since_start,
