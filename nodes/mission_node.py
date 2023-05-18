@@ -66,6 +66,7 @@ class MissionNode(mp.Process):
 
         # CAN2 node data
         self.go_signal = 0
+        self.emergency_signal = 0
         self.position = (None, None)
         self.euler = (None, None, None)
         self.velocity = (0., 0., 0.)
@@ -97,6 +98,7 @@ class MissionNode(mp.Process):
 
         # CAN2 node message subscriptions
         self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
+        self.emergency_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.EMERGENCY_SIGNAL)
         self.switch_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.SWITCH_SIGNAL)
         self.position_socket = create_subscriber_socket(CAN2NodeMsgPorts.POSITION)
         self.velocity_socket = create_subscriber_socket(CAN2NodeMsgPorts.VELOCITY)
@@ -132,6 +134,7 @@ class MissionNode(mp.Process):
         self.ins_status = update_subscription_data(self.ins_status_socket, self.ins_status)
         self.switch = update_subscription_data(self.switch_signal_socket, self.switch)
         self.mission_num = update_subscription_data(self.mission_socket, self.mission_num)
+        self.emergency_signal = update_subscription_data(self.emergency_signal_socket, self.emergency_signal)
 
         current_position = update_subscription_data(self.position_socket, self.position)
 
@@ -141,8 +144,7 @@ class MissionNode(mp.Process):
                 self.earth_radius = get_earth_radius_at_pos(
                     current_position[0])
                 self.start_pos = np.array(current_position, dtype=np.float64)
-            self.position = lat_lon_to_meter_x_y(np.array(current_position, dtype=np.float64), self.earth_radius,
-                                                 self.start_pos)
+            self.position = lat_lon_to_meter_x_y(np.array(current_position, dtype=np.float64), self.earth_radius, self.start_pos)
         elif self.mode == "SIM":
             self.position = current_position
 
@@ -158,12 +160,13 @@ class MissionNode(mp.Process):
             # TODO: change start_button to tson_button
             self.ASM.update(start_button=self.start_button,
                             go_signal=self.go_signal,
+                            emergency_signal=self.emergency_signal,
+                            car_status=self.car_status,
                             finished=self.finished)
             # self.ASM.update_asm_status()
 
             if self.ASM.AS == AS.DRIVING and self.car_status == CarStatus.STARTED:
-                self.finished, steering_angle, speed, log, path, target = self.mission.loop(
-                    **self.get_mission_kwargs())
+                self.finished, steering_angle, speed, log, path, target = self.mission.loop(**self.get_mission_kwargs())
                 self.mission_log = {
                     "steering_angle": steering_angle,
                     "speed": speed,

@@ -50,7 +50,10 @@ def state_to_SA_SteeringAngle(state):
     return values
 
 def state_to_EBSS_Status(state):
-    CarState = 5
+    if state.emergency_signal:
+        CarState = 0
+    else:
+        CarState = 5
 
     values = [0 for _ in range(34)]
     values[0] = CarState

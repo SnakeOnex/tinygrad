@@ -213,6 +213,9 @@ if __name__ == '__main__':
         if key == 'g':
             app.controls_state[ControlsValues.go_signal] = 1
 
+        if key == 'n':
+            app.controls_state[ControlsValues.emergency_signal] = 1
+
     def update():
         """
         Ursina engine update loop

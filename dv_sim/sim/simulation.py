@@ -36,7 +36,8 @@ class GUIValues(IntEnum):
 class ControlsValues(IntEnum):
     go_signal = 0,
     lat_control = 1,
-    long_control = 2
+    long_control = 2,
+    emergency_signal = 3
 
 
 class MissionValue(IntEnum):
@@ -75,8 +76,7 @@ class Simulation():
         # 2.A vision simulation address
         if not self.manual:
             self.vision_socket = self.context.socket(zmq.PUB)
-            self.vision_socket.bind(
-                config["TCP_HOST"] + ":" + config["VISION_PORT"])
+            self.vision_socket.bind(config["TCP_HOST"] + ":" + config["VISION_PORT"])
             self.vision_freq = 30  # Hz
             self.vision_time = 0.  # var for keeping track of last time vision packat has been sent
 
@@ -160,6 +160,10 @@ class Simulation():
 
             if controls_state[ControlsValues.go_signal]:
                 self.go_signal()
+
+            if controls_state[ControlsValues.emergency_signal]:
+                print("emergency")
+                self.emergency_signal()
 
             if self.manual:
                 # lateral control
