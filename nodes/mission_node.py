@@ -131,6 +131,7 @@ class MissionNode(mp.Process):
         self.go_signal = update_subscription_data(self.go_signal_socket, self.go_signal)
         self.ins_status = update_subscription_data(self.ins_status_socket, self.ins_status)
         self.switch = update_subscription_data(self.switch_signal_socket, self.switch)
+        self.mission_num = update_subscription_data(self.mission_socket, self.mission_num)
 
         current_position = update_subscription_data(self.position_socket, self.position)
 
@@ -183,8 +184,6 @@ class MissionNode(mp.Process):
                 publish_data(self.steering_angle_cmd_socket, steering_angle)
                 publish_data(self.wheel_speed_cmd_socket, speed)
             else:
-                self.mission_num = update_subscription_data(
-                    self.mission_socket, self.mission_num)
                 # self.mission_num = self.ASM.get_mission_num()
                 if self.mission_num != MissionValue.NoValue:
                     self.mission = Missions[self.mission_num]()
