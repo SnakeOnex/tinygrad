@@ -22,20 +22,13 @@ class ASM():
     def __init__(self):
 
         # ASM required sockets
-        self.start_button_socket = create_subscriber_socket(
-            CAN1NodeMsgPorts.START_BUTTON)
-        self.go_signal_socket = create_subscriber_socket(
-            CAN2NodeMsgPorts.GO_SIGNAL)
-        self.switch_signal_socket = create_subscriber_socket(
-            CAN2NodeMsgPorts.SWITCH_SIGNAL)
-        self.ins_status_socket = create_subscriber_socket(
-            CAN2NodeMsgPorts.INS_STATUS)
-        self.ksicht_status_socket = create_publisher_socket(
-            MissionNodeMsgPorts.KSICHT_STATUS)
-        self.emergency_signal_socket = create_subscriber_socket(
-            CAN2NodeMsgPorts.EMERGENCY_SIGNAL)
-        self.mission_socket = create_subscriber_socket(
-            CAN1NodeMsgPorts.MISSION)
+        self.start_button_socket = create_subscriber_socket(CAN1NodeMsgPorts.START_BUTTON)
+        self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
+        self.switch_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.SWITCH_SIGNAL)
+        self.ins_status_socket = create_subscriber_socket(CAN2NodeMsgPorts.INS_STATUS)
+        self.ksicht_status_socket = create_publisher_socket(MissionNodeMsgPorts.KSICHT_STATUS)
+        self.emergency_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.EMERGENCY_SIGNAL)
+        self.mission_socket = create_subscriber_socket(CAN1NodeMsgPorts.MISSION)
 
         # ASM required data
         self.start_button = 0
@@ -50,16 +43,11 @@ class ASM():
         self.AS = AS.OFF
 
     def update_asm_status(self):
-        self.start_button = update_subscription_data(
-            self.start_button_socket, self.start_button)
-        self.go_signal = update_subscription_data(
-            self.go_signal_socket, self.go_signal)
-        self.ins_status = update_subscription_data(
-            self.ins_status_socket, self.ins_status)
-        self.switch = update_subscription_data(
-            self.switch_signal_socket, self.switch)
-        self.emergency_signal = update_subscription_data(
-            self.emergency_signal_socket, self.emergency_signal)
+        self.start_button = update_subscription_data(self.start_button_socket, self.start_button)
+        self.go_signal = update_subscription_data(self.go_signal_socket, self.go_signal)
+        self.ins_status = update_subscription_data(self.ins_status_socket, self.ins_status)
+        self.switch = update_subscription_data(self.switch_signal_socket, self.switch)
+        self.emergency_signal = update_subscription_data(self.emergency_signal_socket, self.emergency_signal)
 
         if self.emergency_signal == 1:
             self.set_emergency()

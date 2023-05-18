@@ -1,11 +1,6 @@
 from enum import IntEnum
 
-class AS(IntEnum):
-	OFF = 0
-	READY = 1
-	DRIVING = 2
-	FINISHED = 3
-	EMERGENCY = 4
+from config import AS
 
 class ASM():
 	"""

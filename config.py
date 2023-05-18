@@ -30,6 +30,7 @@ class CAN1NodeMsgPorts(IntEnum):
     STEERING_ANGLE = auto()
     MISSION = auto()
     START_BUTTON = auto()
+    CAR_STATUS = auto()
 
 
 class CAN2NodeMsgPorts(IntEnum):
@@ -67,6 +68,21 @@ class MissionValue(IntEnum):
     Manual = 7,
     Disco = 8,
     Donuts = 9
+
+class AS(IntEnum):
+	OFF = 0
+	READY = 1
+	DRIVING = 2
+	FINISHED = 3
+	EMERGENCY = 4
+
+class CarStatus(IntEnum):
+    NOT_READY = 0,
+    TS_READY = 1,
+    PRECHARGE = 2,
+    TS_ON = 3,
+    WAITING_FOR_RTDS = 4,
+    STARTED = 5
 
 
 tcp_config = {

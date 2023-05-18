@@ -52,7 +52,7 @@ class TestTrackdrive(unittest.TestCase):
             time_since_start = time.perf_counter() - start_time
 
             # after 10 seconds send go signal
-            if time_since_start >= 5.:
+            if time_since_start >= 10.:
                 self.sim.go_signal()
 
             # after max seconds end and return TRUE

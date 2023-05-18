@@ -49,6 +49,14 @@ def state_to_SA_SteeringAngle(state):
 
     return values
 
+def state_to_EBSS_Status(state):
+    CarState = 5
+
+    values = [0 for _ in range(34)]
+    values[0] = CarState
+
+    return values
+
 
 # CAN2 SEND
     
@@ -98,7 +106,8 @@ def state_to_INS_D_EKF_VEL_BODY(state):
 can1_send_callbacks = {
     "MCR_ActualValues_A": state_to_MCR_ActualValues_A,
     "DSH_Status": state_to_DSH_Status,
-    "SA_SteeringAngle": state_to_SA_SteeringAngle
+    "SA_SteeringAngle": state_to_SA_SteeringAngle,
+    "EBSS_Status": state_to_EBSS_Status
 }
 
 can2_send_callbacks = {

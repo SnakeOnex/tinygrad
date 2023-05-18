@@ -19,11 +19,10 @@ from missions.donuts import Donuts
 from nodes.asm import ASM, AS
 # from nodes.asm_new import ASM, AS
 from config import can_config, tcp_config
-from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts, MissionNodeMsgPorts, MissionValue
+from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts, MissionNodeMsgPorts, MissionValue, CarStatus
 from config import mission_opt as config
 
-from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, \
-    publish_data
+from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, publish_data
 from algorithms.unit_conversions import get_earth_radius_at_pos, lat_lon_to_meter_x_y
 
 
@@ -63,6 +62,7 @@ class MissionNode(mp.Process):
         self.mission_num = MissionValue.NoValue.value
         self.mission = Missions[self.mission_num]
         self.start_button = 0
+        self.car_status = 0
 
         # CAN2 node data
         self.go_signal = 0
@@ -89,35 +89,24 @@ class MissionNode(mp.Process):
             VisionNodeMsgPorts.CONE_PREDS)
 
         # CAN1 node message subscriptions
-        self.wheel_speed_socket = create_subscriber_socket(
-            CAN1NodeMsgPorts.WHEEL_SPEED)
-        self.steering_angle_socket = create_subscriber_socket(
-            CAN1NodeMsgPorts.STEERING_ANGLE)
-        self.mission_socket = create_subscriber_socket(
-            CAN1NodeMsgPorts.MISSION)
-        self.start_button_socket = create_subscriber_socket(
-            CAN1NodeMsgPorts.START_BUTTON)
+        self.wheel_speed_socket = create_subscriber_socket(CAN1NodeMsgPorts.WHEEL_SPEED)
+        self.steering_angle_socket = create_subscriber_socket(CAN1NodeMsgPorts.STEERING_ANGLE)
+        self.mission_socket = create_subscriber_socket(CAN1NodeMsgPorts.MISSION)
+        self.start_button_socket = create_subscriber_socket(CAN1NodeMsgPorts.START_BUTTON)
+        self.car_status_socket = create_subscriber_socket(CAN1NodeMsgPorts.CAR_STATUS)
 
         # CAN2 node message subscriptions
-        self.go_signal_socket = create_subscriber_socket(
-            CAN2NodeMsgPorts.GO_SIGNAL)
-        self.switch_signal_socket = create_subscriber_socket(
-            CAN2NodeMsgPorts.SWITCH_SIGNAL)
-        self.position_socket = create_subscriber_socket(
-            CAN2NodeMsgPorts.POSITION)
-        self.velocity_socket = create_subscriber_socket(
-            CAN2NodeMsgPorts.VELOCITY)
+        self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
+        self.switch_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.SWITCH_SIGNAL)
+        self.position_socket = create_subscriber_socket(CAN2NodeMsgPorts.POSITION)
+        self.velocity_socket = create_subscriber_socket(CAN2NodeMsgPorts.VELOCITY)
         self.euler_socket = create_subscriber_socket(CAN2NodeMsgPorts.EULER)
-        self.ins_status_socket = create_subscriber_socket(
-            CAN2NodeMsgPorts.INS_STATUS)
+        self.ins_status_socket = create_subscriber_socket(CAN2NodeMsgPorts.INS_STATUS)
 
         # CAN sender node message publishers
-        self.wheel_speed_cmd_socket = create_publisher_socket(
-            MissionNodeMsgPorts.WHEEL_SPEED_CMD)
-        self.steering_angle_cmd_socket = create_publisher_socket(
-            MissionNodeMsgPorts.STEERING_ANGLE_CMD)
-        self.ksicht_status_socket = create_publisher_socket(
-            MissionNodeMsgPorts.KSICHT_STATUS)
+        self.wheel_speed_cmd_socket = create_publisher_socket(MissionNodeMsgPorts.WHEEL_SPEED_CMD)
+        self.steering_angle_cmd_socket = create_publisher_socket(MissionNodeMsgPorts.STEERING_ANGLE_CMD)
+        self.ksicht_status_socket = create_publisher_socket(MissionNodeMsgPorts.KSICHT_STATUS)
 
     def get_mission_kwargs(self):
         return {
@@ -130,23 +119,20 @@ class MissionNode(mp.Process):
         }
 
     def update_data(self):
-
-        self.percep_data = update_subscription_data(
-            self.cone_preds_socket, self.percep_data)
-        self.wheel_speed = update_subscription_data(
-            self.wheel_speed_socket, self.wheel_speed)
-        self.steering_angle = update_subscription_data(
-            self.steering_angle_socket, self.steering_angle)
-        self.position = update_subscription_data(
-            self.position_socket, self.position)
-        self.velocity = update_subscription_data(
-            self.velocity_socket, self.velocity)
+        self.percep_data = update_subscription_data(self.cone_preds_socket, self.percep_data)
+        self.wheel_speed = update_subscription_data(self.wheel_speed_socket, self.wheel_speed)
+        self.steering_angle = update_subscription_data(self.steering_angle_socket, self.steering_angle)
+        self.position = update_subscription_data(self.position_socket, self.position)
+        self.velocity = update_subscription_data(self.velocity_socket, self.velocity)
         self.euler = update_subscription_data(self.euler_socket, self.euler)
-        self.ins_status = update_subscription_data(
-            self.ins_status_socket, self.ins_status)
+        self.ins_status = update_subscription_data(self.ins_status_socket, self.ins_status)
+        self.car_status = update_subscription_data(self.car_status_socket, self.car_status)
+        self.start_button = update_subscription_data(self.start_button_socket, self.start_button)
+        self.go_signal = update_subscription_data(self.go_signal_socket, self.go_signal)
+        self.ins_status = update_subscription_data(self.ins_status_socket, self.ins_status)
+        self.switch = update_subscription_data(self.switch_signal_socket, self.switch)
 
-        current_position = update_subscription_data(
-            self.position_socket, self.position)
+        current_position = update_subscription_data(self.position_socket, self.position)
 
         # Convert geographical lat, lon to planar x,y in meters
         if self.mode == "RACE" and current_position is not None:
@@ -165,14 +151,8 @@ class MissionNode(mp.Process):
         while True:
             start_time = time.perf_counter()
 
-            self.start_button = update_subscription_data(
-                self.start_button_socket, self.start_button)
-            self.go_signal = update_subscription_data(
-                self.go_signal_socket, self.go_signal)
-            self.ins_status = update_subscription_data(
-                self.ins_status_socket, self.ins_status)
-            self.switch = update_subscription_data(
-                self.switch_signal_socket, self.switch)
+            self.update_data()
+
             # 1. update AS State
             # TODO: change start_button to tson_button
             self.ASM.update(start_button=self.start_button,
@@ -180,8 +160,7 @@ class MissionNode(mp.Process):
                             finished=self.finished)
             # self.ASM.update_asm_status()
 
-            if self.ASM.AS == AS.DRIVING:
-                self.update_data()
+            if self.ASM.AS == AS.DRIVING and self.car_status == CarStatus.STARTED:
                 self.finished, steering_angle, speed, log, path, target = self.mission.loop(
                     **self.get_mission_kwargs())
                 self.mission_log = {
@@ -211,8 +190,8 @@ class MissionNode(mp.Process):
                     self.mission = Missions[self.mission_num]()
 
             # 3. send XVR_STATUS
-            publish_data(self.ksicht_status_socket, [
-                self.ASM.AS.value, self.mission_num, 0, self.switch, self.ins_status[0], self.ins_status[1], 0, 0])
+            publish_data(self.ksicht_status_socket, [self.ASM.AS.value, self.mission_num, 0, self.switch, self.ins_status[0], self.ins_status[1], 0, 0])
+
             # self.ASM.send_ksicht_status()
             self.logger.log("FRAME", {"finished": self.finished, "mission_kwargs": self.get_mission_kwargs(),
                                       "mission_log": self.mission_log})

@@ -23,11 +23,13 @@ class Can1Node(mp.Process):
         self.steering_angle_socket = create_publisher_socket(CAN1NodeMsgPorts.STEERING_ANGLE)
         self.mission_socket = create_publisher_socket(CAN1NodeMsgPorts.MISSION)
         self.start_button_socket = create_publisher_socket(CAN1NodeMsgPorts.START_BUTTON)
+        self.car_status_socket = create_publisher_socket(CAN1NodeMsgPorts.CAR_STATUS)
 
         self.message_callbacks = {
             self.CAN1.name2id["MCR_ActualValues_A"]: self.receive_MCR_ActualValues_A,
             self.CAN1.name2id["SA_SteeringAngle"]: self.receive_SA_SteeringAngle,
             self.CAN1.name2id["DSH_Status"]: self.receive_DSH_Status,
+            self.CAN1.name2id["EBSS_Status"]: self.receive_EBSS_Status,
         }
 
     def run(self):
@@ -62,3 +64,8 @@ class Can1Node(mp.Process):
     def receive_SA_SteeringAngle(self, values):
         steering_angle = values[2]
         publish_data(self.steering_angle_socket, steering_angle)
+
+    def receive_EBSS_Status(self, values):
+        car_status = values[0]
+
+        publish_data(self.car_status_socket, car_status)
