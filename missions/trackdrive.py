@@ -27,8 +27,8 @@ class Trackdrive():
 
         # CONTROLS CONFIGURATION
         self.lookahead_dist = 1.7
-        self.linear_gain = 0.5
-        self.nonlinear_gain = .2
+        self.linear_gain = 1.7
+        self.nonlinear_gain = 1.2
 
         self.old_path_planner = OldPathPlanner(path_planner_opt)
         self.david_path_planner = DavidPathPlanner()

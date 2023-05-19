@@ -24,7 +24,7 @@ def get_lookahead_point(lookahead, path):
             break
     return target
 
-def stanley_steering(path, lookahead_dist, speed, gain, lateran_gain, max_range=50.):
+def stanley_steering(path, lookahead_dist, speed, gain, lateran_gain, max_range=95.):
     """
     Lateral steering controller
     Args:

@@ -30,8 +30,8 @@ class State():
         self.steering_speed = 90 # degrees per second
         self.max_steering_angle = 25. # max and min steering angle
 
-        self.max_engine_force = 3000. # nm
-        self.max_brake_force = 400. # nm
+        self.max_engine_force = 10000. # nm
+        self.max_brake_force = 1000. # nm
         self.drag_coef = 4
         self.rr_coef = self.drag_coef * 30
         self.mass = 200. # kg
@@ -70,8 +70,9 @@ class State():
         if not self.manual:
             if self.steering_angle_set_point > self.steering_angle:
                 self.steer_left()
-            else:
+            elif self.steering_angle_set_point < self.steering_angle:
                 self.steer_right()
+            
 
         self.handle_controls(timedelta)
 

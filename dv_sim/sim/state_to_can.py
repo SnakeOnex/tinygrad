@@ -41,7 +41,7 @@ def state_to_DSH_Status(state):
 def state_to_SA_SteeringAngle(state):
     Angle_FT = 0
     AngularSpeed_FT = 0
-    Angle = state.steering_angle
+    Angle = state.steering_angle*4.0
     AngularSpeed = 0
     SEQ = 0
 
@@ -125,7 +125,7 @@ can2_send_callbacks = {
 
 def receive_XVR_Control(state, values):
     # state.steering_angle = values[0]
-    state.steering_angle_set_point = values[0]
+    state.steering_angle_set_point = values[0]/4.0
 
 
 def receive_XVR_SetpointsMotor_A(state, values):
