@@ -79,7 +79,8 @@ class Trackdrive():
             # start_time = time.perf_counter()
             # path = self.path_planner.find_path(percep_data)
             path = self.optimized_path_planner.find_path(percep_data)
-            path = stanley_smooth_path(path)
+            # path = stanley_smooth_path(path)
+            path, _ = self.path_smoothing.torch_smooth(path)
 
             # path = optimized_smooth_path(path) # minimize func
 
@@ -96,8 +97,8 @@ class Trackdrive():
             # path = stanley_smooth_path(path)
             # path = self.more_points_path_planner.find_path(percep_data)
             path = self.david_path_planner.find_path(percep_data)
-            # path, _ = self.path_smoothing.torch_smooth(path)
-            path, _ = self.path_smoothing.scipy_smooth(path)
+            path, _ = self.path_smoothing.torch_smooth(path)
+            # path, _ = self.path_smoothing.scipy_smooth(path)
 
         # Speed profile
         if self.use_speed_profile and len(path) > 2 and self.speed_set_point > 0.:
