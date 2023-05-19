@@ -30,10 +30,13 @@ class Trackdrive():
         self.linear_gain = 1.7
         self.nonlinear_gain = 1.2
 
+        # speed profile constants
+        max_safe_speed = 5.75 # in m/s
+
         self.old_path_planner = OldPathPlanner(path_planner_opt)
         self.david_path_planner = DavidPathPlanner()
         self.path_planner = PathPlanner()
-        self.speed_profile = SpeedProfile()
+        self.speed_profile = SpeedProfile(max_safe_speed)
         self.optimized_path_planner = OptimizedPathPlanner()
         self.more_points_path_planner = PathPlannerMorePoints()
         self.path_smoothing = PathSmoothing()
@@ -102,9 +105,7 @@ class Trackdrive():
 
         # Speed profile
         if self.use_speed_profile and len(path) > 2 and self.speed_set_point > 0.:
-            # if self.use_speed_profile:
-            # self.speed_set_point, speed_arr = self.speed_profile.michals_profile(path, init_speed=wheel_speed)
-            speed_arr = self.speed_profile.michals_profile(path, wheel_speed)
+            speed_arr = self.speed_profile.compute_speed_profile(path, wheel_speed)
             self.speed_set_point = speed_arr[1]
         # print(f"{speed_arr.shape=}")
         # print(f"{path.shape=}")
