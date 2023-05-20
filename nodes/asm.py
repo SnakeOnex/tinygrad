@@ -36,9 +36,14 @@ class ASM():
                 self.AS = AS.DRIVING
                 print("ASM -> AS.DRIVING")
 
+            if car_status == CarStatus.NOT_READY:
+                self.AS = AS.EMERGENCY
+                print("ASM -> AS.EMERGENCY")
+
         elif self.AS == AS.DRIVING:
             if car_status == CarStatus.NOT_READY:
                 self.AS = AS.EMERGENCY
+                print("ASM -> AS.EMERGENCY")
 
             if finished == True:
                 self.AS = self.AS.FINISHED  
