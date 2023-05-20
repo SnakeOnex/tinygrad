@@ -139,7 +139,7 @@ class MissionNode(mp.Process):
         current_position = update_subscription_data(self.position_socket, self.position)
 
         # Convert geographical lat, lon to planar x,y in meters
-        if self.mode == "RACE" and current_position is not None:
+        if False and self.mode == "RACE" and current_position is not None:
             if not self.start_pos.any():
                 self.earth_radius = get_earth_radius_at_pos(
                     current_position[0])
@@ -185,7 +185,7 @@ class MissionNode(mp.Process):
                         "mission_status": log})
 
                 publish_data(self.steering_angle_cmd_socket, steering_angle)
-                publish_data(self.wheel_speed_cmd_socket, speed)
+                publish_data(self.wheel_speed_cmd_socket, [speed,torque])
             else:
                 # self.mission_num = self.ASM.get_mission_num()
                 if self.mission_num != MissionValue.NoValue:
