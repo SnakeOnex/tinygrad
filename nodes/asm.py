@@ -13,13 +13,21 @@ class ASM():
         # self.AS = AS.READY
         self.AS = AS.OFF
 
-    def update(self, start_button, go_signal, emergency_signal, car_status, finished):
-        if emergency_signal == 1:
-            self.AS = AS.EMERGENCY
-            return
+    def update(self, tson_button, asms_out, go_signal, car_status, finished):
+        """
+        args:
+          tson_button: 1 if ts_on_button is pressed
+          asms_out: 1 if AS key is set to ON
+          go_signal: 1 if go_signal is set to ON
+          car_status: indicates EBSS car status (via CarStatus enum)
+          finished: True if the car has finished the track
+        """
+        if asms_out == 0 and self.AS != AS.OFF:
+            self.AS = AS.OFF
+            print("ASM -> AS.OFF")
 
         if self.AS == AS.OFF:
-            if start_button == 1:
+            if tson_button == 1:
                 self.AS = AS.READY
                 print("ASM -> AS.READY")
 
@@ -40,19 +48,3 @@ class ASM():
             pass
         elif self.AS == AS.EMERGENCY:
             pass
-
-    def start_button(self):
-        if self.AS == AS.OFF:
-            self.AS = AS.READY
-
-    def go_signal(self):
-        if self.AS == AS.READY:
-            self.AS = AS.DRIVING
-
-    def finished(self):
-        if self.AS == AS.DRIVING:
-            self.AS = AS.FINISHED
-
-    def emergency(self):
-        if self.AS == AS.DRIVING:
-            self.AS = AS.EMERGENCY

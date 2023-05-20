@@ -31,6 +31,8 @@ class CAN1NodeMsgPorts(IntEnum):
     MISSION = auto()
     START_BUTTON = auto()
     CAR_STATUS = auto()
+    TSON_BUTTON = auto()
+    ASMS_OUT = auto()
 
 
 class CAN2NodeMsgPorts(IntEnum):
