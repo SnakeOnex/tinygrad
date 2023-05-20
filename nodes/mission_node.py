@@ -63,6 +63,8 @@ class MissionNode(mp.Process):
         self.mission = Missions[self.mission_num]
         self.start_button = 0
         self.car_status = 0
+        self.tson_button = 0
+        self.asms_out = 0
 
         # CAN2 node data
         self.go_signal = 0
@@ -95,6 +97,8 @@ class MissionNode(mp.Process):
         self.mission_socket = create_subscriber_socket(CAN1NodeMsgPorts.MISSION)
         self.start_button_socket = create_subscriber_socket(CAN1NodeMsgPorts.START_BUTTON)
         self.car_status_socket = create_subscriber_socket(CAN1NodeMsgPorts.CAR_STATUS)
+        self.tson_button_socket = create_subscriber_socket(CAN1NodeMsgPorts.TSON_BUTTON)
+        self.asms_out_socket = create_subscriber_socket(CAN1NodeMsgPorts.ASMS_OUT)
 
         # CAN2 node message subscriptions
         self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
@@ -135,6 +139,8 @@ class MissionNode(mp.Process):
         self.switch = update_subscription_data(self.switch_signal_socket, self.switch)
         self.mission_num = update_subscription_data(self.mission_socket, self.mission_num)
         self.emergency_signal = update_subscription_data(self.emergency_signal_socket, self.emergency_signal)
+        self.tson_button = update_subscription_data(self.tson_button_socket, self.tson_button)
+        self.asms_out = update_subscription_data(self.asms_out_socket, self.asms_out)
 
         current_position = update_subscription_data(self.position_socket, self.position)
 
@@ -158,9 +164,9 @@ class MissionNode(mp.Process):
 
             # 1. update AS State
             # TODO: change start_button to tson_button
-            self.ASM.update(start_button=self.start_button,
+            self.ASM.update(tson_button=self.tson_button,
+                            asms_out=self.asms_out,
                             go_signal=self.go_signal,
-                            emergency_signal=self.emergency_signal,
                             car_status=self.car_status,
                             finished=self.finished)
             # self.ASM.update_asm_status()

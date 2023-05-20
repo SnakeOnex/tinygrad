@@ -57,9 +57,10 @@ def state_to_EBSS_Status(state):
 
     values = [0 for _ in range(34)]
     values[0] = CarState
+    values[3] = 1 # tson button
+    values[9] = 1 # asms out
 
     return values
-
 
 # CAN2 SEND
     

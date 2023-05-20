@@ -24,6 +24,8 @@ class Can1Node(mp.Process):
         self.mission_socket = create_publisher_socket(CAN1NodeMsgPorts.MISSION)
         self.start_button_socket = create_publisher_socket(CAN1NodeMsgPorts.START_BUTTON)
         self.car_status_socket = create_publisher_socket(CAN1NodeMsgPorts.CAR_STATUS)
+        self.tson_button_socket = create_publisher_socket(CAN1NodeMsgPorts.TSON_BUTTON)
+        self.asms_out_socket = create_publisher_socket(CAN1NodeMsgPorts.ASMS_OUT)
 
         self.message_callbacks = {
             self.CAN1.name2id["MCR_ActualValues_A"]: self.receive_MCR_ActualValues_A,
@@ -67,5 +69,9 @@ class Can1Node(mp.Process):
 
     def receive_EBSS_Status(self, values):
         car_status = values[0]
+        tson_button = values[3]
+        asms_out = values[9]
 
         publish_data(self.car_status_socket, car_status)
+        publish_data(self.tson_button_socket, tson_button)
+        publish_data(self.asms_out_socket, asms_out)
