@@ -24,6 +24,7 @@ class Disco():
         self.path_planner = PathPlanner(path_planner_opt)
 
         self.speed_set_point = 5.
+        self.torque_set_point = 0.
 
         # mission planning variables
         self.finished = False
@@ -74,7 +75,7 @@ class Disco():
 
         # 2. controls
         delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
-
+        torque = self.torque_set_point
         debug_dict = {
             "time_since_start": time_since_start,
             "brake_time": self.brake_time,
@@ -83,4 +84,4 @@ class Disco():
             "finished": self.finished
         }
 
-        return self.finished, delta, self.speed_set_point, debug_dict, path, controller_log["target"]
+        return self.finished, delta, self.speed_set_point,torque, debug_dict, path, controller_log["target"]

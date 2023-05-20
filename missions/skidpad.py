@@ -30,6 +30,8 @@ class Skidpad():
         self.path_planner = PathPlanner(path_planner_opt)
         self.finish_detect = False
         self.speed_set_point = 5.
+        self.torque_set_point = 5.
+
         self.finished = False
         self.start_time = None
         self.finished_time = None
@@ -104,7 +106,7 @@ class Skidpad():
                 self.check_passed_through_center()
             path = self.get_circular_path()
             delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
-
+        torque = self.torque_set_point
         debug_dict = {
             "Glob coords": self.glob_coords,
             "Time since start": time_since_start,
@@ -115,7 +117,7 @@ class Skidpad():
             # "cone_centers": self.estimated_cone_centers
         }
 
-        return self.finished, delta, self.speed_set_point, debug_dict, path, controller_log["target"]
+        return self.finished, delta, self.speed_set_point, torque, debug_dict, path, controller_log["target"]
 
     def get_circular_path(self):
         """

@@ -16,6 +16,8 @@ class Inspection():
         self.n_periods = inspection_config["n_periods"]
         self.finished = False
         self.steering_angle = 0.
+        self.torque_set_point = 5.
+
 
     def loop(self, **kwargs):
         """
@@ -35,7 +37,7 @@ class Inspection():
             # else compute the steering angle
             steering_state = time_since_start * (self.n_periods * (2 * np.pi) / self.inspection_duration)
             self.steering_angle = np.sin(steering_state) * self.max_steering_angle
-
+        torque = self.torque_set_point
         debug_dict = {
             "time_since_start": time_since_start,
             "completed %": (time_since_start / self.inspection_duration) * 100,
@@ -43,4 +45,4 @@ class Inspection():
             "steering_angle": self.steering_angle
         }
 
-        return self.finished, self.steering_angle, self.speed_set_point, debug_dict, np.array([[0, 0]]), np.array([[0, 0]])
+        return self.finished, self.steering_angle, self.speed_set_point, torque, debug_dict, np.array([[0, 0]]), np.array([[0, 0]])

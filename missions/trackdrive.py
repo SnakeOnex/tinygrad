@@ -33,6 +33,7 @@ class Trackdrive():
         # speed profile constants
         max_safe_speed = 5.75 # in m/s
 
+
         self.old_path_planner = OldPathPlanner(path_planner_opt)
         self.david_path_planner = DavidPathPlanner()
         self.path_planner = PathPlanner()
@@ -44,6 +45,8 @@ class Trackdrive():
         self.use_speed_profile = True
         self.use_new_path_planning = False
         self.speed_set_point = 6.
+        self.torque_set_point = 5.
+
 
         # mission planning variables
         self.finished = False
@@ -141,7 +144,7 @@ class Trackdrive():
         # 2. controls
         delta, controller_log = stanley_steering(
             path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
-
+        torque = self.torque_set_point
         debug_dict = {
             "time_since_start": time_since_start,
             "lap_time": time_since_last_lap,
@@ -150,4 +153,4 @@ class Trackdrive():
             "finished": self.finished,
         }
 
-        return self.finished, delta, self.speed_set_point, debug_dict, path, controller_log["target"]
+        return self.finished, delta, self.speed_set_point, torque, debug_dict, path, controller_log["target"]

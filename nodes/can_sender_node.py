@@ -24,7 +24,8 @@ class CanSenderNode(mp.Process):
         self.ksicht_status = (0, 0, 0, 0, 0, 0, 0, 0)
 
         # CAN msgs values
-        self.ksicht_status_values = [self.ksicht_status[0], self.ksicht_status[1], 0, 0, 0, 0, 0, 0]
+        power = 5 # Nm
+        self.ksicht_status_values = [self.ksicht_status[0], self.ksicht_status[1], 0, 0, 0, 0, 0, 5]
         self.motor_setpoints_values = [0, 0, 0, 0, self.wheel_speed_cmd, 0]
         self.steering_control_values = [self.steering_angle_cmd]
 
@@ -66,7 +67,15 @@ class CanSenderNode(mp.Process):
                 self.logger.log("XVR_Status", self.ksicht_status_values)
 
                 # Lenze inverters require extended CAN address ID
+                if self.ksicht_status_values[0] == 1:
+                    self.CAN1.send_can_msg([1,0,0,0],self.CAN1.name2id["XVR_MasterControlStatus"], is_extended_id=True)
+                    self.motor_setpoints_values[0] = 1
+                else:
+                    self.CAN1.send_can_msg([0,0,0,0],self.CAN1.name2id["XVR_MasterControlStatus"], is_extended_id=True)
+                    self.motor_setpoints_values[0] = 0
                 self.CAN1.send_can_msg(self.motor_setpoints_values.copy(), self.CAN1.name2id["XVR_SetpointsMotor_A"], is_extended_id=True)
+                self.CAN1.send_can_msg(self.motor_setpoints_values.copy(), self.CAN1.name2id["XVR_SetpointsMotor_B"],
+                                       is_extended_id=True)
                 self.logger.log("XVR_SetpointsMotor_A", self.motor_setpoints_values)
 
             # 200 hz messages
