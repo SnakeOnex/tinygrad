@@ -12,18 +12,16 @@ from config import can_sender_config as opt
 
 
 class CanSenderNode(mp.Process):
-    def __init__(self, main_log_folder):
+    def __init__(self, curr_log_folder):
         mp.Process.__init__(self)
         self.frequency = opt["frequency"]
-        self.main_log_folder = main_log_folder
-        self.CAN1 = CanInterface(can_config["CAN_JSON"], can_config["CAN1_ID"], False)
-        self.CAN2 = CanInterface(can_config["CAN_JSON"], can_config["CAN2_ID"], False)
-
+        self.curr_log_folder = curr_log_folder
+        self.CAN1 = CanInterface(can_config["CAN_JSON"], can_config["CAN1_ID"], recv_self=False, log_data_dir=curr_log_folder, log_messages=True)
+        self.CAN2 = CanInterface(can_config["CAN_JSON"], can_config["CAN2_ID"], recv_self=False, log_data_dir=curr_log_folder, log_messages=True)
         self.loop_counter = 0
-
         self.wheel_speed_cmd = 0.
         self.steering_angle_cmd = 0.
-        self.ksicht_status = (0,0,0,0,0,0,0,0)
+        self.ksicht_status = (0, 0, 0, 0, 0, 0, 0, 0)
 
         # CAN msgs values
         self.ksicht_status_values = [self.ksicht_status[0], self.ksicht_status[1], 0, 0, 0, 0, 0, 0]
@@ -34,7 +32,7 @@ class CanSenderNode(mp.Process):
         self.logger = Logger(
             log_name=opt["log_name"],
             log_folder_name=opt["log_folder_name"],
-            main_folder_path=self.main_log_folder
+            curr_log_folder=self.curr_log_folder
         )
 
         # Mission node message subscriptions
@@ -85,4 +83,3 @@ class CanSenderNode(mp.Process):
     def init_res(self):
         data = [0x01, 0]
         self.CAN2.send_can_msg(data.copy(), self.CAN2.name2id["XVR_NMT_Mode_Control"])
-

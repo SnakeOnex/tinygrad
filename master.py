@@ -25,22 +25,23 @@ from nodes.perf_log_node import PerfLogNode
 def main(mode="RACE"):
     # 0. create a log folder for the run
     main_log_folder = config["main_log_folder"]
-    folder_path = main_log_folder / Path(gen_name_with_time('', ''))
-    folder_path.mkdir(parents=True)
-    print("LOG_FILE: ", folder_path)
+    curr_log_folder = main_log_folder / Path(gen_name_with_time('', ''))
+    curr_log_folder.mkdir(parents=True)
+    curr_log_folder = str(curr_log_folder)
+    print("LOG_FILE: ", curr_log_folder)
 
     # 1. processes init
 
     # AS
-    vision_node = VisionNode(main_log_folder=main_log_folder, mode=mode)
+    vision_node = VisionNode(curr_log_folder=curr_log_folder, mode=mode)
 
     # CAN
-    can1_node = Can1Node(main_log_folder=main_log_folder)
-    can2_node = Can2Node(main_log_folder=main_log_folder)
+    can1_node = Can1Node(curr_log_folder=curr_log_folder)
+    can2_node = Can2Node(curr_log_folder=curr_log_folder)
 
     # MISSIONS
-    mission_node = MissionNode(main_log_folder=main_log_folder, mode=mode)
-    can_sender_node = CanSenderNode(main_log_folder=main_log_folder)
+    mission_node = MissionNode(curr_log_folder=curr_log_folder, mode=mode)
+    can_sender_node = CanSenderNode(curr_log_folder=curr_log_folder)
 
     # ASM
 
@@ -65,7 +66,7 @@ def main(mode="RACE"):
         str(can_sender_node.pid): 'CAN_SENDER'
     }
 
-    perf_log_node = PerfLogNode(main_log_folder=main_log_folder, process_pids=process_pids)
+    perf_log_node = PerfLogNode(curr_log_folder=curr_log_folder, process_pids=process_pids)
     perf_log_node.start()
     print("PERF LOG NODE STARTED")
     time.sleep(1)

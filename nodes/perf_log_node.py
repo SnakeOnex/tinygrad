@@ -7,10 +7,10 @@ from tvojemama.computer_status import *
 
 
 class PerfLogNode(mp.Process):
-    def __init__(self, main_log_folder, process_pids, frequency=10):
+    def __init__(self, curr_log_folder, process_pids, frequency=10):
         mp.Process.__init__(self)
         self.frequency = frequency
-        self.main_log_folder = main_log_folder
+        self.curr_log_folder = curr_log_folder
         self.process_pids = process_pids
         self.gpu_pids = {key: value for key, value in process_pids.items() if value in log_opt["gpu_processes"]}
 
@@ -34,7 +34,7 @@ class PerfLogNode(mp.Process):
         self.logger = Logger(
             log_name=self.log_opt["log_name"],
             log_folder_name=self.log_opt["log_folder_name"],
-            main_folder_path=self.main_log_folder
+            curr_log_folder=self.curr_log_folder
         )
 
         # Check NVIDIA GPU presence and set logging accordingly

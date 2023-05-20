@@ -22,9 +22,9 @@ import cv2
 
 
 class VisionNode(mp.Process):
-    def __init__(self, main_log_folder, mode="RACE"):
+    def __init__(self, curr_log_folder, mode="RACE"):
         mp.Process.__init__(self)
-        self.main_log_folder = main_log_folder
+        self.curr_log_folder = curr_log_folder
         self.mode = mode
         self.go_signal = 0
         self.log_images = False
@@ -44,7 +44,7 @@ class VisionNode(mp.Process):
             self.zed.open()
 
         self.logger = Logger(
-            log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
+            log_name=config["log_name"], log_folder_name=config["log_folder_name"], curr_log_folder=self.curr_log_folder)
 
         # adding start global time to config
         config["start_time"] = time.time()

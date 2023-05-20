@@ -10,14 +10,14 @@ from config import can1_config as config
 
 
 class Can1Node(mp.Process):
-    def __init__(self, main_log_folder):
+    def __init__(self, curr_log_folder):
         mp.Process.__init__(self)
         self.bus_name = "can1"
-        self.main_log_folder = main_log_folder
+        self.curr_log_folder = curr_log_folder
 
     def initialize(self):
-        self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"], main_folder_path=self.main_log_folder)
-        self.CAN1 = CanInterface("data/D1.json", 0, False)
+        self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"], curr_log_folder=self.curr_log_folder)
+        self.CAN1 = CanInterface("data/D1.json", 0, recv_self=False, log_data_dir=self.curr_log_folder, log_messages=True)
 
         self.wheel_speed_socket = create_publisher_socket(CAN1NodeMsgPorts.WHEEL_SPEED)
         self.steering_angle_socket = create_publisher_socket(CAN1NodeMsgPorts.STEERING_ANGLE)

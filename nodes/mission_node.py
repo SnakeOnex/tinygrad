@@ -42,9 +42,9 @@ Missions = {
 
 class MissionNode(mp.Process):
 
-    def __init__(self, main_log_folder, mode="RACE"):
+    def __init__(self, curr_log_folder, mode="RACE"):
         mp.Process.__init__(self)
-        self.main_log_folder = main_log_folder
+        self.curr_log_folder = curr_log_folder
         self.frequency = config["frequency"]  # Hz
         self.mission_log = {"steering_angle": 0., "speed": 0.}
         self.mode = mode
@@ -77,7 +77,7 @@ class MissionNode(mp.Process):
 
     def initialize(self):
         self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"],
-                             main_folder_path=self.main_log_folder)
+                            curr_log_folder=self.curr_log_folder)
         # self.CAN1 = CanInterface(
         #    can_config["CAN_JSON"], can_config["CAN1_ID"], False)
 

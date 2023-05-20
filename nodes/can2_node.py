@@ -9,15 +9,15 @@ from config import can2_config as config
 
 
 class Can2Node(mp.Process):
-    def __init__(self, main_log_folder):
+    def __init__(self, curr_log_folder):
         mp.Process.__init__(self)
         self.bus_name = "can2"
-        self.main_log_folder = main_log_folder
+        self.curr_log_folder = curr_log_folder
 
     def initialize(self):
         self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"],
-                             main_folder_path=self.main_log_folder)
-        self.CAN2 = CanInterface("data/D1.json", 1, False)
+                             curr_log_folder=self.curr_log_folder)
+        self.CAN2 = CanInterface("data/D1.json", 1, recv_self=False, log_data_dir=self.curr_log_folder, log_messages=True)
 
         self.go_signal_socket = create_publisher_socket(CAN2NodeMsgPorts.GO_SIGNAL)
         self.emergency_signal_socket = create_publisher_socket(CAN2NodeMsgPorts.EMERGENCY_SIGNAL)

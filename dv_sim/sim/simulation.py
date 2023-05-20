@@ -96,9 +96,9 @@ class Simulation():
 
         # 2.D CAN interaface objects
         self.CAN1 = CanInterface(
-            config["CAN_JSON"], config["CAN1_ID"], True)
+            config["CAN_JSON"], config["CAN1_ID"], recv_self=False, log_messages=False)
         self.CAN2 = CanInterface(
-            config["CAN_JSON"], config["CAN2_ID"], True)
+            config["CAN_JSON"], config["CAN2_ID"], recv_self=False, log_messages=False)
 
     def step(self):
         curr_time = time.perf_counter()
