@@ -65,6 +65,7 @@ class MissionNode(mp.Process):
         self.car_status = 0
         self.tson_button = 0
         self.asms_out = 0
+        self.accelerator_pos = 0.
 
         # CAN2 node data
         self.go_signal = 0
@@ -99,6 +100,7 @@ class MissionNode(mp.Process):
         self.car_status_socket = create_subscriber_socket(CAN1NodeMsgPorts.CAR_STATUS)
         self.tson_button_socket = create_subscriber_socket(CAN1NodeMsgPorts.TSON_BUTTON)
         self.asms_out_socket = create_subscriber_socket(CAN1NodeMsgPorts.ASMS_OUT)
+        self.accelerator_pos_socket = create_subscriber_socket(CAN1NodeMsgPorts.ACCELERATOR_POS)
 
         # CAN2 node message subscriptions
         self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
@@ -121,7 +123,8 @@ class MissionNode(mp.Process):
             "steering_angle": self.steering_angle,
             "position": np.array(self.position),
             "velocity": self.velocity,
-            "euler": np.array(self.euler)
+            "euler": np.array(self.euler),
+            "accelerator_pos": self.accelerator_pos
         }
 
     def update_data(self):
@@ -141,6 +144,7 @@ class MissionNode(mp.Process):
         self.emergency_signal = update_subscription_data(self.emergency_signal_socket, self.emergency_signal)
         self.tson_button = update_subscription_data(self.tson_button_socket, self.tson_button)
         self.asms_out = update_subscription_data(self.asms_out_socket, self.asms_out)
+        self.accelerator_pos = update_subscription_data(self.accelerator_pos_socket, self.accelerator_pos)
 
         current_position = update_subscription_data(self.position_socket, self.position)
 
