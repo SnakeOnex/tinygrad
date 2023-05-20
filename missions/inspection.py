@@ -45,4 +45,4 @@ class Inspection():
             "steering_angle": self.steering_angle
         }
 
-        return self.finished, self.steering_angle, self.speed_set_point, torque, debug_dict, np.array([[0, 0]]), np.array([[0, 0]])
+        return self.finished, self.steering_angle, self.speed_set_point, torque, debug_dict, np.array([[0, 0]]), np.array([0, 0])
