@@ -53,12 +53,10 @@ class VisionNode(mp.Process):
         self.logger.log("VISION_CONFIGURATION", config)  # log config
 
         # publisher sockets
-        self.cone_preds_socket = create_publisher_socket(
-            VisionNodeMsgPorts.CONE_PREDS)
+        self.cone_preds_socket = create_publisher_socket(VisionNodeMsgPorts.CONE_PREDS)
 
         # subscriber sockets
-        self.go_signal_socket = create_subscriber_socket(
-            CAN2NodeMsgPorts.GO_SIGNAL)
+        self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
 
     def run(self):
         print("STARTING CONE DETECTION")
@@ -134,18 +132,13 @@ class VisionNode(mp.Process):
         if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:
             self.zed.retrieve_image(self.zed_image, sl.VIEW.LEFT)
             image = self.zed_image.get_data()
-            # cv2.imshow("lol",image)
 
             return image
-        # raise Exception("COULDN'T RETRIEVE IMAGE")
 
     def read_log_image(self):
         msg_t, (msg_type, data) = next(self.brosbag_gen)
         assert msg_type == "CONE_DETECTOR_FRAME"
         return data["image"]
-
-    def read_cones_from_network(self):
-        pass
 
     # def terminate(self):
     #     print("Terminating Vision Node")
