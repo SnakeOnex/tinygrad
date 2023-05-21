@@ -80,7 +80,7 @@ class MissionNode(mp.Process):
 
     def initialize(self):
         self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"],
-                            curr_log_folder=self.curr_log_folder)
+                             curr_log_folder=self.curr_log_folder)
         # self.CAN1 = CanInterface(
         #    can_config["CAN_JSON"], can_config["CAN1_ID"], False)
 
@@ -100,7 +100,7 @@ class MissionNode(mp.Process):
         self.car_status_socket = create_subscriber_socket(CAN1NodeMsgPorts.CAR_STATUS)
         self.tson_button_socket = create_subscriber_socket(CAN1NodeMsgPorts.TSON_BUTTON)
         self.asms_out_socket = create_subscriber_socket(CAN1NodeMsgPorts.ASMS_OUT)
-        self.accelerator_pos_socket = create_subscriber_socket(CAN1NodeMsgPorts.ACCELERATOR_POS)
+        self.accelerator_pos_socket = create_subscriber_socket(CAN2NodeMsgPorts.ACCELERATOR_POS)
 
         # CAN2 node message subscriptions
         self.go_signal_socket = create_subscriber_socket(CAN2NodeMsgPorts.GO_SIGNAL)
@@ -195,7 +195,7 @@ class MissionNode(mp.Process):
                         "mission_status": log})
 
                 publish_data(self.steering_angle_cmd_socket, steering_angle)
-                publish_data(self.wheel_speed_cmd_socket, [speed,torque])
+                publish_data(self.wheel_speed_cmd_socket, [speed, torque])
             else:
                 # self.mission_num = self.ASM.get_mission_num()
                 if self.mission_num != MissionValue.NoValue:

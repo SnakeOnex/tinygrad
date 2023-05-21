@@ -589,8 +589,7 @@
                             "received_by": [
                                 "Accessory.Bootloader",
                                 "FSE09.DSH",
-                                "FSE10.DSH",
-                                "FSE11.DSH"
+                                "FSE10.DSH"
                             ],
                             "sent_by": [
                                 "Accessory.Bootloader"
@@ -5723,9 +5722,7 @@
                             "frame_type": "CAN_STD",
                             "id": 1072,
                             "length": 6,
-                            "received_by": [
-                                "FSE11.DSH"
-                            ],
+                            "received_by": [],
                             "sent_by": [],
                             "timeout": 60,
                             "tx_period": 20
@@ -6484,9 +6481,111 @@
                             "id": 818,
                             "length": 7,
                             "received_by": [],
-                            "sent_by": [],
+                            "sent_by": [
+                                "D1.EBSS"
+                            ],
                             "timeout": 500,
                             "tx_period": 100
+                        },
+                        {
+                            "name": "SerialOutput",
+                            "description": "Packetized serial output (experimental)\r\n\r\nMax transfer rate: 56 bits * 25 Hz = 175 bytes\/second (1400 bits\/second) Internal buffer: 875 bytes (5 seconds worth of output)",
+                            "bus": "D1.CAN3",
+                            "fields": [
+                                {
+                                    "name": "SEQ",
+                                    "description": "Sequence counter",
+                                    "type": "uint",
+                                    "bits": 4,
+                                    "count": 1,
+                                    "start_bit": 0,
+                                    "unit": null,
+                                    "factor": "1",
+                                    "factor_num": 1,
+                                    "offset": "0",
+                                    "min": "0",
+                                    "max": "15"
+                                },
+                                {
+                                    "name": "Truncated",
+                                    "description": "Indicates internal buffer overflow",
+                                    "type": "bool",
+                                    "bits": 1,
+                                    "count": 1,
+                                    "start_bit": 4,
+                                    "unit": null,
+                                    "factor": null,
+                                    "factor_num": null,
+                                    "offset": null,
+                                    "min": null,
+                                    "max": null
+                                },
+                                {
+                                    "name": "Completed",
+                                    "description": "Transmission complete (for now)?",
+                                    "type": "bool",
+                                    "bits": 1,
+                                    "count": 1,
+                                    "start_bit": 5,
+                                    "unit": null,
+                                    "factor": null,
+                                    "factor_num": null,
+                                    "offset": null,
+                                    "min": null,
+                                    "max": null
+                                },
+                                {
+                                    "name": "Channel",
+                                    "description": "Channel (0 or 1)",
+                                    "type": "uint",
+                                    "bits": 1,
+                                    "count": 1,
+                                    "start_bit": 6,
+                                    "unit": null,
+                                    "factor": "1",
+                                    "factor_num": 1,
+                                    "offset": "0",
+                                    "min": "0",
+                                    "max": "1"
+                                },
+                                {
+                                    "name": "CouldNotRead",
+                                    "description": "True iff an error occured while reading.",
+                                    "type": "bool",
+                                    "bits": 1,
+                                    "count": 1,
+                                    "start_bit": 7,
+                                    "unit": null,
+                                    "factor": null,
+                                    "factor_num": null,
+                                    "offset": null,
+                                    "min": null,
+                                    "max": null
+                                },
+                                {
+                                    "name": "Payload",
+                                    "description": "Unused bytes are marked with 0",
+                                    "type": "uint",
+                                    "bits": 8,
+                                    "count": 7,
+                                    "start_bit": 8,
+                                    "unit": null,
+                                    "factor": null,
+                                    "factor_num": null,
+                                    "offset": null,
+                                    "min": null,
+                                    "max": null
+                                }
+                            ],
+                            "frame_type": "CAN_STD",
+                            "id": 1440,
+                            "length": 8,
+                            "received_by": [],
+                            "sent_by": [
+                                "D1.EBSS"
+                            ],
+                            "timeout": null,
+                            "tx_period": 2
                         },
                         {
                             "name": "SoftwareBuild",
@@ -6526,7 +6625,9 @@
                             "id": 291,
                             "length": 5,
                             "received_by": [],
-                            "sent_by": [],
+                            "sent_by": [
+                                "D1.EBSS"
+                            ],
                             "timeout": null,
                             "tx_period": 10000
                         },
@@ -13850,7 +13951,9 @@
                             "id": 1099,
                             "length": 8,
                             "received_by": [],
-                            "sent_by": [],
+                            "sent_by": [
+                                "D1.PDL"
+                            ],
                             "timeout": 1000,
                             "tx_period": 50
                         },
@@ -15176,8 +15279,8 @@
                                 {
                                     "name": "Dir",
                                     "description": "Motor direction",
-                                    "type": "enum SA_Motor_Direction",
-                                    "bits": 2,
+                                    "type": "bool",
+                                    "bits": 1,
                                     "count": 1,
                                     "start_bit": 15,
                                     "unit": null,
@@ -15193,7 +15296,7 @@
                                     "type": "uint",
                                     "bits": 12,
                                     "count": 1,
-                                    "start_bit": 17,
+                                    "start_bit": 16,
                                     "unit": null,
                                     "factor": "1",
                                     "factor_num": 1,
@@ -15207,7 +15310,7 @@
                                     "type": "bool",
                                     "bits": 1,
                                     "count": 1,
-                                    "start_bit": 29,
+                                    "start_bit": 28,
                                     "unit": null,
                                     "factor": null,
                                     "factor_num": null,
@@ -15221,7 +15324,7 @@
                                     "type": "bool",
                                     "bits": 1,
                                     "count": 1,
-                                    "start_bit": 30,
+                                    "start_bit": 29,
                                     "unit": null,
                                     "factor": null,
                                     "factor_num": null,
@@ -15235,7 +15338,7 @@
                                     "type": "enum SA_Switching_Frequency",
                                     "bits": 3,
                                     "count": 1,
-                                    "start_bit": 31,
+                                    "start_bit": 30,
                                     "unit": null,
                                     "factor": null,
                                     "factor_num": null,
@@ -15249,7 +15352,7 @@
                                     "type": "uint",
                                     "bits": 12,
                                     "count": 1,
-                                    "start_bit": 34,
+                                    "start_bit": 33,
                                     "unit": null,
                                     "factor": "1",
                                     "factor_num": 1,
@@ -15295,11 +15398,11 @@
                                     "count": 1,
                                     "start_bit": 12,
                                     "unit": "raw",
-                                    "factor": "0.1",
-                                    "factor_num": 0.1,
+                                    "factor": "1",
+                                    "factor_num": 1,
                                     "offset": "0",
                                     "min": "0",
-                                    "max": "409.5"
+                                    "max": "4095"
                                 },
                                 {
                                     "name": "D",

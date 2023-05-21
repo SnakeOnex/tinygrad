@@ -42,7 +42,7 @@ class Can2Node(mp.Process):
             self.CAN2.name2id["INS_D_EKF_ORIENT_ACC"]: self.receive_INS_D_EKF_ORIENT_ACC,
             self.CAN2.name2id["INS_D_EKF_POS_ACC"]: self.receive_INS_D_EKF_POS_ACC,
             self.CAN2.name2id["INS_D_EKF_VEL_ACC"]: self.receive_INS_D_EKF_VEL_ACC,
-            self.CAN2.name2id["RawRelative"]: self.receive_PDL_Accelerator
+            self.CAN2.name2id["PDL_RawRelative"]: self.receive_PDL_Accelerator
         }
 
     def run(self):
