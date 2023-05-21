@@ -30,6 +30,7 @@ class Can2Node(mp.Process):
         self.orientation_acc_socket = create_publisher_socket(CAN2NodeMsgPorts.EULER_ACCURACY)
         self.position_acc_socket = create_publisher_socket(CAN2NodeMsgPorts.POSITION_ACCURACY)
         self.velocity_acc_socket = create_publisher_socket(CAN2NodeMsgPorts.VELOCITY_ACCURACY)
+        self.accelerator_pos_socket = create_publisher_socket(CAN2NodeMsgPorts.ACCELERATOR_POS)
 
         self.message_callbacks = {
             self.CAN2.name2id["RES_Status"]: self.receive_RES_Status,
@@ -41,6 +42,7 @@ class Can2Node(mp.Process):
             self.CAN2.name2id["INS_D_EKF_ORIENT_ACC"]: self.receive_INS_D_EKF_ORIENT_ACC,
             self.CAN2.name2id["INS_D_EKF_POS_ACC"]: self.receive_INS_D_EKF_POS_ACC,
             self.CAN2.name2id["INS_D_EKF_VEL_ACC"]: self.receive_INS_D_EKF_VEL_ACC,
+            self.CAN2.name2id["PDL_RawRelative"]: self.receive_PDL_Accelerator
         }
 
     def run(self):
@@ -103,3 +105,7 @@ class Can2Node(mp.Process):
     def receive_INS_D_EKF_VEL_ACC(self, values):
         vel_x_acc, vel_y_acc, vel_z_acc = values
         publish_data(self.velocity_acc_socket, (vel_x_acc, vel_y_acc, vel_z_acc))
+
+    def receive_PDL_Accelerator(self, values):
+        accelerator_pos = values[2]
+        publish_data(self.accelerator_pos_socket, accelerator_pos)

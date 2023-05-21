@@ -33,7 +33,6 @@ class CAN1NodeMsgPorts(IntEnum):
     CAR_STATUS = auto()
     TSON_BUTTON = auto()
     ASMS_OUT = auto()
-    ACCELERATOR_POS = auto()
 
 
 class CAN2NodeMsgPorts(IntEnum):
@@ -48,6 +47,7 @@ class CAN2NodeMsgPorts(IntEnum):
     EULER_ACCURACY = auto()
     POSITION_ACCURACY = auto()
     VELOCITY_ACCURACY = auto()
+    ACCELERATOR_POS = auto()
 
 
 class VisionNodeMsgPorts(IntEnum):
@@ -72,12 +72,14 @@ class MissionValue(IntEnum):
     Disco = 8,
     Donuts = 9
 
+
 class AS(IntEnum):
-	OFF = 0
-	READY = 1
-	DRIVING = 2
-	FINISHED = 3
-	EMERGENCY = 4
+    OFF = 0
+    READY = 1
+    DRIVING = 2
+    FINISHED = 3
+    EMERGENCY = 4
+
 
 class CarStatus(IntEnum):
     NOT_READY = 0,
