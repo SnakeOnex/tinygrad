@@ -1,18 +1,18 @@
 import math
-
+import sys
+sys.path.append("..")
+sys.path.append(".")
 from .state import AS
+from algorithms.unit_conversions import mps_to_wheel_rpm, wheel_rpm_to_mps
 
 # CAN1 SEND
+
 
 def state_to_MCR_ActualValues_A(state):
     act_InverterStatus = 0
     act_InverterReady = 0
     act_InverterErrorStatus = 0.
-
-    # (1 / (60 * GEAR_RATIO)) * (2 * PI * 0.2)
-    WHEEL_SPEED_TO_MS = 1 / (60 * 6.7) * 2 * 0.2 * math.pi
-    act_Speed = int(state.speed / WHEEL_SPEED_TO_MS)
-
+    act_Speed = int(mps_to_wheel_rpm(state.speed))
     act_Torque = 0
     act_Power = 0
     act_MotorTemperature = 0
@@ -20,6 +20,7 @@ def state_to_MCR_ActualValues_A(state):
     values = [act_InverterStatus, act_InverterReady, act_InverterErrorStatus,
               act_Speed, act_Torque, act_Power, act_MotorTemperature]
     return values
+
 
 def state_to_DSH_Status(state):
     Voltage = 0
@@ -38,16 +39,18 @@ def state_to_DSH_Status(state):
 
     return values
 
+
 def state_to_SA_SteeringAngle(state):
     Angle_FT = 0
     AngularSpeed_FT = 0
-    Angle = state.steering_angle*4.0
+    Angle = state.steering_angle * 4.0
     AngularSpeed = 0
     SEQ = 0
 
     values = [Angle_FT, AngularSpeed_FT, Angle, AngularSpeed, SEQ]
 
     return values
+
 
 def state_to_EBSS_Status(state):
     if state.emergency_signal:
@@ -57,13 +60,14 @@ def state_to_EBSS_Status(state):
 
     values = [0 for _ in range(34)]
     values[0] = CarState
-    values[3] = 1 # tson button
-    values[9] = 1 # asms out
+    values[3] = 1  # tson button
+    values[9] = 1  # asms out
 
     return values
 
 # CAN2 SEND
-    
+
+
 def state_to_RES_Status(state):
     E_stop = 0
     Switch = 0
@@ -98,19 +102,22 @@ def state_to_INS_D_EKF_POS(state):
 
 def state_to_INS_D_EKF_EULER(state):
     # subtract 180 to change range to < -180, 180 > to mimick INS
-    values = [0., 0., state.heading-180]
+    values = [0., 0., state.heading - 180]
     return values
+
 
 def state_to_INS_D_EKF_VEL_BODY(state):
     vel_x, vel_y = state.velocity
     values = [vel_x, vel_y, 0.]
     return values
 
+
 def state_to_PDL_RawRelative(state):
     values = [0 for _ in range(6)]
     APPS1 = 10.
 
     return values
+
 
 can1_send_callbacks = {
     "MCR_ActualValues_A": state_to_MCR_ActualValues_A,
@@ -131,11 +138,11 @@ can2_send_callbacks = {
 
 def receive_XVR_Control(state, values):
     # state.steering_angle = values[0]
-    state.steering_angle_set_point = values[0]/4.0
+    state.steering_angle_set_point = values[0] / 4.0
 
 
 def receive_XVR_SetpointsMotor_A(state, values):
-    state.speed_set_point = values[4]
+    state.speed_set_point = wheel_rpm_to_mps(values[4])
     # print("received set point: ", state.speed_set_point)
 
 

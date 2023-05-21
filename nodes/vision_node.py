@@ -28,6 +28,7 @@ class VisionNode(mp.Process):
         self.mode = mode
         self.go_signal = 0
         self.log_images = False
+        self.camera_open = False
 
     def initialize(self):
         print("INITTING")
@@ -42,6 +43,7 @@ class VisionNode(mp.Process):
             self.detector = ConeDetector(config["cone_detector_opt"])
             self.localizer = ConeLocalizer(config["cone_localizer_opt"])
             self.zed.open()
+            self.camera_open = True
 
         self.logger = Logger(
             log_name=config["log_name"], log_folder_name=config["log_folder_name"], curr_log_folder=self.curr_log_folder)
@@ -144,3 +146,18 @@ class VisionNode(mp.Process):
 
     def read_cones_from_network(self):
         pass
+
+    def terminate(self):
+        if self.camera_open:
+            self.zed.close()
+        super(VisionNode, self).terminate()
+
+    def kill(self):
+        if self.camera_open:
+            self.zed.close()
+        super(VisionNode, self).kill()
+
+    def close(self):
+        if self.camera_open:
+            self.zed.close()
+        super(VisionNode, self).close()

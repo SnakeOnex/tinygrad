@@ -5,6 +5,7 @@ from tvojemama.logger import Logger
 from pycandb.can_interface import CanInterface
 
 from internode_communication import create_publisher_socket, publish_data
+from algorithms.unit_conversions import wheel_rpm_to_mps
 from config import CAN1NodeMsgPorts
 from config import can1_config as config
 
@@ -51,9 +52,7 @@ class Can1Node(mp.Process):
 
     # CAN MESSAGE RECEIVE CALLBACK FUNCTIONS
     def receive_MCR_ActualValues_A(self, values):
-        WHEEL_SPEED_TO_MS = 1 / (60 * 6.7) * 2 * 0.2 * math.pi
-
-        wheel_speed = float(values[3]) * WHEEL_SPEED_TO_MS
+        wheel_speed = wheel_rpm_to_mps(float(values[3]))
         publish_data(self.wheel_speed_socket, wheel_speed)
 
     def receive_DSH_Status(self, values):

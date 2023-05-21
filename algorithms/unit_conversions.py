@@ -31,3 +31,25 @@ def lat_lon_to_meter_x_y(lat_lon_arr, earth_radius, lat_lon_origin):
     """
     meter_yx = earth_radius * np.tan(np.deg2rad(lat_lon_arr - lat_lon_origin))
     return meter_yx[::-1]
+
+
+def wheel_rpm_to_mps(wheel_rpm):
+    """
+    Converts wheel rpm to meters per second
+    Args:
+        wheel_rpm (np.float64): wheel rpm
+    Returns:
+        np.float64: meters per second
+    """
+    return wheel_rpm * 1 / (60 * 6.7) * 2 * 0.2 * np.pi
+
+
+def mps_to_wheel_rpm(mps):
+    """
+    Converts meters per second to wheel rpm
+    Args:
+        mps (np.float64): meters per second
+    Returns:
+        np.float64: wheel rpm
+    """
+    return mps * (60 * 6.7) * 1 / (2 * 0.2 * np.pi)

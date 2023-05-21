@@ -5,12 +5,14 @@ import time
 from tvojemama.logger import Logger
 from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, publish_data
 from pycandb.can_interface import CanInterface
-
+from algorithms.unit_conversions import mps_to_wheel_rpm
 from config import can_config, tcp_config
 from config import MissionNodeMsgPorts
 from config import can_sender_config as opt
 from config import AS, CarStatus, CAN1NodeMsgPorts
 from config import MissionValue
+
+
 class CanSenderNode(mp.Process):
     def __init__(self, curr_log_folder):
         mp.Process.__init__(self)
@@ -26,7 +28,7 @@ class CanSenderNode(mp.Process):
         self.car_status = 0
 
         # CAN msgs values
-        
+
         self.ksicht_status_values = [self.ksicht_status[0], self.ksicht_status[1], 0, 0, 0, 0, 0, 0]
         self.motor_setpoints_values = [0, 0, 0, 0, self.wheel_speed_cmd, 0]
         self.steering_control_values = [self.steering_angle_cmd]
@@ -46,7 +48,7 @@ class CanSenderNode(mp.Process):
         self.init_res()
 
     def update_data(self):
-        self.wheel_speed_cmd, self.torque_cmd = update_subscription_data(self.wheel_speed_cmd_socket, [self.wheel_speed_cmd,self.torque_cmd])
+        self.wheel_speed_cmd, self.torque_cmd = update_subscription_data(self.wheel_speed_cmd_socket, [self.wheel_speed_cmd, self.torque_cmd])
         self.steering_angle_cmd = update_subscription_data(self.steering_angle_cmd_socket, self.steering_angle_cmd)
         self.ksicht_status = update_subscription_data(self.ksicht_status_socket, self.ksicht_status)
         self.car_status = update_subscription_data(self.car_status_socket, self.car_status)
@@ -54,7 +56,7 @@ class CanSenderNode(mp.Process):
         # # update values list for the CAN messages
         self.ksicht_status_values = list(self.ksicht_status)
 
-        self.motor_setpoints_values[4] = self.wheel_speed_cmd
+        self.motor_setpoints_values[4] = mps_to_wheel_rpm(self.wheel_speed_cmd)
         self.motor_setpoints_values[5] = self.torque_cmd
         self.steering_control_values[0] = self.steering_angle_cmd
 
@@ -73,10 +75,10 @@ class CanSenderNode(mp.Process):
 
                 # Lenze inverters require extended CAN address ID
                 if self.ksicht_status_values[0] == AS.DRIVING or (self.ksicht_status_values[1] == MissionValue.Manual and self.car_status == CarStatus.STARTED):
-                    self.CAN1.send_can_msg([1,0,0,0],self.CAN1.name2id["XVR_MasterControlStatus"], is_extended_id=True)
+                    self.CAN1.send_can_msg([1, 0, 0, 0], self.CAN1.name2id["XVR_MasterControlStatus"], is_extended_id=True)
                     self.motor_setpoints_values[0] = 1
                 else:
-                    self.CAN1.send_can_msg([0,0,0,0],self.CAN1.name2id["XVR_MasterControlStatus"], is_extended_id=True)
+                    self.CAN1.send_can_msg([0, 0, 0, 0], self.CAN1.name2id["XVR_MasterControlStatus"], is_extended_id=True)
                     self.motor_setpoints_values[0] = 0
                 self.CAN1.send_can_msg(self.motor_setpoints_values.copy(), self.CAN1.name2id["XVR_SetpointsMotor_A"], is_extended_id=True)
                 self.CAN1.send_can_msg(self.motor_setpoints_values.copy(), self.CAN1.name2id["XVR_SetpointsMotor_B"],
