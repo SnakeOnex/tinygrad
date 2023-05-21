@@ -19,7 +19,6 @@ class Manual():
         self.torque_set_point = 5.
         self.speed_set_point = 2000.
 
-
     def loop(self, **kwargs):
         """
         inputs unused, loops 2 times the period of a sine function to steer wheels, motors set at stable m/s
@@ -30,8 +29,8 @@ class Manual():
         accelerator_pos = kwargs["accelerator_pos"]
         print("accelerator_pos", accelerator_pos)
 
-        torque = (accelerator_pos) * 20
+        torque = (accelerator_pos) * 20 / 100
         debug_dict = {}
         if torque < 0.0:
-           torque = 0.0
+            torque = 0.0
         return self.finished, self.steering_angle, self.speed_set_point, torque, debug_dict, np.array([[0, 0]]), np.array([0, 0])
