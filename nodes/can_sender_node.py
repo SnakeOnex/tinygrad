@@ -23,6 +23,7 @@ class CanSenderNode(mp.Process):
         self.torque_cmd = 0.
         self.steering_angle_cmd = 0.
         self.ksicht_status = (0, 0, 0, 0, 0, 0, 0, 0)
+        self.car_status = 0
 
         # CAN msgs values
         
@@ -41,12 +42,14 @@ class CanSenderNode(mp.Process):
         self.wheel_speed_cmd_socket = create_subscriber_socket(MissionNodeMsgPorts.WHEEL_SPEED_CMD)
         self.steering_angle_cmd_socket = create_subscriber_socket(MissionNodeMsgPorts.STEERING_ANGLE_CMD)
         self.ksicht_status_socket = create_subscriber_socket(MissionNodeMsgPorts.KSICHT_STATUS)
+        self.car_status_socket = create_subscriber_socket(CAN1NodeMsgPorts.CAR_STATUS)
         self.init_res()
 
     def update_data(self):
         self.wheel_speed_cmd, self.torque_cmd = update_subscription_data(self.wheel_speed_cmd_socket, [self.wheel_speed_cmd,self.torque_cmd])
         self.steering_angle_cmd = update_subscription_data(self.steering_angle_cmd_socket, self.steering_angle_cmd)
         self.ksicht_status = update_subscription_data(self.ksicht_status_socket, self.ksicht_status)
+        self.car_status = update_subscription_data(self.car_status_socket, self.car_status)
 
         # # update values list for the CAN messages
         self.ksicht_status_values = list(self.ksicht_status)

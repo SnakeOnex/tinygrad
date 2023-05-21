@@ -106,6 +106,11 @@ def state_to_INS_D_EKF_VEL_BODY(state):
     values = [vel_x, vel_y, 0.]
     return values
 
+def state_to_PDL_RawRelative(state):
+    values = [0 for _ in range(6)]
+    APPS1 = 10.
+
+    return values
 
 can1_send_callbacks = {
     "MCR_ActualValues_A": state_to_MCR_ActualValues_A,
@@ -141,5 +146,5 @@ def receive_XVR_Status(state, values):
 can1_recv_callbacks = {
     "XVR_Status": receive_XVR_Status,
     "XVR_Control": receive_XVR_Control,
-    "XVR_SetpointsMotor_A": receive_XVR_SetpointsMotor_A
+    "XVR_SetpointsMotor_A": receive_XVR_SetpointsMotor_A,
 }
