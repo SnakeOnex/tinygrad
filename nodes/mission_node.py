@@ -175,7 +175,7 @@ class MissionNode(mp.Process):
                             finished=self.finished)
             # self.ASM.update_asm_status()
 
-            if self.ASM.AS == AS.DRIVING and self.car_status == CarStatus.STARTED:
+            if (self.ASM.AS == AS.DRIVING and self.car_status == CarStatus.STARTED) or (self.mission is not None and self.mission.ID == "Manual"):
                 self.finished, steering_angle, speed, torque, log, path, target = self.mission.loop(**self.get_mission_kwargs())
                 self.mission_log = {
                     "steering_angle": steering_angle,
