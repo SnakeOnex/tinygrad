@@ -16,7 +16,7 @@ from cones.cone_localizer import ConeLocalizer
 from tvojemama.logger import Logger, LogReader, name_to_log
 from config import vision_node_config as config
 from config import tcp_config as tcp
-from internode_communication import create_publisher_socket, publish_data, create_subscriber_socket, update_subscription_data
+from internode_communication import *
 from config import VisionNodeMsgPorts, CAN2NodeMsgPorts
 import cv2
 
@@ -147,17 +147,9 @@ class VisionNode(mp.Process):
     def read_cones_from_network(self):
         pass
 
-    def terminate(self):
-        if self.camera_open:
-            self.zed.close()
-        super(VisionNode, self).terminate()
-
-    def kill(self):
-        if self.camera_open:
-            self.zed.close()
-        super(VisionNode, self).kill()
-
-    def close(self):
-        if self.camera_open:
-            self.zed.close()
-        super(VisionNode, self).close()
+    # def terminate(self):
+    #     print("Terminating Vision Node")
+    #     if self.camera_open:
+    #         self.zed.close()
+    #     print(self.cone_preds_socket)
+    #     super().terminate()

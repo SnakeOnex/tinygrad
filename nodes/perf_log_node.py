@@ -58,3 +58,7 @@ class PerfLogNode(mp.Process):
             time_to_sleep = (1. / self.frequency) - (end_time - start_time)
             if time_to_sleep > 0.:
                 time.sleep(time_to_sleep)
+
+    # def terminate(self):
+    #     print("Terminating PerfLogNode")
+    #     super().terminate()

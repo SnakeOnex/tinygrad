@@ -2,7 +2,7 @@ import multiprocessing as mp
 
 from tvojemama.logger import Logger
 from pycandb.can_interface import CanInterface
-from internode_communication import create_publisher_socket, publish_data
+from internode_communication import create_publisher_socket, publish_data, destroy_socket
 
 from config import CAN2NodeMsgPorts
 from config import can2_config as config
@@ -25,7 +25,7 @@ class Can2Node(mp.Process):
         self.position_socket = create_publisher_socket(CAN2NodeMsgPorts.POSITION)
         self.euler_socket = create_publisher_socket(CAN2NodeMsgPorts.EULER)
         self.velocity_socket = create_publisher_socket(CAN2NodeMsgPorts.VELOCITY)
-        self.ins_satatus_socket = create_publisher_socket(CAN2NodeMsgPorts.INS_STATUS)
+        self.ins_status_socket = create_publisher_socket(CAN2NodeMsgPorts.INS_STATUS)
         self.accel_socket = create_publisher_socket(CAN2NodeMsgPorts.ACCELERATION)
         self.orientation_acc_socket = create_publisher_socket(CAN2NodeMsgPorts.EULER_ACCURACY)
         self.position_acc_socket = create_publisher_socket(CAN2NodeMsgPorts.POSITION_ACCURACY)
@@ -88,7 +88,7 @@ class Can2Node(mp.Process):
         heading_valid = values[2]
         velocity_valid = values[3]
         position_valid = values[4]
-        publish_data(self.ins_satatus_socket, (heading_valid, velocity_valid, position_valid))
+        publish_data(self.ins_status_socket, (heading_valid, velocity_valid, position_valid))
 
     def receive_INS_D_IMU_ACCEL(self, values):
         accel_x, accel_y, accel_z = values
@@ -109,3 +109,19 @@ class Can2Node(mp.Process):
     def receive_PDL_Accelerator(self, values):
         accelerator_pos = values[2]
         publish_data(self.accelerator_pos_socket, accelerator_pos)
+
+    # def terminate(self):
+    #     print("Terminating CAN2Node")
+    #     destroy_socket(self.go_signal_socket)
+    #     destroy_socket(self.emergency_signal_socket)
+    #     destroy_socket(self.switch_signal_socket)
+    #     destroy_socket(self.position_socket)
+    #     destroy_socket(self.euler_socket)
+    #     destroy_socket(self.velocity_socket)
+    #     destroy_socket(self.ins_status_socket)
+    #     destroy_socket(self.accel_socket)
+    #     destroy_socket(self.orientation_acc_socket)
+    #     destroy_socket(self.position_acc_socket)
+    #     destroy_socket(self.velocity_acc_socket)
+    #     destroy_socket(self.accelerator_pos_socket)
+    #     super().terminate()

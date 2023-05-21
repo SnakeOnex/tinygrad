@@ -3,7 +3,7 @@ import subprocess
 import time
 
 from tvojemama.logger import Logger
-from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, publish_data
+from internode_communication import create_subscriber_socket, update_subscription_data
 from pycandb.can_interface import CanInterface
 from algorithms.unit_conversions import mps_to_wheel_rpm
 from config import can_config, tcp_config
@@ -99,3 +99,7 @@ class CanSenderNode(mp.Process):
     def init_res(self):
         data = [0x01, 0]
         self.CAN2.send_can_msg(data.copy(), self.CAN2.name2id["XVR_NMT_Mode_Control"])
+
+    # def terminate(self) -> None:
+    #     print("Terminating CAN sender node")
+    #     super().terminate()

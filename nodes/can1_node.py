@@ -4,7 +4,7 @@ import math
 from tvojemama.logger import Logger
 from pycandb.can_interface import CanInterface
 
-from internode_communication import create_publisher_socket, publish_data
+from internode_communication import create_publisher_socket, publish_data, destroy_socket
 from algorithms.unit_conversions import wheel_rpm_to_mps
 from config import CAN1NodeMsgPorts
 from config import can1_config as config
@@ -73,3 +73,14 @@ class Can1Node(mp.Process):
         publish_data(self.car_status_socket, car_status)
         publish_data(self.tson_button_socket, tson_button)
         publish_data(self.asms_out_socket, asms_out)
+
+    # def terminate(self) -> None:
+    #     print("Terminating CAN1 node")
+    #     destroy_socket(self.wheel_speed_socket)
+    #     destroy_socket(self.steering_angle_socket)
+    #     destroy_socket(self.mission_socket)
+    #     destroy_socket(self.start_button_socket)
+    #     destroy_socket(self.car_status_socket)
+    #     destroy_socket(self.tson_button_socket)
+    #     destroy_socket(self.asms_out_socket)
+    #     super().terminate()

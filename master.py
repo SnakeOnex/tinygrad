@@ -70,6 +70,7 @@ def main(mode="RACE"):
     perf_log_node.start()
     print("PERF LOG NODE STARTED")
     time.sleep(1)
+    nodes = [vision_node, can1_node, can2_node, mission_node, can_sender_node, perf_log_node]
 
     def handler(sig, frame):
         vision_node.terminate()
@@ -83,7 +84,11 @@ def main(mode="RACE"):
 
     signal(SIGTERM, handler)
 
-    vision_node.join()
+    for node in nodes:
+        try:
+            node.join()
+        except KeyboardInterrupt:
+            handler(None, None)
 
 
 if __name__ == '__main__':

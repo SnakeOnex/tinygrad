@@ -63,3 +63,12 @@ def update_subscription_data(socket, old_data):
         data = old_data
 
     return data
+
+
+def destroy_socket(socket):
+    """Closes a socket
+
+    Args:
+        socket (zmq.socket): socket to be closed
+    """
+    socket.close()

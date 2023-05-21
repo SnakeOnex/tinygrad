@@ -22,7 +22,7 @@ from config import can_config, tcp_config
 from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts, MissionNodeMsgPorts, MissionValue, CarStatus
 from config import mission_opt as config
 
-from internode_communication import create_subscriber_socket, update_subscription_data, create_publisher_socket, publish_data
+from internode_communication import *
 from algorithms.unit_conversions import get_earth_radius_at_pos, lat_lon_to_meter_x_y
 
 
@@ -216,3 +216,12 @@ class MissionNode(mp.Process):
 
             if time_to_sleep > 0.:
                 time.sleep(time_to_sleep)
+
+    # def terminate(self):
+    #     print("Terminating MissionNode")
+    #     destroy_socket(self.steering_angle_cmd_socket)
+    #     destroy_socket(self.wheel_speed_cmd_socket)
+    #     destroy_socket(self.ksicht_status_socket)
+    #     if self.mode == "SIM":
+    #         destroy_socket(self.debug_socket)
+    #     super().terminate()
