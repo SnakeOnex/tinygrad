@@ -22,12 +22,16 @@ from nodes.can_sender_node import CanSenderNode
 from nodes.perf_log_node import PerfLogNode
 
 
-def main(mode="RACE"):
+def main(mode="RACE", log_folder=None):
     # 0. create a log folder for the run
-    main_log_folder = config["main_log_folder"]
-    curr_log_folder = main_log_folder / Path(gen_name_with_time('', ''))
-    curr_log_folder.mkdir(parents=True)
-    curr_log_folder = str(curr_log_folder)
+    if log_folder is not None:
+        curr_log_folder = Path(log_folder)
+    else:
+        main_log_folder = config["main_log_folder"]
+        curr_log_folder = main_log_folder / Path(gen_name_with_time('', ''))
+        curr_log_folder.mkdir(parents=True)
+        curr_log_folder = str(curr_log_folder)
+
     print("LOG_FILE: ", curr_log_folder)
 
     # 1. processes init
@@ -94,6 +98,7 @@ def main(mode="RACE"):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--mode', type=str, default="RACE")
+    parser.add_argument('--log_folder', type=str, default=None)
     args = parser.parse_args()
 
-    main(args.mode)
+    main(args.mode, args.log_folder)
