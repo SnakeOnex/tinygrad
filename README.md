@@ -39,6 +39,17 @@ cd dv_sim && python run_simulation.py --gui --manual --map maps/skidpad_map.json
 python -m pytest
 ```
 
+## Setup shell alisases
+
+**Setup bros path and source aliases**
+```
+export BROS_PATH=$HOME/eforce/bros # change to your path to BROS
+source $BROS_PATH/shell_scripts/aliases.sh
+```
+- You can now use the following commands:
+    - **cd_latest_log** - changes directory to the most recent log folder
+    
+
 ## Links & Resources
 
 - [Process communication](https://pymotw.com/2/multiprocessing/communication.html)
