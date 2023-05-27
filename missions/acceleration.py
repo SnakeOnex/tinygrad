@@ -7,7 +7,7 @@ import multiprocessing as mp
 from config import path_planner_opt
 
 from algorithms.path_tracking import stanley_steering
-from algorithms.path_planning import PathPlanner
+from algorithms.old_path_planning import OldPathPlanner as PathPlanner
 from algorithms.general import get_big_orange_distance
 
 
@@ -85,4 +85,4 @@ class Acceleration():
             "finished": self.finished
         }
 
-        return self.finished, delta, self.speed_set_point, torque,debug_dict, path, controller_log["target"]
+        return self.finished, delta, self.speed_set_point, torque, debug_dict, path, controller_log["target"]

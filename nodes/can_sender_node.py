@@ -3,7 +3,7 @@ import subprocess
 import time
 
 from tvojemama.logger import Logger
-from internode_communication import create_subscriber_socket, update_subscription_data
+from utils.internode_communication import create_subscriber_socket, update_subscription_data
 from pycandb.can_interface import CanInterface
 from algorithms.unit_conversions import mps_to_wheel_rpm
 from config import can_config, tcp_config
@@ -80,6 +80,7 @@ class CanSenderNode(mp.Process):
                 else:
                     self.CAN1.send_can_msg([0, 0, 0, 0], self.CAN1.name2id["XVR_MasterControlStatus"], is_extended_id=True)
                     self.motor_setpoints_values[0] = 0
+
                 self.CAN1.send_can_msg(self.motor_setpoints_values.copy(), self.CAN1.name2id["XVR_SetpointsMotor_A"], is_extended_id=True)
                 self.CAN1.send_can_msg(self.motor_setpoints_values.copy(), self.CAN1.name2id["XVR_SetpointsMotor_B"],
                                        is_extended_id=True)

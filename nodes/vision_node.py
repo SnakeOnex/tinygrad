@@ -16,7 +16,7 @@ from cones.cone_localizer import ConeLocalizer
 from tvojemama.logger import Logger, LogReader, name_to_log
 from config import vision_node_config as config
 from config import tcp_config as tcp
-from internode_communication import *
+from utils.internode_communication import *
 from config import VisionNodeMsgPorts, CAN2NodeMsgPorts
 import cv2
 

@@ -7,3 +7,4 @@ missions/trackdrive/__init__.py
 .DS_Store
 .ipynb_checkpoints/
 .vscode/
+.pytest_cache/

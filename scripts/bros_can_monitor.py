@@ -11,7 +11,7 @@ from config import MissionNodeMsgPorts
 from config import CAN1NodeMsgPorts
 from config import CAN2NodeMsgPorts
 from nodes.mission_node import MissionNode
-from internode_communication import create_subscriber_socket, get_last_subscription_data
+from utils.internode_communication import create_subscriber_socket, get_last_subscription_data
 
 
 FPS = 30

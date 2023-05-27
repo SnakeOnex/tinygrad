@@ -4,7 +4,7 @@ import math
 from tvojemama.logger import Logger
 from pycandb.can_interface import CanInterface
 
-from internode_communication import create_publisher_socket, publish_data, destroy_socket
+from utils.internode_communication import create_publisher_socket, publish_data, destroy_socket
 from algorithms.unit_conversions import wheel_rpm_to_mps
 from config import CAN1NodeMsgPorts
 from config import can1_config as config

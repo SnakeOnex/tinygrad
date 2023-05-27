@@ -2,7 +2,7 @@ import multiprocessing as mp
 
 from tvojemama.logger import Logger
 from pycandb.can_interface import CanInterface
-from internode_communication import create_publisher_socket, publish_data, destroy_socket
+from utils.internode_communication import create_publisher_socket, publish_data, destroy_socket
 
 from config import CAN2NodeMsgPorts
 from config import can2_config as config

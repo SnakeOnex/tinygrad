@@ -1,5 +1,3 @@
-#!/bin/bash
-
 CAN1_PORT="can0"
 CAN2_PORT="can1"
 
