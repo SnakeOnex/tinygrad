@@ -56,9 +56,10 @@ if __name__ == '__main__':
     parser.add_help = True
     parser.add_argument('--bros_data', type=str, default="data/bros_logs", help="path to bros data folder")
     parser.add_argument('--from_dir', type=str, default=None, help="path to specific log folder")
-    parser.add_argument('--latest', action=argparse.BooleanOptionalAction, default=False, help="use the latest log found by date")
-    parser.add_argument('--show', action=argparse.BooleanOptionalAction, default=False, help="show all of the figures")
-    parser.add_argument('--clear_all_logs', action=argparse.BooleanOptionalAction, default=False, help="clear all logs from the log folder")
-    parser.add_argument('--video', action=argparse.BooleanOptionalAction, default=False, help="generate video for the given logs")
+    parser.add_argument('--latest', action='store_true', default=False, help="use the latest log found by date")
+    parser.add_argument('--show', action='store_true', default=False, help="show all of the figures")
+    parser.add_argument('--clear_all_logs', action='store_true', default=False, help="clear all logs from the log folder")
+    parser.add_argument('--video', action='store_true', default=False, help="generate video for the given logs")
+
     args = parser.parse_args()
     main(args)
