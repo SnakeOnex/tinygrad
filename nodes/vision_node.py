@@ -11,8 +11,8 @@ try:
 except:
     print("No ZED SDK")
 
-from cones.cone_detector import ConeDetector
-from cones.cone_localizer import ConeLocalizer
+from vision.cone_detector import ConeDetector
+from vision.cone_localizer import ConeLocalizer
 from tvojemama.logger import Logger, LogReader, name_to_log
 from config import vision_node_config as config
 from config import tcp_config as tcp
