@@ -13,4 +13,4 @@ else
 fi
 
 mkdir $folder_path
-python3 master.py 2>&1 | tee output.log
+python3 master.py 2>&1 | tee $output_log_path
