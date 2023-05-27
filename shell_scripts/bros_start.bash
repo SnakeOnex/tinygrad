@@ -1,6 +1,6 @@
 # NOTE: This script has to be run a from the bros/.. directory
 # save name of folder in a variable
-folder_name=$(date +"%d-%m-%Y__%H:%M")
+folder_name=$(date +"%d_%m_%Y-%H_%M_%S")
 
 # if name is zotac else
 if [ "$HOSTNAME" = "zotac" ]; then
