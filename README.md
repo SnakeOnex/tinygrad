@@ -48,6 +48,7 @@ source $BROS_PATH/shell_scripts/aliases.sh
 ```
 - You can now use the following commands:
     - **cd_latest_log** - changes directory to the most recent log folder
+    - **gen_latest_log** - generates diagnostic charts & drive-log video in the most recent log folder
     
 
 ## Links & Resources
