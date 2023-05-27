@@ -11,10 +11,10 @@ sys.path.append("..")
 sys.path.append(".")
 
 from algorithms import path_planning
-from cones.visual_helpers import *
-from cones.cone_detector import ConeDetector
-from cones.cone_localizer import ConeLocalizer
-from cones.geometry_functions import *
+from vision.visual_helpers import *
+from vision.cone_detector import ConeDetector
+from vision.cone_localizer import ConeLocalizer
+from vision.geometry_functions import *
 from config import vision_node_config as config
 from config import cone_localizer_opt
 from config import path_planner_opt
@@ -24,8 +24,7 @@ def main():
     cv2.namedWindow("Perception")
     show_bboxes = False
     draw_path = False
-    views = [sl.VIEW.LEFT, sl.VIEW.RIGHT]
-    view = 0
+    view = sl.VIEW.LEFT
     # init zed
     zed = sl.Camera()
     init_params = sl.InitParameters()
@@ -40,10 +39,10 @@ def main():
     localizer = ConeLocalizer(config["cone_localizer_opt"])
     # init path predictor
     path_planner = path_planning.PathPlanner(path_planner_opt)
-
+    print("Press 'k' to exit, 'b' to toggle bounding boxes, 'p' to toggle path, 'l' to switch to left camera, 'r' to switch to right camera")
     while True:
         if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
-            zed.retrieve_image(zed_image, views[view])
+            zed.retrieve_image(zed_image, view)
             image = zed_image.get_data()
 
             bbox_preds = detector.process_image(image)
@@ -70,9 +69,9 @@ def main():
             elif key == ord("p"):
                 draw_path = not draw_path
             elif key == ord("l"):
-                view = 0
+                view = sl.VIEW.LEFT
             elif key == ord("r"):
-                view = 1
+                view = sl.VIEW.RIGHT
     cv2.destroyAllWindows()
     zed.close()
 
