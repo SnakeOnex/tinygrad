@@ -6,7 +6,7 @@ import shutil
 import sys
 
 from tvojemama.log_to_chart import log_to_chart
-
+from tvojemama.log_to_video import log_to_video
 
 def latest_log_dir(root_log_dir):
     logs = os.listdir(root_log_dir)
@@ -22,14 +22,19 @@ def clear_all_logs(root_log_dir):
         shutil.rmtree(os.path.join(root_log_dir, log), ignore_errors=True)
 
 
-def process_log_folder(log_folder, show=False):
+def process_log_folder(log_folder, show=False, video=False):
     AS_folder = Path(log_folder) / Path("AS")
     if ".jpg" not in [file.suffix for file in AS_folder.iterdir()]:
-        print(f"processing {log_folder}")
+        print(f"generating charts for {log_folder}")
         log_to_chart(AS_folder, show=show)
     else:
-        print(f"skipping {log_folder}")
+        print(f"skipping charts for {log_folder}")
 
+    if video and ".mp4" not in [file.suffix for file in AS_folder.iterdir()]:
+        print(f"generating charts for {log_folder}")
+        log_to_video(AS_folder)
+    else:
+        print(f"skipping video in {log_folder}")
 
 def main(args):
     bros_data_path = Path(args.bros_data)
@@ -37,13 +42,13 @@ def main(args):
         clear_all_logs(bros_data_path)
     else:
         if args.from_dir:
-            process_log_folder(bros_data_path / Path(args.from_dir), show=args.show)
+            process_log_folder(bros_data_path / Path(args.from_dir), show=args.show, video=args.video)
         elif args.latest:
             last_log_dir = latest_log_dir(bros_data_path)
-            process_log_folder(last_log_dir, show=args.show)
+            process_log_folder(last_log_dir, show=args.show, video=args.video)
         else:
             for log_folder in bros_data_path.iterdir():
-                process_log_folder(log_folder, show=args.show)
+                process_log_folder(log_folder, show=args.show, video=args.video)
 
 
 if __name__ == '__main__':
@@ -54,5 +59,6 @@ if __name__ == '__main__':
     parser.add_argument('--latest', action=argparse.BooleanOptionalAction, default=False, help="use the latest log found by date")
     parser.add_argument('--show', action=argparse.BooleanOptionalAction, default=False, help="show all of the figures")
     parser.add_argument('--clear_all_logs', action=argparse.BooleanOptionalAction, default=False, help="clear all logs from the log folder")
+    parser.add_argument('--video', action=argparse.BooleanOptionalAction, default=False, help="generate video for the given logs")
     args = parser.parse_args()
     main(args)
