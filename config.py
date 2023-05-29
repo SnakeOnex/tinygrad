@@ -90,6 +90,13 @@ class CarStatus(IntEnum):
     STARTED = 5
 
 
+class NodeStatus(IntEnum):
+    NODE_CREATED = 0,
+    NODE_INITTED = 1,
+    NODE_OK = 2,
+    NODE_FAULT = 3
+
+
 tcp_config = {
     "TCP_HOST": 'tcp://127.0.0.1',
     "VISION_PORT": '50000',
@@ -197,7 +204,7 @@ perf_logger_config = {
 
 inspection_config = {
     "max_steering_angle": 90,
-    "speed_set_point": 500.0,
+    "speed_set_point": 2.0,
     "duration": 25.,
     "n_periods": 4.
 }

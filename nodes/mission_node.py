@@ -1,9 +1,6 @@
 import multiprocessing as mp
 import numpy as np
 import time
-from enum import IntEnum
-
-from pycandb.can_interface import CanInterface
 from tvojemama.logger import Logger
 
 from missions.acceleration import Acceleration
@@ -17,8 +14,7 @@ from missions.disco import Disco
 from missions.donuts import Donuts
 
 from nodes.asm import ASM, AS
-# from nodes.asm_new import ASM, AS
-from config import can_config, tcp_config
+from config import tcp_config
 from config import VisionNodeMsgPorts, CAN1NodeMsgPorts, CAN2NodeMsgPorts, MissionNodeMsgPorts, MissionValue, CarStatus
 from config import mission_opt as config
 
@@ -81,8 +77,6 @@ class MissionNode(mp.Process):
     def initialize(self):
         self.logger = Logger(log_name=config["log_name"], log_folder_name=config["log_folder_name"],
                              curr_log_folder=self.curr_log_folder)
-        # self.CAN1 = CanInterface(
-        #    can_config["CAN_JSON"], can_config["CAN1_ID"], False)
 
         if self.mode == "SIM":
             self.debug_socket = create_publisher_socket(
@@ -116,17 +110,6 @@ class MissionNode(mp.Process):
         self.steering_angle_cmd_socket = create_publisher_socket(MissionNodeMsgPorts.STEERING_ANGLE_CMD)
         self.ksicht_status_socket = create_publisher_socket(MissionNodeMsgPorts.KSICHT_STATUS)
 
-    def get_mission_kwargs(self):
-        return {
-            "percep_data": self.percep_data,
-            "wheel_speed": self.wheel_speed,
-            "steering_angle": self.steering_angle,
-            "position": np.array(self.position),
-            "velocity": self.velocity,
-            "euler": np.array(self.euler),
-            "accelerator_pos": self.accelerator_pos
-        }
-
     def update_data(self):
         self.percep_data = update_subscription_data(self.cone_preds_socket, self.percep_data)
         self.wheel_speed = update_subscription_data(self.wheel_speed_socket, self.wheel_speed)
@@ -158,22 +141,29 @@ class MissionNode(mp.Process):
         elif self.mode == "SIM":
             self.position = current_position
 
+    def get_mission_kwargs(self):
+        return {
+            "percep_data": self.percep_data,
+            "wheel_speed": self.wheel_speed,
+            "steering_angle": self.steering_angle,
+            "position": np.array(self.position),
+            "velocity": self.velocity,
+            "euler": np.array(self.euler),
+            "accelerator_pos": self.accelerator_pos
+        }
+
     def run(self):
         self.initialize()
 
         while True:
             start_time = time.perf_counter()
-
             self.update_data()
-
-            # 1. update AS State
             # TODO: change start_button to tson_button
             self.ASM.update(tson_button=self.tson_button,
                             asms_out=self.asms_out,
                             go_signal=self.go_signal,
                             car_status=self.car_status,
                             finished=self.finished)
-            # self.ASM.update_asm_status()
 
             if (self.ASM.AS == AS.DRIVING and self.car_status == CarStatus.STARTED) or (self.mission is not None and self.mission.ID == "Manual"):
                 self.finished, steering_angle, speed, torque, log, path, target = self.mission.loop(**self.get_mission_kwargs())
@@ -193,11 +183,9 @@ class MissionNode(mp.Process):
                         "steering_angle": steering_angle,
                         "mission_id": self.mission.ID,
                         "mission_status": log})
-
                 publish_data(self.steering_angle_cmd_socket, steering_angle)
                 publish_data(self.wheel_speed_cmd_socket, [speed, torque])
             else:
-                # self.mission_num = self.ASM.get_mission_num()
                 if self.mission_num != MissionValue.NoValue:
                     self.mission = Missions[self.mission_num]()
 
@@ -209,19 +197,11 @@ class MissionNode(mp.Process):
                                       "mission_log": self.mission_log})
 
             end_time = time.perf_counter()
-
-            # print(f"took: {(end_time - start_time) * 1000}")
             time_to_sleep = (1. / self.frequency) - (end_time - start_time)
-            # time_to_sleep = (1. / self.frequency)
-
             if time_to_sleep > 0.:
                 time.sleep(time_to_sleep)
 
-    # def terminate(self):
-    #     print("Terminating MissionNode")
-    #     destroy_socket(self.steering_angle_cmd_socket)
-    #     destroy_socket(self.wheel_speed_cmd_socket)
-    #     destroy_socket(self.ksicht_status_socket)
-    #     if self.mode == "SIM":
-    #         destroy_socket(self.debug_socket)
-    #     super().terminate()
+    def raise_external_emergency(self, reason: str):
+        self.emergency_signal = True
+        self.logger.log("EXTERNAL EMERGENCY", {"reason": reason})
+        self.ASM.raise_emergency()

@@ -18,7 +18,6 @@ class Inspection():
         self.steering_angle = 0.
         self.torque_set_point = 5.
 
-
     def loop(self, **kwargs):
         """
         inputs unused, loops 2 times the period of a sine function to steer wheels, motors set at stable m/s
@@ -44,5 +43,4 @@ class Inspection():
             "speed_setpoint": self.speed_set_point,
             "steering_angle": self.steering_angle
         }
-
         return self.finished, self.steering_angle, self.speed_set_point, torque, debug_dict, np.array([[0, 0]]), np.array([0, 0])

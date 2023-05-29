@@ -10,7 +10,7 @@ import sys
 sys.path.append('..')
 
 from sim.math_helpers import angle_to_vector, global_to_local, local_to_global, filter_occluded_cones
-from algorithms.path_planning import PathPlanner
+from algorithms.dima_path_planning import PathPlanner
 
 class Cones(IntEnum):
     YELLOW=0,

@@ -7,15 +7,14 @@ import multiprocessing as mp
 from config import path_planner_opt
 
 from algorithms.path_tracking import stanley_steering
-from algorithms.old_path_planning import OldPathPlanner
+from algorithms.path_planning import PathPlanner
 from algorithms.general import get_big_orange_distance
 
 from algorithms.speed_profile import SpeedProfile
-from algorithms.path_planning import PathPlanner, stanley_smooth_path
-from algorithms.optimized_path_planning import PathPlanner as OptimizedPathPlanner
-from algorithms.optimized_path_planning import stanley_smooth_path as optimized_smooth_path
+from algorithms.dima_path_planning import PathPlanner, stanley_smooth_path
+from algorithms.dima_optimized_path_planning import PathPlanner as OptimizedPathPlanner
+from algorithms.dima_optimized_path_planning import stanley_smooth_path as optimized_smooth_path
 from algorithms.david_planning import PathPlanner as DavidPathPlanner
-from algorithms.path_planning_more_points import PathPlanner as PathPlannerMorePoints
 from algorithms.path_smoothing import PathSmoothing
 
 
@@ -31,21 +30,17 @@ class Trackdrive():
         self.nonlinear_gain = 1.2
 
         # speed profile constants
-        max_safe_speed = 5.75 # in m/s
+        max_safe_speed = 5.75  # in m/s
 
-        self.old_path_planner = OldPathPlanner(path_planner_opt)
         self.david_path_planner = DavidPathPlanner()
         self.path_planner = PathPlanner()
-        self.speed_profile = SpeedProfile(max_safe_speed)
+        self.speed_profile = SpeedProfile()
         self.optimized_path_planner = OptimizedPathPlanner()
-        self.more_points_path_planner = PathPlannerMorePoints()
         self.path_smoothing = PathSmoothing()
 
-        self.use_speed_profile = False
-        self.use_new_path_planning = False
-        self.speed_set_point = 3. # m/s
+        self.use_speed_profile = True
+        self.speed_set_point = 3.  # m/s
         self.torque_set_point = 5.
-
 
         # mission planning variables
         self.finished = False
@@ -79,19 +74,13 @@ class Trackdrive():
         time_since_start = time.perf_counter() - self.start_timestamp
         time_since_last_lap = time_since_start - self.last_lap_time
 
-        # 1. receive perception data
-        if self.use_new_path_planning:
-            # start_time = time.perf_counter()
-            path = self.optimized_path_planner.find_path(percep_data)
-            path, _ = self.path_smoothing.torch_smooth(path)
-        else:
-            # path = self.old_path_planner.find_path(percep_data)
-            path = self.david_path_planner.find_path(percep_data)
-            path, _ = self.path_smoothing.torch_smooth(path)
+        # path = self.old_path_planner.find_path(percep_data)
+        path = self.david_path_planner.find_path(percep_data)
+        path, _ = self.path_smoothing.torch_smooth(path)
 
         # Speed profile
         if self.use_speed_profile and len(path) > 2 and self.speed_set_point > 0.:
-            speed_arr = self.speed_profile.compute_speed_profile(path, wheel_speed)
+            speed_arr = self.speed_profile.michals_profile(path, wheel_speed)
             self.speed_set_point = speed_arr[1]
 
         # 2. planning
@@ -120,8 +109,7 @@ class Trackdrive():
             self.finished = True
 
         # 2. controls
-        delta, controller_log = stanley_steering(
-            path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
+        delta, controller_log = stanley_steering(path, self.lookahead_dist, wheel_speed, self.linear_gain, self.nonlinear_gain)
         torque = self.torque_set_point
         debug_dict = {
             "time_since_start": time_since_start,
