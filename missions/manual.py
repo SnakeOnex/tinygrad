@@ -17,7 +17,7 @@ class Manual():
         self.finished = False
         self.steering_angle = 0.
         self.torque_set_point = 5.
-        self.speed_set_point = 2000.
+        self.speed_set_point = 2.
 
     def loop(self, **kwargs):
         """

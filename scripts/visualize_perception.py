@@ -10,7 +10,7 @@ import sys
 sys.path.append("..")
 sys.path.append(".")
 
-from algorithms import path_planning
+from algorithms import dima_path_planning
 from vision.visual_helpers import *
 from vision.cone_detector import ConeDetector
 from vision.cone_localizer import ConeLocalizer
@@ -38,7 +38,7 @@ def main():
     # init projector
     localizer = ConeLocalizer(config["cone_localizer_opt"])
     # init path predictor
-    path_planner = path_planning.PathPlanner(path_planner_opt)
+    path_planner = dima_path_planning.PathPlanner(path_planner_opt)
     print("Press 'k' to exit, 'b' to toggle bounding boxes, 'p' to toggle path, 'l' to switch to left camera, 'r' to switch to right camera")
     while True:
         if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:

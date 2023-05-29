@@ -17,7 +17,7 @@ from tvojemama.logger import Logger, LogReader, name_to_log
 from config import vision_node_config as config
 from config import tcp_config as tcp
 from utils.internode_communication import *
-from config import VisionNodeMsgPorts, CAN2NodeMsgPorts
+from config import VisionNodeMsgPorts, CAN2NodeMsgPorts, NodeStatus
 import cv2
 
 
@@ -28,7 +28,6 @@ class VisionNode(mp.Process):
         self.mode = mode
         self.go_signal = 0
         self.log_images = False
-        self.camera_open = False
 
     def initialize(self):
         print("INITTING")
@@ -43,7 +42,6 @@ class VisionNode(mp.Process):
             self.detector = ConeDetector(config["cone_detector_opt"])
             self.localizer = ConeLocalizer(config["cone_localizer_opt"])
             self.zed.open()
-            self.camera_open = True
 
         self.logger = Logger(
             log_name=config["log_name"], log_folder_name=config["log_folder_name"], curr_log_folder=self.curr_log_folder)
@@ -104,6 +102,8 @@ class VisionNode(mp.Process):
         socket = context.socket(zmq.SUB)
         socket.connect(tcp["TCP_HOST"] + ":" + tcp["VISION_PORT"])
         socket.setsockopt(zmq.SUBSCRIBE, b"")
+        # ! test counter
+        test_counter = 0
         image = None
 
         if config["simulate_images"]:
@@ -124,7 +124,9 @@ class VisionNode(mp.Process):
 
             if self.log_images:
                 data["image"] = image
-
+            test_counter += 1
+            if test_counter % 150 == 0:
+                raise Exception("TESTING")
             self.logger.log("CONE_DETECTOR_FRAME", data)
             publish_data(self.cone_preds_socket, world_preds)
 
@@ -132,17 +134,4 @@ class VisionNode(mp.Process):
         if self.zed.grab(self.runtime_parameters) == sl.ERROR_CODE.SUCCESS:
             self.zed.retrieve_image(self.zed_image, sl.VIEW.LEFT)
             image = self.zed_image.get_data()
-
             return image
-
-    def read_log_image(self):
-        msg_t, (msg_type, data) = next(self.brosbag_gen)
-        assert msg_type == "CONE_DETECTOR_FRAME"
-        return data["image"]
-
-    # def terminate(self):
-    #     print("Terminating Vision Node")
-    #     if self.camera_open:
-    #         self.zed.close()
-    #     print(self.cone_preds_socket)
-    #     super().terminate()

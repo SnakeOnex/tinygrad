@@ -7,6 +7,7 @@ from tvojemama.computer_status import *
 
 
 class PerfLogNode(mp.Process):
+
     def __init__(self, curr_log_folder, process_pids, frequency=10):
         mp.Process.__init__(self)
         self.frequency = frequency

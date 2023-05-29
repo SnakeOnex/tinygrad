@@ -1,13 +1,131 @@
 import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+from scipy.interpolate import splprep, splev
+
+# According to Stanley paper
+
+
+def stanley_smooth_path(path):
+
+    def normalize(v):
+        norm = np.linalg.norm(v, axis=0) + 0.00001
+        return v / norm.reshape(1, v.shape[1])
+
+    def curvature(waypoints):
+        '''
+        Curvature as  the sum of the normalized dot product between the way elements
+        Implement second term of the smoothing objective.
+
+        args: 
+            waypoints [2, num_waypoints] !!!!!
+        '''
+        shift_left = np.roll(waypoints, shift=-1, axis=1)
+        shift_right = np.roll(waypoints, shift=1, axis=1)
+
+        left_half = normalize(shift_left - waypoints)
+        right_half = normalize(waypoints - shift_right)
+
+        segment = np.array([np.dot(l, r) for l, r in zip(left_half.T, right_half.T)])
+
+        segment[0] = 0  # right half of this connects first to last waypoint, delete
+        segment[-1] = 0  # left  half of this connects first to last waypoint, delete
+
+        return np.sum(segment)
+
+    def smoothing_objective(waypoints, waypoints_center, weight_curvature=16):  # weight_curvature=128
+        '''
+        Objective for path smoothing
+
+        args:
+            waypoints [2 * num_waypoints] !!!!!
+            waypoints_center [2 * num_waypoints] !!!!!
+            weight_curvature (default=40)
+        '''
+        waypoints = waypoints.reshape(-1, 2)
+        waypoints_center = waypoints_center.reshape(-1, 2)
+
+        # mean least square error between waypoint and way point center
+        ls_tocenter = np.sum(np.abs(waypoints_center - waypoints)**2)
+
+        # derive curvature
+        ls_curvature = curvature(waypoints.T)
+
+        boundary_penalty = 0  # boundary_func(waypoints)
+
+        return ls_tocenter - weight_curvature * ls_curvature + boundary_penalty
+        # return ls_tocenter - weight_curvature * ls_curvature + boundary_penalty + np.linalg.norm(path[0,:] - waypoints[0, :])
+
+    opts = {"maxiter": 1, "disp": False}
+
+    add_more_points_to_path = False
+
+    way_points = minimize(smoothing_objective, (path), tol=0.5, args=path, options=opts)
+
+    way_points = way_points["x"]
+
+    smooth_path = way_points.reshape(-1, 2)
+    smooth_path[0] = [0., 0.]
+
+    return smooth_path
 
 
 class PathPlanning:
 
+    """
+    Description:
+
+    Step 0: Prepare the cones for next steps:
+            - divide to Blue, Yellow, Orange cones
+            - in case of zero Blue/Yellow cones -> fill missing cones
+            - if we have Orange cones, use them -> recolor Orange cones
+            - sort and filter Blue and Yellow cones
+
+    Step 1: Find a path point for step 1:
+            - compute B_hat, Y_hat (use Blue, Yellow cones from Step 0)
+            - find the closest blue, yellow cone from B_hat, Y_hat to last point of path ([0,0]) 
+            - calculate the center between blue and yellow cone 
+            - do ?some? checks for calculated center (is_already_added, path_length, angle check)
+            - add the center to path
+
+    Step 2..n: Find a path point for step 2..n:
+            - compute B_hat, Y_hat (return Blue/Yellow cones above the line)
+            - if B_hat or Y_hat is empty, END the algorithm and RETURN planned path
+            - find the closest blue, yellow cone from B_hat, Y_hat to the last point of path 
+            - calculate the center between blue and yellow cone 
+            - do ?some? checks for calculated center (is_already_added, path_length, angle check)
+            - add the center to path
+
+    Step n+1: Smooth planned path
+
+    """
+
+    """
+    Changes or new vs old path planning:
+    1. New path planning - output is a *smooth path*
+
+    2. New path planning - computes the path untill *B_hat or Y_hat is empty*
+                (means that new path planning tries to use all blue and yellow cones)
+
+    3. New path planning - in most cases *long path (up to 20m)* 
+                (old path planning planned only 5 points)
+
+    4. New path planning - uses *Big Orange cones* to plan a path
+    
+    5. New path planning - filters cones, so it shouldn't plan a path for another part of track that isn't important for now
+    """
+
     def __init__(self, debug=False, n_steps=None):
+        """
+        Initialize a path planning algorithm.
+
+        :param bool debug: enable debug mode
+        :param int n_steps: set number of steps for path planning
+        """
 
         self.used_blue_cones = np.reshape([], (-1, 2))
         self.used_yellow_cones = np.reshape([], (-1, 2))
-        self.path = np.array([[0., 0.]])
+        self.path = np.array([0., 0.])
 
         self.FILLING_CONE_DIST = 3.5        # is used to fill missing cones
         self.MAX_PATH_LENGTH = 20.          # can be used to stop path planning
@@ -19,18 +137,23 @@ class PathPlanning:
         self.path_length = 0.
         self.debug = debug
 
-    def reset(self):
-        # reset some variables for the next find_path() call
-        self.used_blue_cones = np.reshape(
-            [], (-1, 2))  # only for debugging purpose?
-        self.used_yellow_cones = np.reshape(
-            [], (-1, 2))  # only for debugging purpose?
-        self.path = np.array([[0., 0.]])
-        self.path_length = 0.
-        self.step = 0
+        self.log = {}
+        self.log["args"] = {
+            "debug": self.debug,
+            "n steps": self.n_steps,
+            "filling cone distance": self.FILLING_CONE_DIST,
+            "max path length": self.MAX_PATH_LENGTH
+        }
+        self.log["planned path"] = self.path
+
+    def get_path_planning_log(self) -> dict:
+        return self.log
 
     def is_already_added(self, point: np.array, among_points: np.array) -> bool:
         return np.all(np.isin(point, among_points))
+
+    def calculate_center(self, pointB, pointY):
+        return np.array([(pointB[0] - pointY[0]) / 2 + pointY[0], (pointB[1] - pointY[1]) / 2 + pointY[1]])
 
     def is_new_center_ok(self, new_center):
         def compute_angle_between_vectors(vector_1, vector_2):
@@ -62,6 +185,30 @@ class PathPlanning:
             return False  # angle isn't ok
         else:
             return True
+
+    def plot_results(self, B_cones, Y_cones, path, b_bound=[], y_bound=[], BIG_ORANGE_cones=[]):
+        fig = plt.figure(1, figsize=(20, 10))
+        axe = fig.add_axes([0.05, 0.05, 0.9, 0.9])
+        axe.set_aspect("equal")
+
+        if len(B_cones) > 0:
+            axe.plot(B_cones[:, 0], B_cones[:, 1], "o", color="blue", mec="black")
+        if len(Y_cones) > 0:
+            axe.plot(Y_cones[:, 0], Y_cones[:, 1], "o", color="yellow", mec="black")
+        if len(BIG_ORANGE_cones) > 0:
+            axe.plot(BIG_ORANGE_cones[:, 0], BIG_ORANGE_cones[:, 1], "o", color="orange", mec="black")
+
+        axe.plot(path[:, 0], path[:, 1], "o", color="red")
+
+        if len(b_bound) > 0:
+            axe.plot(b_bound[:, 0], b_bound[:, 1], color="blue")
+        if len(y_bound) > 0:
+            axe.plot(y_bound[:, 0], y_bound[:, 1], color="yellow")
+
+        axe.plot(path[:, 0], path[:, 1], color="red")
+        axe.plot(path[:, 0], path[:, 1], "o", color="red", mec="black")
+
+        plt.show()
 
     def points_above_cone_line(self, points: np.array) -> np.array:
         """
@@ -246,6 +393,10 @@ class PathPlanning:
                 recolored_to_blue = np.vstack((recolored_to_blue, O_cones[distances.index(dist)]))
                 b_count += 1
 
+        self.log[self.str_step]["recolor orange cones"] = True
+        self.log[self.str_step]["recolored to blue"] = recolored_to_blue
+        self.log[self.str_step]["recolored to yellow"] = recolored_to_yellow
+
         B = np.vstack((B_cones, recolored_to_blue))
         Y = np.vstack((Y_cones, recolored_to_yellow))
 
@@ -312,10 +463,14 @@ class PathPlanning:
                     vec = np.array([[np.cos(-angle), -np.sin(-angle)], [np.sin(-angle), np.cos(-angle)]]) @ vec2
 
             to_fill = np.vstack((to_fill, full[idx, :] + vec * self.FILLING_CONE_DIST))
+            # filled_cones = np.vstack((filled_cones, full[idx, :] + vec * self.FILLING_CONE_DIST))
 
+        self.log[self.str_step]["fill missing cones"] = True
         if yellow:
+            # self.log[self.str_step]["filled blue cones"] = filled_cones
             return to_fill, full
         else:
+            # self.log[self.str_step]["filled yellow cones"] = filled_cones
             return full, to_fill
 
     def find_path(self, B_cones, Y_cones, O_cones=[]) -> np.array:
@@ -328,15 +483,30 @@ class PathPlanning:
         """
 
         self.step = 0
+        self.str_step = "step " + str(self.step)
+        self.log[self.str_step] = {}
+
         if self.n_steps is not None and self.n_steps < 0:
+            self.log[self.str_step]["info"] = "ERROR: n_steps < 0"
             return self.path
+
+        self.log[self.str_step]["blue cones"] = B_cones
+        self.log[self.str_step]["yellow cones"] = Y_cones
+        self.log[self.str_step]["big orange cones"] = O_cones
+
         # fill missing cones (it's case with a turn)
         if len(B_cones) == 0 or len(Y_cones) == 0:
             # ? if no cones are found, return empty path
             if len(B_cones) == 0 and len(Y_cones) == 0:
+                print("ERROR: not enough Blue/Yellow cones after fill missing")
+                self.log[self.str_step]["info"] = "ERROR: not enough Blue/Yellow cones after fill missing"
                 return self.path
             else:
                 B_cones, Y_cones = self.fill_missing_cones(B_cones, Y_cones)
+
+            # if len(B_cones) == 0 or len(Y_cones) == 0:
+            #     self.log[self.str_step]["info"] = "ERROR: not enough Blue/Yellow cones after fill missing"
+            #     return self.path
 
         # use Orange cones to plan a path
         if len(O_cones) > 1:
@@ -344,48 +514,75 @@ class PathPlanning:
 
         B, Y = self.sort_cones(B_cones), self.sort_cones(Y_cones)
         B, Y = self.filter_cones(B), self.filter_cones(Y)
+        self.log[self.str_step]["B"], self.log[self.str_step]["Y"] = B, Y
 
         if len(B) == 0 or len(Y) == 0:
+            self.log[self.str_step]["info"] = "ERROR: not enough Blue/Yellow cones after filtering cones"
             return self.path
 
         while True:
             if self.n_steps is not None and self.step == self.n_steps:
+                self.log[self.str_step]["info"] = "OK: path planning ended (step == n_steps)"
+                self.log["planned path"] = self.path
                 return self.path
 
             self.step += 1
+            self.str_step = "step " + str(self.step)
+            self.log[self.str_step] = {}
 
             B_hat, Y_hat = self.compute_hats(B, Y)
+            self.log[self.str_step]["B hat"], self.log[self.str_step]["Y hat"] = B_hat, Y_hat
             if len(B_hat) == 0 or len(Y_hat) == 0:
+                self.log[self.str_step]["info"] = "OK: path planning ended (B_hat or Y_hat is empty)"
+                self.log["planned path"] = self.path
                 return self.path
 
             b, y = self.find_blue_and_yellow_cone(B_hat, Y_hat)
+            self.log[self.str_step]["b"], self.log[self.str_step]["y"] = b, y
             self.used_blue_cones = np.vstack((self.used_blue_cones, b))
             self.used_yellow_cones = np.vstack((self.used_yellow_cones, y))
+            # np.array([(pointB[0] - pointY[0]) / 2 + pointY[0], (pointB[1] - pointY[1]) / 2 + pointY[1]])
             center = (b - y) / 2 + y
+            # center = self.calculate_center(b, y)
+            self.log[self.str_step]["center"] = center
+
             if self.is_already_added(center, self.path):
+                self.log[self.str_step]["info"] = "OK: path planning ended (tried to use already added center)"
+                self.log["planned path"] = self.path
                 return self.path
 
             dist_to_new_center = np.linalg.norm(center - self.path[-1])
             if self.path_length + dist_to_new_center > self.MAX_PATH_LENGTH:
+                self.log[self.str_step]["info"] = "OK: path planning ended (path is far enough long)"
+                self.log["planned path"] = self.path
                 return self.path
 
             # TODO: asi to potrebuju?
             if len(self.path) > 2 and not self.is_new_center_ok(center):
+                self.log[self.str_step]["info"] = "OK: path planning ended (new center angle is too large)"
                 return self.path
 
             # add new center to a path
             self.path = np.vstack((self.path, center))
             self.path_length += dist_to_new_center
 
+            self.log[self.str_step]["path"] = self.path
+            self.log[self.str_step]["path length"] = self.path_length
+            self.log[self.str_step]["done"] = True
+
+# TODO: REDO for my path planninh alg
+# Use it to communicate with bros? / PathPlanning can be used for test/debug purposes
+
 
 class PathPlanner():
     def __init__(self, n_steps=False, debug=False):
         self.n_steps = n_steps
         self.debug = debug
-        self.planner = PathPlanning()
+        self.planner = None
 
     def find_path(self, cones):
-        self.planner.reset()
+        self.planner = PathPlanning()
+
         if cones is None:
             blue_cones = np.zeros((0, 3))
             yellow_cones = np.zeros((0, 3))
@@ -402,3 +599,6 @@ class PathPlanner():
             path = np.array([[0., 0.]])
 
         return path
+
+    def plot_results(self, B_cones, Y_cones, path, b_bound=[], y_bound=[], BIG_ORANGE_cones=[]):
+        self.planner.plot_results(B_cones, Y_cones, path, b_bound, y_bound, BIG_ORANGE_cones)
