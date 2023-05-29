@@ -102,8 +102,6 @@ class VisionNode(mp.Process):
         socket = context.socket(zmq.SUB)
         socket.connect(tcp["TCP_HOST"] + ":" + tcp["VISION_PORT"])
         socket.setsockopt(zmq.SUBSCRIBE, b"")
-        # ! test counter
-        test_counter = 0
         image = None
 
         if config["simulate_images"]:
@@ -124,9 +122,6 @@ class VisionNode(mp.Process):
 
             if self.log_images:
                 data["image"] = image
-            test_counter += 1
-            if test_counter % 150 == 0:
-                raise Exception("TESTING")
             self.logger.log("CONE_DETECTOR_FRAME", data)
             publish_data(self.cone_preds_socket, world_preds)
 
