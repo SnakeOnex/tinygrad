@@ -10,7 +10,7 @@ import sys
 sys.path.append("..")
 sys.path.append(".")
 
-from algorithms import path_planning
+from algorithms import dima_path_planning
 from vision.visual_helpers import *
 from vision.cone_detector import ConeDetector
 from vision.cone_localizer import ConeLocalizer
@@ -24,6 +24,7 @@ def main():
     cv2.namedWindow("Perception")
     show_bboxes = False
     draw_path = False
+    color_format = False
     view = sl.VIEW.LEFT
     # init zed
     zed = sl.Camera()
@@ -38,17 +39,21 @@ def main():
     # init projector
     localizer = ConeLocalizer(config["cone_localizer_opt"])
     # init path predictor
-    path_planner = path_planning.PathPlanner(path_planner_opt)
+    path_planner = dima_path_planning.PathPlanner(path_planner_opt)
     print("Press 'k' to exit, 'b' to toggle bounding boxes, 'p' to toggle path, 'l' to switch to left camera, 'r' to switch to right camera")
     while True:
         if zed.grab(runtime_parameters) == sl.ERROR_CODE.SUCCESS:
             zed.retrieve_image(zed_image, view)
             image = zed_image.get_data()
 
+            if color_format:
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+
             bbox_preds = detector.process_image(image)
 
             if bbox_preds is not None:
                 bbox_preds = bbox_preds.cpu().detach().numpy()
+                print("bbox_preds: ", bbox_preds)
 
                 if show_bboxes:
                     image = draw_bboxes_from_preds(image, bbox_preds)
@@ -72,6 +77,8 @@ def main():
                 view = sl.VIEW.LEFT
             elif key == ord("r"):
                 view = sl.VIEW.RIGHT
+            elif key == ord("c"):
+                color_format = not color_format
     cv2.destroyAllWindows()
     zed.close()
 

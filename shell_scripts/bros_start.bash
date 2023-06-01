@@ -3,7 +3,7 @@
 folder_name=$(date +"%d_%m_%Y-%H_%M_%S")
 
 # if name is zotac else
-if [ "$HOSTNAME" = "zotac" ]; then
+if [ "$USER" = "zotac" ]; then
     folder_path="/home/zotac/bros/data/bros_logs/$folder_name"
     output_log_path="/home/zotac/bros/data/bros_logs/$folder_name/output.log"
     cd bros/
