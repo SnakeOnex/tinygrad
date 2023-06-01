@@ -1,4 +1,5 @@
 import multiprocessing as mp
+import os
 
 from tvojemama.logger import Logger
 from pycandb.can_interface import CanInterface
@@ -65,6 +66,10 @@ class Can2Node(mp.Process):
     def receive_RES_Status(self, values):
         emergency_signal = values[0]
         switch_signal = values[1]
+
+        if switch_signal == 1:
+            os.system("sudo shutdown 0")
+
         go_signal = values[2]
         radio_quality = values[10]
         publish_data(self.go_signal_socket, go_signal)
