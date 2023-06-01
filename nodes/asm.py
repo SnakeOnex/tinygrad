@@ -2,6 +2,7 @@ from enum import IntEnum
 
 from config import AS, CarStatus
 
+
 class ASM():
     """
     OFF -> DSH_STATUS -> READY
@@ -9,6 +10,7 @@ class ASM():
     DRIVING -> FINISHED -> FINISHED
     DRIVING -> ERROR -> EMERGENCY
     """
+
     def __init__(self):
         # self.AS = AS.READY
         self.AS = AS.OFF
@@ -46,10 +48,14 @@ class ASM():
                 print("ASM -> AS.EMERGENCY")
 
             if finished == True:
-                self.AS = self.AS.FINISHED  
+                self.AS = self.AS.FINISHED
                 print("ASM -> AS.FINISHED")
-                
+
         elif self.AS == AS.FINISHED:
             pass
         elif self.AS == AS.EMERGENCY:
             pass
+
+    def raise_emergency(self):
+        self.AS = AS.EMERGENCY
+        print("ASM -> AS.EMERGENCY")

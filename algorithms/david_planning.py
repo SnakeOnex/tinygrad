@@ -44,7 +44,7 @@ class PathPlanning():
         start = self.path[0]
         for i in range(len(cones)):
             # sort cones according to the current start point
-            closest_cone, closest_cone_idx = closest_point(cones, start)
+            closest_cone, closest_cone_idx = self.closest_point(cones, start)
             cones = np.delete(cones, closest_cone_idx, axis=0)
             sorted_cones[i] = closest_cone
             start = closest_cone
@@ -115,6 +115,11 @@ class PathPlanning():
         else:
             return full, to_fill
 
+    def closest_point(self, arr, point):
+        dist = (arr[:, 0] - point[0])**2 + (arr[:, 1] - point[1])**2
+        idx = dist.argmin()
+        return (arr[idx], idx)
+
     def recolor_orange_cones(self, B_cones: np.array, Y_cones: np.array, O_cones: np.array):
         # Use orange cones to plan a path.
         # Means to recolor/assign orange cones to blue/yellow and after it will be used in usual procedure.
@@ -124,8 +129,8 @@ class PathPlanning():
 
         for o_cone in O_cones:
             distances.append([
-                np.linalg.norm(closest_point(Y_cones, o_cone)[0] - o_cone),
-                np.linalg.norm(closest_point(B_cones, o_cone)[0] - o_cone)
+                np.linalg.norm(self.closest_point(Y_cones, o_cone)[0] - o_cone),
+                np.linalg.norm(self.closest_point(B_cones, o_cone)[0] - o_cone)
             ])
 
         my_sort_dist = sorted(distances, key=lambda x: min(x[0], x[1]))
@@ -312,246 +317,18 @@ class PathPlanning():
             # self.time_records["Compute hats"] += round((end - start) * 1000, 4)
         return self.path
 
-# According to Stanley paper
-# According to Stanley article
-
-
-def torch_smooth(path):
-
-    def normalize(v):
-        # norm = np.linalg.norm(v, axis=0) + 0.00001
-        norm = torch.norm(v, dim=0) + 0.00001
-        return v / norm  # .reshape(1, v.shape[1])
-
-    def curvature(waypoints):
-        '''
-        Curvature as  the sum of the normalized dot product between the way elements
-        Implement second term of the smoothing objective.
-
-        args:
-            waypoints [2, num_waypoints] !!!!!
-        '''
-        shift_left = torch.roll(waypoints, shifts=-1, dims=1)
-        shift_right = torch.roll(waypoints, shifts=1, dims=1)
-        left_half = normalize(shift_left - waypoints)
-        right_half = normalize(waypoints - shift_right)
-        mul = left_half * right_half
-        segment = torch.sum(mul, dim=0)
-        return torch.sum(segment[1:-1])
-
-    # weight_curvature=128
-    def smoothing_objective(waypoints, waypoints_center, weight_curvature=16):
-        '''
-        Objective for path smoothing
-
-        args:
-            waypoints [2 * num_waypoints] !!!!!
-            waypoints_center [2 * num_waypoints] !!!!!
-            weight_curvature (default=40)
-        '''
-        waypoints = waypoints.reshape(-1, 2)
-        waypoints_center = waypoints_center.reshape(-1, 2)
-        ls_tocenter = torch.sum(torch.square(waypoints - waypoints_center))
-        ls_curvature = curvature(waypoints.T)
-        boundary_penalty = 0  # ? TODO? F_rddf in Stanley paper
-        return ls_tocenter - weight_curvature * ls_curvature + boundary_penalty
-
-    initial_trajectory = torch.tensor(
-        path, dtype=torch.float32, requires_grad=True)
-    initial_trajectory_gt = initial_trajectory.clone()
-
-    optimizer = optim.ASGD([initial_trajectory], lr=0.005)
-    num_iterations = 5
-    best_cost = float('inf')
-    best_trajectory = initial_trajectory
-    for i in range(num_iterations):
-        optimizer.zero_grad()
-        cost = smoothing_objective(initial_trajectory, initial_trajectory_gt)
-        if cost.item() < best_cost:
-            best_cost = cost.item()
-            best_trajectory = initial_trajectory.clone()
-        cost.backward()
-        optimizer.step()
-
-    optimized_trajectory = best_trajectory.detach().numpy()
-    smooth_path = optimized_trajectory.reshape(-1, 2)
-    smooth_path[0, :] = 0.  # TODO:Fix this ?add constraint to minimize?
-    return smooth_path, best_cost
-
-
-def stanley_smooth_path(path, use_spline_as_smoother=False, add_more_points_to_path=False):
-
-    def normalize(v):
-        norm = np.linalg.norm(v, axis=0) + 0.00001
-        return v / norm  # .reshape(1, v.shape[1])
-
-    def curvature(waypoints):
-        '''
-        Curvature as  the sum of the normalized dot product between the way elements
-        Implement second term of the smoothing objective.
-
-        args:
-            waypoints [2, num_waypoints] !!!!!
-        '''
-        shift_left = np.roll(waypoints, shift=-1, axis=1)
-        shift_right = np.roll(waypoints, shift=1, axis=1)
-        left_half = normalize(shift_left - waypoints)
-        right_half = normalize(waypoints - shift_right)
-        mul = left_half * right_half
-        segment = np.sum(mul, axis=0)
-        return np.sum(segment[1:-1])
-
-    # weight_curvature=128
-    def smoothing_objective(waypoints, waypoints_center, weight_curvature=16):
-        '''
-        Objective for path smoothing
-
-        args:
-            waypoints [2 * num_waypoints] !!!!!
-            waypoints_center [2 * num_waypoints] !!!!!
-            weight_curvature (default=40)
-        '''
-        waypoints = waypoints.reshape(-1, 2)
-        waypoints_center = waypoints_center.reshape(-1, 2)
-
-        # mean least square error between waypoint and way point center
-        ls_tocenter = np.sum(np.square(waypoints - waypoints_center))
-
-        # derive curvature
-        ls_curvature = curvature(waypoints.T)
-
-        boundary_penalty = 0  # ? TODO? F_rddf in Stanley paper
-
-        return ls_tocenter - weight_curvature * ls_curvature + boundary_penalty
-
-    # increase amount of points on the path
-    # (first step in stanley alg)
-
-    # TODO initialize to previous path previous path -> (path)
-
-    constraints_dict = (
-        {"type": 'ineq', "fun": lambda x: x[0] - path[0]},
-        {"type": 'ineq', "fun": lambda x: x[1] - path[1]},
-        {"type": 'ineq', "fun": lambda x: -x[0] + path[0]},
-        {"type": 'ineq', "fun": lambda x: -x[1] + path[1]}
-    )
-
-    # opts = {"maxiter": 3, "disp": False}
-    opts = {"maxiter": 1, "disp": False}
-    # opts = {"maxiter": 3, "disp": True}
-
-    # constraints_dict = (
-    #     {"type": 'eq', "fun": lambda x: x[0] - path[0]},
-    #     {"type": 'eq', "fun": lambda x: x[1] - path[1]}
-    # )
-
-    if use_spline_as_smoother:
-        add_more_points_to_path = True
-
-    if add_more_points_to_path:
-        if len(path) > 3:
-            spline_smoothness = 10
-            spl_path, _ = splprep(
-                (path[:, 0], path[:, 1]), s=spline_smoothness)
-            # create spline arguments
-            # num_waypoints = 10 #5 #8 #13 # 15
-            num_waypoints = len(path) + 3
-
-            t = np.linspace(0, 1, num_waypoints)
-            # derive roadside points from spline
-            new_path = np.array(splev(t, spl_path)).T
-            # print(f"Add more point to path took: {round((end-start)*1000, 4)} ms")
-        else:
-            new_path = path
-
-        # start = time.time()
-        if use_spline_as_smoother:
-            # spline is faster, but there are problems in the turns
-            return new_path
-        else:
-            way_points = minimize(smoothing_objective,
-                                  (new_path), args=new_path, options=opts)
-
-        # end = time.time()
-        # print(f"Minimize took: {round((end-start)*1000, 4)} ms")
-        # print()
-    else:
-        # start = time.time()
-        way_points = minimize(smoothing_objective, (path),
-                              args=path, options=opts)
-
-        # way_points = minimize(smoothing_objective, (path), args=path, constraints=constraints_dict) # so slow
-        # way_points = minimize(smoothing_objective, (path), args=path)
-
-        # way_points = minimize(smoothing_objective, (path), tol=0.5, args=path, options=opts) # no visual differences
-
-        # end = time.time()
-        # print(f"Minimize took: {round((end-start)*1000, 4)} ms")
-        # print()
-
-    # way_points = minimize(smoothing_objective, (path), args=path)
-
-    way_points = way_points["x"]
-
-    smooth_path = way_points.reshape(-1, 2)
-    smooth_path[0] = [0., 0.]  # TODO:Fix this ?add constraint to minimize?
-
-    return smooth_path
-
-
-def closest_point(arr, point):
-    dist = (arr[:, 0] - point[0])**2 + (arr[:, 1] - point[1])**2
-    idx = dist.argmin()
-    return (arr[idx], idx)
-
-
-def plot_path(path, B_cones, Y_cones, BIG_ORANGE_cones=[], b_bound=[], y_bound=[]):
-    # plot a path with blue and yellow cones
-    fig = plt.figure(1, figsize=(20, 10))
-    axe = fig.add_axes([0.05, 0.05, 0.9, 0.9])
-    axe.set_aspect("equal")
-
-    if len(B_cones) > 0:
-        axe.plot(B_cones[:, 0], B_cones[:, 1], "o", color="blue", mec="black")
-    if len(Y_cones) > 0:
-        axe.plot(Y_cones[:, 0], Y_cones[:, 1],
-                 "o", color="yellow", mec="black")
-    if len(BIG_ORANGE_cones) > 0:
-        axe.plot(BIG_ORANGE_cones[:, 0], BIG_ORANGE_cones[:,
-                 1], "o", color="orange", mec="black")
-
-    if len(b_bound) > 0:
-        axe.plot(b_bound[:, 0], b_bound[:, 1], color="blue")
-    if len(y_bound) > 0:
-        axe.plot(y_bound[:, 0], y_bound[:, 1], color="yellow")
-
-    axe.plot(path[:, 0], path[:, 1], color="red")
-    axe.plot(path[:, 0], path[:, 1], "o", color="red", mec="black")
-
-    plt.show()
-
 
 class PathPlanner():
-    def __init__(self, n_steps=None, debug=False):
-        self.n_steps = n_steps
-        self.debug = debug
-        self.planner = PathPlanning(n_steps=n_steps)
+    def __init__(self, opt: dict = None):
+        if opt is None:
+            self.n_steps = 8
+        else:
+            self.n_steps = opt["n_steps"]
+        self.planner = PathPlanning(n_steps=self.n_steps)
 
     def find_path(self, args):
         # args in the past: blue cones, yellow cones
         # args now: cones; where cones contain blue, yellow and orange cones
-
-        # if len(args) == 1:
-        #     cones = args[0]
-        #     yellow_cones = cones[cones[:, 2] == 0, :2]
-        #     blue_cones = cones[cones[:, 2] == 1, :2]
-        #     orange_cones = cones[cones[:, 2] == 3, :2]
-        # elif len(args) == 2:
-        #     blue_cones, yellow_cones = args
-        #     orange_cones = []
-        # else:
-        #     raise ValueError("Len (args) > 2")
-
         cones = args
         if cones is None:
             blue_cones = np.zeros((0, 3))
@@ -560,20 +337,11 @@ class PathPlanner():
             yellow_cones = cones[cones[:, 2] == 0, :2]
             blue_cones = cones[cones[:, 2] == 1, :2]
             orange_cones = cones[cones[:, 2] == 3, :2]
-
         try:
             self.planner.reset()
             path = self.planner.find_path(
                 blue_cones, yellow_cones, O_cones=orange_cones)
-            # print(f"Path planning took: {self.path_planning_time} ms")
-
-            # start_path_smoothing_time = time.time()
-            # path = self.planner.stanley_smooth_path(path)
-            # end_path_smoothing_time = time.time()
-            # self.path_smoothing_time = round((end_path_smoothing_time-start_path_smoothing_time)*1000, 2)
-
-            # print(f"Path smoothing took: {self.path_smoothing_time} ms")
-            # print(f"Path planning and smoothing took: {self.path_planning_time+self.path_smoothing_time} ms")
-        except:
+        except Exception as e:
+            print(e)
             path = np.array([[0., 0.]])
         return path

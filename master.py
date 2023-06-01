@@ -75,6 +75,7 @@ def main(mode="RACE", log_folder=None):
     print("PERF LOG NODE STARTED")
     time.sleep(1)
     nodes = [vision_node, can1_node, can2_node, mission_node, can_sender_node, perf_log_node]
+    critical_nodes = [mission_node, can_sender_node]
 
     def handler(sig, frame):
         vision_node.terminate()
@@ -88,11 +89,19 @@ def main(mode="RACE", log_folder=None):
 
     signal(SIGTERM, handler)
 
-    for node in nodes:
-        try:
-            node.join()
-        except KeyboardInterrupt:
-            handler(None, None)
+    try:
+        while True:
+            for node in nodes:
+                if not node.is_alive():
+                    reason = f"BROS: NODE {node.__class__.__name__} IS DEAD"
+                    print(reason)
+                    if not node in critical_nodes:
+                        mission_node.raise_external_emergency(reason)
+                    handler(None, None)
+                    return
+            time.sleep(1)
+    except KeyboardInterrupt:
+        handler(None, None)
 
 
 if __name__ == '__main__':
