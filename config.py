@@ -179,6 +179,7 @@ vision_node_config = {
     "cone_detector_opt": cone_detector_opt,
     "cone_localizer_opt": cone_localizer_opt,
     "path_planner_opt": path_planner_opt,
+    "frequency": 30,
     "log_name": "vision",
     "log_folder_name": "AS",
     "simulate_images": False

@@ -36,7 +36,7 @@ class VisionNode(mp.Process):
             self.zed = sl.Camera()
             init_params = sl.InitParameters()
             init_params.camera_resolution = sl.RESOLUTION.HD720
-            init_params.camera_fps = 60
+            init_params.camera_fps = config["frequency"]
             self.zed_image = sl.Mat()
             self.runtime_parameters = sl.RuntimeParameters()
             self.detector = ConeDetector(config["cone_detector_opt"])
